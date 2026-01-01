@@ -3,20 +3,18 @@ FROM node:20-alpine AS builder
 RUN apk add --no-cache libc6-compat
 WORKDIR /app
 
-# Ensure we install ALL dependencies for the build
-ENV NODE_ENV=development
 
 # Copy package files
 COPY package.json package-lock.json* ./
 
-# Install dependencies - using install instead of ci for better peer dependency handling in some environments
-RUN npm install
+# Install dependencies
+RUN npm ci --include=dev
 
 # Copy the rest of the application
 COPY . .
 
 # Build the Next.js application
-# Next.js 15/16 will use the typescript module to transpile next.config.ts
+ENV NODE_ENV=production
 RUN npm run build
 
 # Stage 3: Runner

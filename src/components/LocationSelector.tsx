@@ -6,7 +6,11 @@ import { useLocation } from '@/contexts/LocationContext';
 import { Button } from './Button';
 
 interface LocationSelectorProps {
-  onLocationChange: (cityId: string, cityName: string) => void;
+  onLocationChange: (loc: {
+    countryId: string;
+    stateId: string;
+    cityId: string;
+  }) => void;
   initialCityId?: string;
   initialCityName?: string;
 }
@@ -26,7 +30,6 @@ export const LocationSelector = ({
   const { data: states } = useStates(selectedCountry?.id);
   const { data: cities } = useCities(activeState || undefined);
 
-
   // Set first state as active when states load
   useEffect(() => {
     if (states && states.length > 0 && !activeState) {
@@ -37,7 +40,10 @@ export const LocationSelector = ({
   // Close when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+      if (
+        containerRef.current &&
+        !containerRef.current.contains(event.target as Node)
+      ) {
         setIsOpen(false);
       }
     };
@@ -47,11 +53,15 @@ export const LocationSelector = ({
 
   const handleCitySelect = (cityId: string, cityName: string) => {
     setActiveCityName(cityName);
-    onLocationChange(cityId, cityName);
+    onLocationChange({
+      countryId: selectedCountry?.id || '',
+      stateId: activeState || '',
+      cityId: cityId,
+    });
     setIsOpen(false);
   };
 
-  const activeStateName = states?.find(s => s.id === activeState)?.name || '';
+  const activeStateName = states?.find((s) => s.id === activeState)?.name || '';
 
   return (
     <div className="relative" ref={containerRef}>
@@ -62,7 +72,9 @@ export const LocationSelector = ({
       >
         <div className="flex items-center gap-2 truncate">
           <span className="text-primary">📍</span>
-          <span className="truncate">{activeCityName || 'Select Location'}</span>
+          <span className="truncate">
+            {activeCityName || 'Select Location'}
+          </span>
         </div>
         <svg
           className={`w-4 h-4 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}
@@ -70,7 +82,12 @@ export const LocationSelector = ({
           stroke="currentColor"
           viewBox="0 0 24 24"
         >
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" />
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2.5}
+            d="M19 9l-7 7-7-7"
+          />
         </svg>
       </button>
 
@@ -97,14 +114,26 @@ export const LocationSelector = ({
                     >
                       <span className="truncate">{state.name}</span>
                       {activeState === state.id && (
-                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
+                        <svg
+                          className="w-3 h-3"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2.5}
+                            d="M9 5l7 7-7 7"
+                          />
                         </svg>
                       )}
                     </button>
                   ))}
                   {(!states || states.length === 0) && (
-                    <p className="text-xs text-text-light-gray p-2 italic text-center">Loading states...</p>
+                    <p className="text-xs text-text-light-gray p-2 italic text-center">
+                      Loading states...
+                    </p>
                   )}
                 </div>
               </div>
@@ -127,13 +156,30 @@ export const LocationSelector = ({
                   </button>
                 ))}
                 {activeState && (!cities || cities.length === 0) && (
-                   <div className="col-span-2 py-10 flex flex-col items-center justify-center text-text-light-gray">
-                      <svg className="w-8 h-8 opacity-20 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                      </svg>
-                      <p className="text-xs font-bold uppercase tracking-widest">Loading cities...</p>
-                   </div>
+                  <div className="col-span-2 py-10 flex flex-col items-center justify-center text-text-light-gray">
+                    <svg
+                      className="w-8 h-8 opacity-20 mb-2"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={1.5}
+                        d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
+                      />
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={1.5}
+                        d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
+                      />
+                    </svg>
+                    <p className="text-xs font-bold uppercase tracking-widest">
+                      Loading cities...
+                    </p>
+                  </div>
                 )}
                 {!activeState && (
                   <div className="col-span-2 py-10 text-center text-text-light-gray italic text-xs font-medium">
@@ -143,18 +189,22 @@ export const LocationSelector = ({
               </div>
             </div>
           </div>
-          
+
           <div className="p-3 bg-background-primary/50 border-t border-border-custom text-center">
-             <button 
-                onClick={() => {
-                  setActiveCityName('');
-                  onLocationChange('', '');
-                  setIsOpen(false);
-                }}
-                className="text-xs font-black text-text-gray hover:text-primary uppercase tracking-[0.2em] transition-colors"
-             >
-                Clear Location
-             </button>
+            <button
+              onClick={() => {
+                setActiveCityName('');
+                onLocationChange({
+                  countryId: '',
+                  stateId: '',
+                  cityId: '',
+                });
+                setIsOpen(false);
+              }}
+              className="text-xs font-black text-text-gray hover:text-primary uppercase tracking-[0.2em] transition-colors"
+            >
+              Clear Location
+            </button>
           </div>
         </div>
       )}

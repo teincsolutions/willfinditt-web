@@ -21,10 +21,23 @@ type CreateAdFormData = yup.InferType<typeof schema>;
 
 // Validation Schema
 const schema = yup.object().shape({
-  title: yup.string().required('Title is required').min(5, 'Title is too short'),
-  description: yup.string().required('Description is required').min(20, 'Description is too short'),
-  price: yup.number().typeError('Price must be a number').required('Price is required').min(0, 'Price must be positive'),
-  condition: yup.mixed<AdCondition>().oneOf(Object.values(AdCondition)).required('Condition is required'),
+  title: yup
+    .string()
+    .required('Title is required')
+    .min(5, 'Title is too short'),
+  description: yup
+    .string()
+    .required('Description is required')
+    .min(20, 'Description is too short'),
+  price: yup
+    .number()
+    .typeError('Price must be a number')
+    .required('Price is required')
+    .min(0, 'Price must be positive'),
+  condition: yup
+    .mixed<AdCondition>()
+    .oneOf(Object.values(AdCondition))
+    .required('Condition is required'),
   categoryId: yup.string().required('Category is required'),
   countryId: yup.string().required('Country is required'),
   stateId: yup.string().optional(),
@@ -38,7 +51,7 @@ export default function CreateAdPage() {
   const router = useRouter();
   const { isAuthenticated, isLoading: authLoading } = useAuth();
   const createAd = useCreateAd();
-  
+
   const [selectedParentId, setSelectedParentId] = useState<string>('');
   const [images, setImages] = useState<string[]>([]);
   const [uploadError, setUploadError] = useState<string | null>(null);
@@ -92,13 +105,13 @@ export default function CreateAdPage() {
       categoryId: data.categoryId,
       isNegotiable: data.isNegotiable,
       images: images,
-      
+
       // Location logic
       // Ideally backend wants cityId. If no cityId, maybe stateId?
       // The ad DTO has `cityId`, `address`, `latitude`, `longitude`.
       cityId: data.cityId || undefined,
       address: data.address, // Optional manual address
-      
+
       fieldValues: fieldValues,
     };
 
@@ -115,15 +128,18 @@ export default function CreateAdPage() {
 
   const handleLocationChange = (loc: {
     countryId: string;
-    stateId?: string;
-    cityId?: string;
+    stateId: string;
+    cityId: string;
   }) => {
     setValue('countryId', loc.countryId);
     setValue('stateId', loc.stateId);
     setValue('cityId', loc.cityId);
   };
 
-  if (authLoading) return <div className="p-8 text-center text-text-gray">Loading checks...</div>;
+  if (authLoading)
+    return (
+      <div className="p-8 text-center text-text-gray">Loading checks...</div>
+    );
 
   return (
     <div className="bg-background min-h-screen py-8">
@@ -132,19 +148,24 @@ export default function CreateAdPage() {
           {/* Header */}
           <div className="bg-primary px-8 py-6">
             <h1 className="text-2xl font-bold text-white">Post a New Ad</h1>
-            <p className="text-primaryLight mt-1">Fill in the details to list your item for sale.</p>
+            <p className="text-primaryLight mt-1">
+              Fill in the details to list your item for sale.
+            </p>
           </div>
 
           <form onSubmit={handleSubmit(onSubmit)} className="p-8 space-y-8">
-            
             {/* Section 1: Item Images */}
             <div>
               <h2 className="text-lg font-semibold text-text mb-4 flex items-center gap-2">
-                <span className="w-6 h-6 rounded-full bg-background-primary text-primary flex items-center justify-center text-sm font-bold">1</span>
+                <span className="w-6 h-6 rounded-full bg-background-primary text-primary flex items-center justify-center text-sm font-bold">
+                  1
+                </span>
                 Photos
               </h2>
               <ImageUploader images={images} onImagesChange={setImages} />
-              {uploadError && <p className="text-error text-sm mt-2">{uploadError}</p>}
+              {uploadError && (
+                <p className="text-error text-sm mt-2">{uploadError}</p>
+              )}
             </div>
 
             <hr className="border-border-custom" />
@@ -152,13 +173,17 @@ export default function CreateAdPage() {
             {/* Section 2: Category & Title */}
             <div>
               <h2 className="text-lg font-semibold text-text mb-4 flex items-center gap-2">
-                <span className="w-6 h-6 rounded-full bg-background-primary text-primary flex items-center justify-center text-sm font-bold">2</span>
+                <span className="w-6 h-6 rounded-full bg-background-primary text-primary flex items-center justify-center text-sm font-bold">
+                  2
+                </span>
                 Basic Details
               </h2>
-              
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                 <div>
-                  <label className="block text-sm font-medium mb-1 text-text">Category *</label>
+                  <label className="block text-sm font-medium mb-1 text-text">
+                    Category *
+                  </label>
                   <select
                     value={selectedParentId}
                     onChange={(e) => {
@@ -169,13 +194,17 @@ export default function CreateAdPage() {
                   >
                     <option value="">Select Category</option>
                     {parentCategories?.map((cat) => (
-                      <option key={cat.id} value={cat.id}>{cat.name}</option>
+                      <option key={cat.id} value={cat.id}>
+                        {cat.name}
+                      </option>
                     ))}
                   </select>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium mb-1 text-text">Subcategory *</label>
+                  <label className="block text-sm font-medium mb-1 text-text">
+                    Subcategory *
+                  </label>
                   <select
                     {...register('categoryId')}
                     className="w-full border border-border-custom rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-primary transition-all disabled:bg-background/50 disabled:text-text-light-gray"
@@ -183,35 +212,49 @@ export default function CreateAdPage() {
                   >
                     <option value="">Select Subcategory</option>
                     {subcategories?.map((cat) => (
-                      <option key={cat.id} value={cat.id}>{cat.name}</option>
+                      <option key={cat.id} value={cat.id}>
+                        {cat.name}
+                      </option>
                     ))}
                   </select>
-                  {errors.categoryId && <p className="text-error text-sm mt-1">{errors.categoryId.message}</p>}
+                  {errors.categoryId && (
+                    <p className="text-error text-sm mt-1">
+                      {errors.categoryId.message}
+                    </p>
+                  )}
                 </div>
               </div>
 
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium mb-1 text-text">Title *</label>
+                  <label className="block text-sm font-medium mb-1 text-text">
+                    Title *
+                  </label>
                   <input
                     type="text"
                     {...register('title')}
                     className="w-full border border-border-custom rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-primary transition-all"
                     placeholder="E.g. Brand new iPhone 14 Pro Max 256GB"
                   />
-                  {errors.title && <p className="text-error text-sm mt-1">{errors.title.message}</p>}
+                  {errors.title && (
+                    <p className="text-error text-sm mt-1">
+                      {errors.title.message}
+                    </p>
+                  )}
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium mb-1 text-text">Condition *</label>
+                  <label className="block text-sm font-medium mb-1 text-text">
+                    Condition *
+                  </label>
                   <div className="flex flex-wrap gap-2">
                     {Object.values(AdCondition).map((cond) => (
                       <label key={cond} className="cursor-pointer">
                         <input
-                           type="radio"
-                           value={cond}
-                           {...register('condition')}
-                           className="peer sr-only"
+                          type="radio"
+                          value={cond}
+                          {...register('condition')}
+                          className="peer sr-only"
                         />
                         <div className="px-4 py-2 bg-background border border-border-custom rounded-full text-sm font-medium text-text-gray peer-checked:bg-primary peer-checked:text-white peer-checked:border-primary hover:bg-background-primary transition-all">
                           {cond.replace('_', ' ')}
@@ -219,7 +262,11 @@ export default function CreateAdPage() {
                       </label>
                     ))}
                   </div>
-                  {errors.condition && <p className="text-error text-sm mt-1">{errors.condition.message}</p>}
+                  {errors.condition && (
+                    <p className="text-error text-sm mt-1">
+                      {errors.condition.message}
+                    </p>
+                  )}
                 </div>
               </div>
             </div>
@@ -238,25 +285,35 @@ export default function CreateAdPage() {
             {/* Section 3: Description & Price */}
             <div>
               <h2 className="text-lg font-semibold text-text mb-4 flex items-center gap-2">
-                <span className="w-6 h-6 rounded-full bg-background-primary text-primary flex items-center justify-center text-sm font-bold">3</span>
+                <span className="w-6 h-6 rounded-full bg-background-primary text-primary flex items-center justify-center text-sm font-bold">
+                  3
+                </span>
                 Description & Price
               </h2>
-              
+
               <div className="space-y-6">
                 <div>
-                  <label className="block text-sm font-medium mb-1 text-text">Description *</label>
+                  <label className="block text-sm font-medium mb-1 text-text">
+                    Description *
+                  </label>
                   <textarea
                     {...register('description')}
                     rows={6}
                     className="w-full border border-border-custom rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-primary transition-all"
                     placeholder="Describe your item in detail. Include features, condition notes, and reason for selling."
                   />
-                  {errors.description && <p className="text-error text-sm mt-1">{errors.description.message}</p>}
+                  {errors.description && (
+                    <p className="text-error text-sm mt-1">
+                      {errors.description.message}
+                    </p>
+                  )}
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
-                    <label className="block text-sm font-medium mb-1 text-text">Price ($) *</label>
+                    <label className="block text-sm font-medium mb-1 text-text">
+                      Price ($) *
+                    </label>
                     <div className="relative">
                       <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                         <span className="text-text-gray">$</span>
@@ -269,7 +326,11 @@ export default function CreateAdPage() {
                         placeholder="0.00"
                       />
                     </div>
-                    {errors.price && <p className="text-error text-sm mt-1">{errors.price.message}</p>}
+                    {errors.price && (
+                      <p className="text-error text-sm mt-1">
+                        {errors.price.message}
+                      </p>
+                    )}
                   </div>
 
                   <div className="flex items-center h-full pt-6">
@@ -282,7 +343,9 @@ export default function CreateAdPage() {
                         />
                         <div className="w-11 h-6 bg-background-primary/30 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-background after:border-border-custom after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
                       </div>
-                      <span className="text-sm font-medium text-text">Price is negotiable</span>
+                      <span className="text-sm font-medium text-text">
+                        Price is negotiable
+                      </span>
                     </label>
                   </div>
                 </div>
@@ -294,12 +357,14 @@ export default function CreateAdPage() {
             {/* Section 4: Location */}
             <div>
               <h2 className="text-lg font-semibold text-text mb-4 flex items-center gap-2">
-                <span className="w-6 h-6 rounded-full bg-background-primary text-primary flex items-center justify-center text-sm font-bold">4</span>
+                <span className="w-6 h-6 rounded-full bg-background-primary text-primary flex items-center justify-center text-sm font-bold">
+                  4
+                </span>
                 Location
               </h2>
-              
+
               <LocationSelector onLocationChange={handleLocationChange} />
-              
+
               {(errors.countryId || errors.stateId || errors.cityId) && (
                 <p className="text-error text-sm mt-2">
                   Please select a valid location (Country is required)
@@ -307,7 +372,9 @@ export default function CreateAdPage() {
               )}
 
               <div className="mt-4">
-                <label className="block text-sm font-medium mb-1 text-text">Specific Address (Optional)</label>
+                <label className="block text-sm font-medium mb-1 text-text">
+                  Specific Address (Optional)
+                </label>
                 <input
                   type="text"
                   {...register('address')}
@@ -320,11 +387,13 @@ export default function CreateAdPage() {
             {/* Actions */}
             <div className="pt-6 border-t border-border-custom flex items-center justify-end gap-4">
               <Link href="/">
-                <Button variant="outline" type="button">Cancel</Button>
+                <Button variant="outline" type="button">
+                  Cancel
+                </Button>
               </Link>
-              <Button 
-                type="submit" 
-                size="lg" 
+              <Button
+                type="submit"
+                size="lg"
                 disabled={createAd.isPending}
                 className="bg-gradient-to-r from-primary to-secondary hover:opacity-90 shadow-lg text-white font-semibold py-3 px-8"
               >
@@ -336,7 +405,6 @@ export default function CreateAdPage() {
                 Something went wrong. Please check your inputs and try again.
               </p>
             )}
-
           </form>
         </div>
       </div>

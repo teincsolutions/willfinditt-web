@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, Suspense } from 'react';
 import Link from 'next/link';
 import { SearchBar } from '@/components/SearchBar';
 import { Button } from '@/components/Button';
@@ -514,14 +514,16 @@ export const Header = () => {
                   </svg>
                 </div>
 
-                <LocationMegaMenu
-                  isOpen={isLocationMenuOpen}
-                  onClose={() => {
-                    setIsLocationMenuOpen(false);
-                    if (locationCloseTimeoutRef.current)
-                      clearTimeout(locationCloseTimeoutRef.current);
-                  }}
-                />
+                <Suspense fallback={null}>
+                  <LocationMegaMenu
+                    isOpen={isLocationMenuOpen}
+                    onClose={() => {
+                      setIsLocationMenuOpen(false);
+                      if (locationCloseTimeoutRef.current)
+                        clearTimeout(locationCloseTimeoutRef.current);
+                    }}
+                  />
+                </Suspense>
               </div>
 
               {/* Quick Category Links */}

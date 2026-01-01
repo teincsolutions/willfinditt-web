@@ -1,7 +1,7 @@
 'use client';
 
 import { useParams, useSearchParams } from 'next/navigation';
-import { useState } from 'react';
+import { useState, Suspense } from 'react';
 import { useSearchAds } from '@/hooks/useAds';
 import { useCategory, useCategoryFields } from '@/hooks/useCategories';
 
@@ -11,14 +11,16 @@ import { Button } from '@/components/Button';
 import { AdCondition, AdSearchSortBy, AdSearchSortOrder } from '@/types/ad';
 import { CategoryFieldFilter } from '@/types/category';
 
-export default function CategoryPage() {
+function CategoryContent() {
   const params = useParams();
   const searchParams = useSearchParams();
   const slug = params.slug as string;
   const categoryIdFromQuery = searchParams.get('categoryId');
 
   // Fetch current category directly by ID from query
-  const { data: activeCategory, isLoading: categoryLoading } = useCategory(categoryIdFromQuery || '');
+  const { data: activeCategory, isLoading: categoryLoading } = useCategory(
+    categoryIdFromQuery || ''
+  );
 
   // Fetch dynamic fields for this category
   const { data: categoryFields } = useCategoryFields(activeCategory?.id || '');
@@ -33,7 +35,9 @@ export default function CategoryPage() {
     sortOrder: AdSearchSortOrder.DESC,
   });
 
-  const [categoryFieldFilters, setCategoryFieldFilters] = useState<{ categoryFieldId: string; value: string }[]>([]);
+  const [categoryFieldFilters, setCategoryFieldFilters] = useState<
+    { categoryFieldId: string; value: string }[]
+  >([]);
 
   // Use the advanced search endpoint
   const { data: adsResponse, isLoading: adsLoading } = useSearchAds({
@@ -43,18 +47,23 @@ export default function CategoryPage() {
       limit: filters.limit,
       priceMin: filters.minPrice ? Number(filters.minPrice) : undefined,
       priceMax: filters.maxPrice ? Number(filters.maxPrice) : undefined,
-      conditions: filters.condition ? [filters.condition as AdCondition] : undefined,
+      conditions: filters.condition
+        ? [filters.condition as AdCondition]
+        : undefined,
       sortBy: filters.sortBy,
       sortOrder: filters.sortOrder as 'asc' | 'desc',
-      fieldValues: categoryFieldFilters.length > 0 ? categoryFieldFilters : undefined,
-      cityIds: searchParams.get('cityId') ? [searchParams.get('cityId') as string] : undefined,
+      fieldValues:
+        categoryFieldFilters.length > 0 ? categoryFieldFilters : undefined,
+      cityIds: searchParams.get('cityId')
+        ? [searchParams.get('cityId') as string]
+        : undefined,
     },
     facets: {
       categories: true,
       cities: true,
       conditions: true,
       priceRanges: true,
-    }
+    },
   });
 
   const isLoading = adsLoading || categoryLoading;
@@ -81,7 +90,7 @@ export default function CategoryPage() {
       }
     });
     // Reset to page 1 on filter change
-    setFilters(prev => ({ ...prev, page: 1 }));
+    setFilters((prev) => ({ ...prev, page: 1 }));
   };
 
   const handlePageChange = (page: number) => {
@@ -109,8 +118,11 @@ export default function CategoryPage() {
           <div className="bg-background p-6 rounded-2xl shadow-sm border border-border-custom sticky top-24 max-h-[calc(100vh-120px)] overflow-y-auto custom-scrollbar">
             <div className="flex items-center justify-between mb-6">
               <h3 className="text-xl font-bold text-text">Filters</h3>
-              {(filters.minPrice || filters.maxPrice || filters.condition || categoryFieldFilters.length > 0) && (
-                <button 
+              {(filters.minPrice ||
+                filters.maxPrice ||
+                filters.condition ||
+                categoryFieldFilters.length > 0) && (
+                <button
                   onClick={clearFilters}
                   className="text-xs font-bold text-primary hover:underline"
                 >
@@ -130,8 +142,14 @@ export default function CategoryPage() {
                       </label>
                       {field.type === 'SELECT' && field.options && (
                         <select
-                          value={categoryFieldFilters.find(f => f.categoryFieldId === field.id)?.value || ''}
-                          onChange={(e) => handleCategoryFieldChange(field.id, e.target.value)}
+                          value={
+                            categoryFieldFilters.find(
+                              (f) => f.categoryFieldId === field.id
+                            )?.value || ''
+                          }
+                          onChange={(e) =>
+                            handleCategoryFieldChange(field.id, e.target.value)
+                          }
                           className="w-full bg-background-primary/30 border border-border-custom rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none font-bold"
                         >
                           <option value="">Any {field.label}</option>
@@ -144,12 +162,20 @@ export default function CategoryPage() {
                       )}
                       {field.type === 'RADIO' && field.options && (
                         <div className="grid grid-cols-1 gap-2">
-                           {field.options.map((option) => {
-                             const isActive = categoryFieldFilters.find(f => f.categoryFieldId === field.id)?.value === option.value;
-                             return (
+                          {field.options.map((option) => {
+                            const isActive =
+                              categoryFieldFilters.find(
+                                (f) => f.categoryFieldId === field.id
+                              )?.value === option.value;
+                            return (
                               <button
                                 key={option.value}
-                                onClick={() => handleCategoryFieldChange(field.id, isActive ? '' : option.value)}
+                                onClick={() =>
+                                  handleCategoryFieldChange(
+                                    field.id,
+                                    isActive ? '' : option.value
+                                  )
+                                }
                                 className={`flex items-center px-4 py-2 rounded-xl text-xs font-bold transition-all border ${
                                   isActive
                                     ? 'bg-primary/10 border-primary text-primary'
@@ -158,15 +184,21 @@ export default function CategoryPage() {
                               >
                                 {option.label}
                               </button>
-                             );
-                           })}
+                            );
+                          })}
                         </div>
                       )}
                       {(field.type === 'TEXT' || field.type === 'NUMBER') && (
                         <input
                           type={field.type === 'NUMBER' ? 'number' : 'text'}
-                          value={categoryFieldFilters.find(f => f.categoryFieldId === field.id)?.value || ''}
-                          onChange={(e) => handleCategoryFieldChange(field.id, e.target.value)}
+                          value={
+                            categoryFieldFilters.find(
+                              (f) => f.categoryFieldId === field.id
+                            )?.value || ''
+                          }
+                          onChange={(e) =>
+                            handleCategoryFieldChange(field.id, e.target.value)
+                          }
                           placeholder={`Enter ${field.label.toLowerCase()}`}
                           className="w-full bg-background-primary/30 border border-border-custom rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none font-medium"
                         />
@@ -175,8 +207,17 @@ export default function CategoryPage() {
                         <label className="flex items-center group cursor-pointer">
                           <input
                             type="checkbox"
-                            checked={categoryFieldFilters.find(f => f.categoryFieldId === field.id)?.value === 'true'}
-                            onChange={(e) => handleCategoryFieldChange(field.id, e.target.checked ? 'true' : '')}
+                            checked={
+                              categoryFieldFilters.find(
+                                (f) => f.categoryFieldId === field.id
+                              )?.value === 'true'
+                            }
+                            onChange={(e) =>
+                              handleCategoryFieldChange(
+                                field.id,
+                                e.target.checked ? 'true' : ''
+                              )
+                            }
                             className="w-5 h-5 rounded border-border-custom text-primary focus:ring-primary/20 transition-all cursor-pointer"
                           />
                           <span className="ml-3 text-sm font-bold text-text-gray group-hover:text-text transition-colors">
@@ -196,21 +237,29 @@ export default function CategoryPage() {
                 </label>
                 <div className="grid grid-cols-2 gap-3">
                   <div className="relative">
-                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-text-light-gray text-xs font-bold">$</span>
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-text-light-gray text-xs font-bold">
+                      $
+                    </span>
                     <input
                       type="number"
                       value={filters.minPrice}
-                      onChange={(e) => handleFilterChange('minPrice', e.target.value)}
+                      onChange={(e) =>
+                        handleFilterChange('minPrice', e.target.value)
+                      }
                       className="w-full bg-background-primary/30 border border-border-custom rounded-xl pl-6 pr-3 py-2.5 text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none font-medium"
                       placeholder="Min"
                     />
                   </div>
                   <div className="relative">
-                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-text-light-gray text-xs font-bold">$</span>
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-text-light-gray text-xs font-bold">
+                      $
+                    </span>
                     <input
                       type="number"
                       value={filters.maxPrice}
-                      onChange={(e) => handleFilterChange('maxPrice', e.target.value)}
+                      onChange={(e) =>
+                        handleFilterChange('maxPrice', e.target.value)
+                      }
                       className="w-full bg-background-primary/30 border border-border-custom rounded-xl pl-6 pr-3 py-2.5 text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none font-medium"
                       placeholder="Max"
                     />
@@ -225,7 +274,9 @@ export default function CategoryPage() {
                 </label>
                 <select
                   value={filters.condition}
-                  onChange={(e) => handleFilterChange('condition', e.target.value)}
+                  onChange={(e) =>
+                    handleFilterChange('condition', e.target.value)
+                  }
                   className="w-full bg-background-primary/30 border border-border-custom rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none font-bold"
                 >
                   <option value="">All Conditions</option>
@@ -247,7 +298,9 @@ export default function CategoryPage() {
                   onChange={(e) => handleFilterChange('sortBy', e.target.value)}
                   className="w-full bg-background-primary/30 border border-border-custom rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none font-bold"
                 >
-                  <option value={AdSearchSortBy.CREATED_AT}>Newest First</option>
+                  <option value={AdSearchSortBy.CREATED_AT}>
+                    Newest First
+                  </option>
                   <option value={AdSearchSortBy.PRICE}>Price</option>
                   <option value={AdSearchSortBy.VIEWS}>Most Popular</option>
                   <option value={AdSearchSortBy.RELEVANCE}>Relevance</option>
@@ -275,13 +328,32 @@ export default function CategoryPage() {
             </div>
 
             <div className="flex items-center gap-2">
-              <button 
-                onClick={() => handleFilterChange('sortOrder', filters.sortOrder === AdSearchSortOrder.ASC ? AdSearchSortOrder.DESC : AdSearchSortOrder.ASC)}
+              <button
+                onClick={() =>
+                  handleFilterChange(
+                    'sortOrder',
+                    filters.sortOrder === AdSearchSortOrder.ASC
+                      ? AdSearchSortOrder.DESC
+                      : AdSearchSortOrder.ASC
+                  )
+                }
                 className="p-2.5 bg-background-primary/50 text-text rounded-xl border border-border-custom hover:border-primary/30 transition-all font-bold text-sm flex items-center gap-2"
               >
-                {filters.sortOrder === AdSearchSortOrder.ASC ? 'Increasing' : 'Decreasing'}
-                <svg className={`w-4 h-4 transition-transform ${filters.sortOrder === AdSearchSortOrder.ASC ? '' : 'rotate-180'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" />
+                {filters.sortOrder === AdSearchSortOrder.ASC
+                  ? 'Increasing'
+                  : 'Decreasing'}
+                <svg
+                  className={`w-4 h-4 transition-transform ${filters.sortOrder === AdSearchSortOrder.ASC ? '' : 'rotate-180'}`}
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2.5}
+                    d="M19 9l-7 7-7-7"
+                  />
                 </svg>
               </button>
             </div>
@@ -290,7 +362,10 @@ export default function CategoryPage() {
           {isLoading ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
               {[...Array(6)].map((_, i) => (
-                <div key={i} className="bg-background-primary/20 rounded-3xl h-[400px] animate-pulse border border-border-custom/50" />
+                <div
+                  key={i}
+                  className="bg-background-primary/20 rounded-3xl h-[400px] animate-pulse border border-border-custom/50"
+                />
               ))}
             </div>
           ) : ads.length > 0 ? (
@@ -303,24 +378,39 @@ export default function CategoryPage() {
 
               {meta && meta.totalPages > 1 && (
                 <div className="bg-background p-6 rounded-2xl border border-border-custom shadow-sm mb-10">
-                    <Pagination
+                  <Pagination
                     currentPage={meta.page}
                     totalPages={meta.totalPages}
                     onPageChange={handlePageChange}
-                    />
+                  />
                 </div>
               )}
             </>
           ) : (
             <div className="flex flex-col items-center justify-center py-24 bg-background-primary/10 rounded-[3rem] border border-dashed border-border-custom shadow-inner">
               <div className="w-24 h-24 bg-background-primary rounded-full flex items-center justify-center mb-8 shadow-md border border-border-custom">
-                  <svg className="w-12 h-12 text-primary/30" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
-                  </svg>
+                <svg
+                  className="w-12 h-12 text-primary/30"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={1.5}
+                    d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"
+                  />
+                </svg>
               </div>
-              <h3 className="text-2xl font-black text-text mb-2">No matching ads found</h3>
-              <p className="text-text-gray font-medium max-w-sm text-center">We couldn't find any results matching your search criteria. Try adjusting your filters.</p>
-              <button 
+              <h3 className="text-2xl font-black text-text mb-2">
+                No matching ads found
+              </h3>
+              <p className="text-text-gray font-medium max-sm text-center">
+                We couldn't find any results matching your search criteria. Try
+                adjusting your filters.
+              </p>
+              <button
                 onClick={clearFilters}
                 className="mt-8 px-8 py-3 bg-primary text-white rounded-full font-bold shadow-lg shadow-primary/25 hover:opacity-90 transition-all"
               >
@@ -331,5 +421,19 @@ export default function CategoryPage() {
         </main>
       </div>
     </div>
+  );
+}
+
+export default function CategoryPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="container mx-auto px-4 py-20 text-center">
+          Loading category...
+        </div>
+      }
+    >
+      <CategoryContent />
+    </Suspense>
   );
 }

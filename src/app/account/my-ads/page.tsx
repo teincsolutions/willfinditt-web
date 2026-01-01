@@ -6,6 +6,7 @@ import { format } from 'date-fns';
 import { useUserAds, useDeleteAd } from '@/hooks/useAds';
 import { Button } from '@/components/Button';
 import { OptimizedImage } from '@/components/OptimizedImage';
+import { formatCurrency } from '@/lib/utils';
 
 export default function MyAdsPage() {
   const [page, setPage] = useState(1);
@@ -67,7 +68,9 @@ export default function MyAdsPage() {
                       </Link>
                     </h3>
                     <p className="text-primary font-bold mt-1">
-                      ${(ad.price || 0).toLocaleString()}
+                      {ad.price && ad.price > 0 
+                        ? formatCurrency(ad.price, 'en-GH', ad.currency || 'GHS')
+                        : 'Contact for price'}
                     </p>
                    </div>
                    <div className="flex gap-2">

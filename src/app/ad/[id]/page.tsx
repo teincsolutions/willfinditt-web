@@ -7,6 +7,7 @@ import { useAddFavorite, useRemoveFavorite } from '@/hooks/useFavorites';
 import { Button } from '@/components/Button';
 import { useState } from 'react';
 import { RelatedAds } from '@/components/RelatedAds';
+import { formatCurrency } from '@/lib/utils';
 
 export default function AdDetailPage() {
   const params = useParams();
@@ -30,6 +31,10 @@ export default function AdDetailPage() {
     // For now, assume toggle
     addFavorite.mutate(id);
   };
+
+  const priceDisplay = ad.price && ad.price > 0 
+    ? formatCurrency(ad.price, 'en-GH', ad.currency || 'GHS')
+    : 'Contact for price';
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -73,7 +78,7 @@ export default function AdDetailPage() {
           <div>
             <h1 className="text-3xl font-bold text-text">{ad.title}</h1>
             <p className="text-2xl font-bold text-primary mt-2">
-              {ad.price ? `$${ad.price.toLocaleString()}` : 'Price not specified'}
+              {priceDisplay}
             </p>
             <p className="text-text-gray mt-1">
               {ad.address || ad.city?.name || 'Location not specified'}

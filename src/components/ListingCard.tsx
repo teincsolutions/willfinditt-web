@@ -1,12 +1,17 @@
 import Link from 'next/link';
 import { OptimizedImage } from './OptimizedImage';
 import { Ad } from '@/types/ad';
+import { formatCurrency } from '@/lib/utils';
 
 interface ListingCardProps {
   ad: Ad;
 }
 
 export const ListingCard: React.FC<ListingCardProps> = ({ ad }) => {
+  const priceDisplay = ad.price && ad.price > 0 
+    ? formatCurrency(ad.price, 'en-GH', ad.currency || 'GHS')
+    : 'Contact for price';
+
   return (
     <Link
       href={`/ad/${ad.id}`}
@@ -45,7 +50,9 @@ export const ListingCard: React.FC<ListingCardProps> = ({ ad }) => {
           </span>
         </div>
         <div className="flex items-center justify-between">
-          <p className="text-2xl font-bold text-primary">${ad.price}</p>
+          <p className={`font-bold text-primary ${priceDisplay === 'Contact for price' ? 'text-lg' : 'text-2xl'}`}>
+            {priceDisplay}
+          </p>
           <div className="text-right">
             <p className="text-text-light-gray text-xs">
               {new Date(ad.createdAt).toLocaleDateString()}

@@ -96,7 +96,7 @@ export const MegaMenu = ({ categories, isOpen, onClose }: MegaMenuProps) => {
                         <p className="text-text-gray text-base font-medium">Explore the best of {activeCategoryData.name}</p>
                     </div>
                     <Link
-                      href={`/category/${activeCategoryData.slug || activeCategoryData.id}`}
+                      href={`/category/${activeCategoryData.slug || activeCategoryData.id}?categoryId=${activeCategoryData.id}`}
                       className="group flex items-center gap-3 px-8 py-3 bg-primary text-white hover:opacity-90 rounded-full text-sm font-bold transition-all shadow-lg shadow-primary/25"
                       onClick={onClose}
                     >
@@ -112,7 +112,7 @@ export const MegaMenu = ({ categories, isOpen, onClose }: MegaMenuProps) => {
                       {activeCategoryData.children.map((subcat) => (
                         <Link
                           key={subcat.id}
-                          href={`/category/${subcat.slug || subcat.id}`}
+                          href={`/category/${subcat.slug || subcat.id}?categoryId=${subcat.id}`}
                           className="group flex items-center gap-5 p-5 rounded-2xl hover:bg-background-primary transition-all duration-300 border border-border-custom/50 hover:border-primary/20 hover:shadow-xl hover:shadow-primary/5 bg-background-primary/5"
                           onClick={onClose}
                         >

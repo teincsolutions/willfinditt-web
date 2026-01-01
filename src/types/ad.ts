@@ -175,31 +175,25 @@ export interface AdsListParams {
   categoryFields?: CategoryFieldFilter[];
 }
 
-export interface AdSearchDto {
+export interface AdSearchParams {
   page?: number;
   limit?: number;
-  after?: string;
-  before?: string;
   query?: string;
   categoryIds?: string[];
   cityIds?: string[];
+  userId?: string;
   conditions?: AdCondition[];
   priceMin?: number;
   priceMax?: number;
-  promotionFilter?: AdPromotionFilter;
-  latitude?: number;
-  longitude?: number;
-  radius?: number;
-  dateRange?: AdSearchDateRange;
-  dateFrom?: string;
-  dateTo?: string;
-  userIds?: string[];
-  hasImages?: boolean;
-  isNegotiable?: boolean;
-  sortBy?: AdSearchSortBy;
-  sortOrder?: AdSearchSortOrder;
+  sortBy?: string;
+  sortOrder?: 'asc' | 'desc';
+  promotionFilter?: 'all' | 'promoted_only' | 'non_promoted_only';
   statuses?: AdStatus[];
-  categoryFields?: CategoryFieldFilter[];
+  fieldValues?: {
+    categoryFieldId: string;
+    value: string;
+  }[];
+  minimal?: boolean; // For lightweight responses
 }
 
 export interface AdSearchFacetDto {
@@ -211,7 +205,7 @@ export interface AdSearchFacetDto {
 }
 
 export interface AdSearchRequest {
-  search: AdSearchDto;
+  search: AdSearchParams;
   facets?: AdSearchFacetDto;
 }
 

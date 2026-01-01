@@ -5,18 +5,23 @@ import Link from 'next/link';
 import { SearchBar } from '@/components/SearchBar';
 import { Button } from '@/components/Button';
 import { MegaMenu } from '@/components/MegaMenu';
+import { LocationMegaMenu } from '@/components/LocationMegaMenu';
 import { MobileDrawer } from '@/components/MobileDrawer';
 import { useAuth } from '@/contexts/AuthContext';
+import { useLocation } from '@/contexts/LocationContext';
 import { useParentCategories } from '@/hooks/useCategories';
 import { useUnreadCount } from '@/hooks/useNotifications';
 
 export const Header = () => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isMegaMenuOpen, setIsMegaMenuOpen] = useState(false);
+  const [isLocationMenuOpen, setIsLocationMenuOpen] = useState(false);
   const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false);
   const { user, isAuthenticated, logout } = useAuth();
+  const { selectedCountry, setSelectedCountry, countries, selectedCity } = useLocation();
   
   const closeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const locationCloseTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const handleMouseEnter = () => {
     if (closeTimeoutRef.current) clearTimeout(closeTimeoutRef.current);
@@ -26,6 +31,17 @@ export const Header = () => {
   const handleMouseLeave = () => {
     closeTimeoutRef.current = setTimeout(() => {
       setIsMegaMenuOpen(false);
+    }, 150);
+  };
+
+  const handleLocationMouseEnter = () => {
+    if (locationCloseTimeoutRef.current) clearTimeout(locationCloseTimeoutRef.current);
+    setIsLocationMenuOpen(true);
+  };
+
+  const handleLocationMouseLeave = () => {
+    locationCloseTimeoutRef.current = setTimeout(() => {
+      setIsLocationMenuOpen(false);
     }, 150);
   };
 
@@ -71,6 +87,31 @@ export const Header = () => {
                 Willfind8
               </span>
             </Link>
+
+            {/* Country Selector */}
+            <div className="hidden lg:flex items-center ml-6 border-l border-border-custom pl-6">
+              <div className="relative group">
+                <select
+                  value={selectedCountry?.id || ''}
+                  onChange={(e) => {
+                    const country = countries.find(c => c.id === e.target.value);
+                    if (country) setSelectedCountry(country);
+                  }}
+                  className="appearance-none bg-transparent hover:bg-background-primary/50 text-text font-bold text-sm py-2 px-3 rounded-lg border border-transparent hover:border-border-custom transition-all outline-none cursor-pointer pr-8"
+                >
+                  {countries.map(country => (
+                    <option key={country.id} value={country.id}>
+                      🇬🇭 {country.name}
+                    </option>
+                  ))}
+                </select>
+                <div className="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none text-text-gray">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </div>
+              </div>
+            </div>
 
             {/* Desktop Search Bar */}
             <div className="hidden md:flex flex-1 max-w-lg mx-8">
@@ -292,12 +333,40 @@ export const Header = () => {
                 />
               </div>
 
+              {/* Location Selector Button with Mega Menu */}
+              <div
+                className="py-2"
+                onMouseEnter={handleLocationMouseEnter}
+                onMouseLeave={handleLocationMouseLeave}
+              >
+                <div className="flex items-center gap-2 px-4 py-2 bg-background-primary/50 text-text border border-border-custom rounded-lg font-medium shadow-sm hover:shadow-lg hover:border-primary transition-all cursor-pointer select-none">
+                  <span className="text-primary">📍</span>
+                  <span className="whitespace-nowrap">{selectedCity?.name || 'Gh, Anywhere'}</span>
+                  <svg 
+                    className={`w-4 h-4 transition-transform duration-300 ${isLocationMenuOpen ? 'rotate-180' : ''}`} 
+                    fill="none" 
+                    stroke="currentColor" 
+                    viewBox="0 0 24 24"
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </div>
+
+                <LocationMegaMenu
+                  isOpen={isLocationMenuOpen}
+                  onClose={() => {
+                    setIsLocationMenuOpen(false);
+                    if (locationCloseTimeoutRef.current) clearTimeout(locationCloseTimeoutRef.current);
+                  }}
+                />
+              </div>
+
               {/* Quick Category Links */}
               <div className="flex items-center gap-1">
                 {categories.slice(0, 6).map((category) => (
                   <Link
                     key={category.id}
-                    href={`/category/${category.slug || category.id}`}
+                    href={`/category/${category.slug || category.id}?categoryId=${category.id}`}
                     className="px-3 py-2 text-sm font-medium text-text-gray hover:text-primary hover:bg-background-primary rounded-lg transition-colors whitespace-nowrap"
                   >
                     {category.name}

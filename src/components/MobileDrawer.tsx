@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import { Category } from '@/types/category';
+import { useLocation } from '@/contexts/LocationContext';
 import { OptimizedImage } from './OptimizedImage';
 
 interface MobileDrawerProps {
@@ -13,6 +14,7 @@ interface MobileDrawerProps {
 
 export const MobileDrawer = ({ isOpen, onClose, categories }: MobileDrawerProps) => {
   const { user, isAuthenticated, logout } = useAuth();
+  const { selectedCountry, setSelectedCountry, countries } = useLocation();
 
   return (
     <>
@@ -97,6 +99,35 @@ export const MobileDrawer = ({ isOpen, onClose, categories }: MobileDrawerProps)
               <span className="font-medium text-sm">Account</span>
             </Link>
           </div>
+        </div>
+
+        {/* Location Selection */}
+        <div className="p-4 border-b border-border-custom bg-background-primary/20">
+            <h3 className="text-xs font-semibold text-text-light-gray uppercase tracking-wider mb-3 px-1">
+                Local Targeting
+            </h3>
+            <div className="relative group">
+                <select
+                    value={selectedCountry?.id || ''}
+                    onChange={(e) => {
+                        const country = countries.find(c => c.id === e.target.value);
+                        if (country) setSelectedCountry(country);
+                    }}
+                    className="w-full appearance-none bg-background border border-border-custom rounded-xl px-4 py-3 text-sm font-bold text-text outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all pr-10"
+                >
+                    {countries.map(country => (
+                        <option key={country.id} value={country.id}>
+                            🇬🇭 {country.name}
+                        </option>
+                    ))}
+                </select>
+                <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-text-gray">
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                </div>
+            </div>
+            <p className="mt-2 px-1 text-[11px] text-text-light-gray font-medium">Currently browsing ads in {selectedCountry?.name || 'your region'}</p>
         </div>
 
         {/* Categories */}

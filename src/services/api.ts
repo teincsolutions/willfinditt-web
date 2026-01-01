@@ -22,20 +22,30 @@ api.interceptors.request.use((config) => {
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
-    if (error.response?.status === 401 && !error.config._retry) {
+    const isAuthRequest = error.config.url?.includes('/auth/login') || error.config.url?.includes('/auth/register');
+    
+    if (error.response?.status === 401 && !error.config._retry && !isAuthRequest) {
       error.config._retry = true;
       try {
         const refreshToken = getRefreshToken();
-        if (!refreshToken) throw new Error('No refresh token');
+        if (!refreshToken) {
+          throw new Error('Session expired. Please log in again.');
+        }
 
         const refreshResponse = await axios.post(
           `${process.env.NEXT_PUBLIC_API_URL}/auth/refresh`,
           {
             refreshToken,
+          },
+          {
+            headers: {
+              Authorization: `Bearer ${getAccessToken()}`
+            }
           }
         );
-        const newAccessToken = refreshResponse.data.accessToken || refreshResponse.data.tokens?.accessToken;
-        const newRefreshToken = refreshResponse.data.refreshToken || refreshResponse.data.tokens?.refreshToken;
+        
+        const newAccessToken = refreshResponse.data.access_token || refreshResponse.data.accessToken || refreshResponse.data.tokens?.accessToken;
+        const newRefreshToken = refreshResponse.data.refresh_token || refreshResponse.data.refreshToken || refreshResponse.data.tokens?.refreshToken;
  
         if (newAccessToken) {
           setAccessToken(newAccessToken);
@@ -45,9 +55,11 @@ api.interceptors.response.use(
           return api.request(error.config);
         }
         throw new Error('Refresh failed');
-      } catch (refreshError) {
+      } catch (refreshError: any) {
         clearTokens();
-        return Promise.reject(refreshError);
+        // Return a cleaner error message if possible
+        const message = refreshError.response?.data?.message || refreshError.message || 'Session expired';
+        return Promise.reject(new Error(message));
       }
     }
     return Promise.reject(error);

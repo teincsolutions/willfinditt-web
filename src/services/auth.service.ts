@@ -2,27 +2,44 @@ import api from './api';
 import { setAccessToken, setRefreshToken, clearTokens } from '@/lib/auth';
 import { LoginData, RegisterData, AuthResponse, User, ChangePasswordData } from '@/types/user';
 
+const extractTokens = (data: any) => {
+  const accessToken = data.access_token || data.accessToken || data.tokens?.accessToken;
+  const refreshToken = data.refresh_token || data.refreshToken || data.tokens?.refreshToken;
+  return { accessToken, refreshToken };
+};
+
 export const login = async (data: LoginData): Promise<AuthResponse> => {
-  const response = await api.post('/auth/login', data);
-  // Robustly extract tokens whether they are at top level or nested in 'tokens'
-  const accessToken = response.data.accessToken || response.data.tokens?.accessToken;
-  const refreshToken = response.data.refreshToken || response.data.tokens?.refreshToken;
-  
-  if (accessToken) setAccessToken(accessToken);
-  if (refreshToken) setRefreshToken(refreshToken);
-  
-  return response.data;
+  try {
+    const response = await api.post('/auth/login', data);
+    const { accessToken, refreshToken } = extractTokens(response.data);
+    
+    if (accessToken) setAccessToken(accessToken);
+    if (refreshToken) setRefreshToken(refreshToken);
+    
+    return response.data;
+  } catch (error: any) {
+    if (error.response?.data?.message) {
+      throw new Error(error.response.data.message);
+    }
+    throw error;
+  }
 };
 
 export const register = async (data: RegisterData): Promise<AuthResponse> => {
-  const response = await api.post('/auth/register', data);
-  const accessToken = response.data.accessToken || response.data.tokens?.accessToken;
-  const refreshToken = response.data.refreshToken || response.data.tokens?.refreshToken;
-  
-  if (accessToken) setAccessToken(accessToken);
-  if (refreshToken) setRefreshToken(refreshToken);
-  
-  return response.data;
+  try {
+    const response = await api.post('/auth/register', data);
+    const { accessToken, refreshToken } = extractTokens(response.data);
+    
+    if (accessToken) setAccessToken(accessToken);
+    if (refreshToken) setRefreshToken(refreshToken);
+    
+    return response.data;
+  } catch (error: any) {
+    if (error.response?.data?.message) {
+      throw new Error(error.response.data.message);
+    }
+    throw error;
+  }
 };
 
 export const logout = async (): Promise<void> => {
@@ -36,8 +53,7 @@ export const logout = async (): Promise<void> => {
 
 export const refresh = async (): Promise<AuthResponse> => {
   const response = await api.post('/auth/refresh');
-  const accessToken = response.data.accessToken || response.data.tokens?.accessToken;
-  const refreshToken = response.data.refreshToken || response.data.tokens?.refreshToken;
+  const { accessToken, refreshToken } = extractTokens(response.data);
   
   if (accessToken) setAccessToken(accessToken);
   if (refreshToken) setRefreshToken(refreshToken);

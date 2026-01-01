@@ -1,6 +1,7 @@
 'use client';
 
-import { useAds } from '@/hooks/useAds';
+import { useSearchAds } from '@/hooks/useAds';
+import { AdStatus } from '@/types/ad';
 import { ListingCard } from './ListingCard';
 
 interface RelatedAdsProps {
@@ -9,10 +10,12 @@ interface RelatedAdsProps {
 }
 
 export const RelatedAds = ({ categoryId, currentAdId }: RelatedAdsProps) => {
-  const { data: adsResponse, isLoading } = useAds({
-    categoryId,
-    limit: 5, // Fetch 5 to ensure we have 4 after filtering out current
-    status: 'ACTIVE' as any,
+  const { data: adsResponse, isLoading } = useSearchAds({
+    search: {
+      categoryIds: [categoryId],
+      limit: 5,
+      statuses: [AdStatus.ACTIVE],
+    }
   });
 
   const relatedAds = adsResponse?.data

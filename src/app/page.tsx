@@ -2,8 +2,9 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { useAds } from '@/hooks/useAds';
+import { useSearchAds } from '@/hooks/useAds';
 import { useParentCategories } from '@/hooks/useCategories';
+import { AdStatus } from '@/types/ad';
 import { ListingCard } from '@/components/ListingCard';
 import { CategoryTiles } from '@/components/CategoryTiles';
 import { Pagination } from '@/components/Pagination';
@@ -36,10 +37,14 @@ export default function Home() {
 
   const sortParams = getSortParams(sortBy);
 
-  const { data: ads, isLoading } = useAds({
-    page: currentPage,
-    limit: 20,
-    ...sortParams,
+  const { data: ads, isLoading } = useSearchAds({
+    search: {
+      page: currentPage,
+      limit: 20,
+      sortBy: sortParams.sortBy,
+      sortOrder: sortParams.sortOrder,
+      statuses: [AdStatus.ACTIVE],
+    }
   });
 
   const handleSortChange = (sort: string) => {
@@ -186,7 +191,7 @@ export default function Home() {
           </div>
         ) : ads?.data.length ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {ads.data.map((ad) => (
+            {ads.data.map((ad: any) => (
               <ListingCard key={ad.id} ad={ad} />
             ))}
           </div>

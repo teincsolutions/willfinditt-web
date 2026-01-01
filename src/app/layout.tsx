@@ -18,22 +18,25 @@ export const metadata: Metadata = {
     template: '%s | WillfindITT',
     default: 'WillfindITT - Buy and Sell Anything in Ghana',
   },
-  description: 'WillfindITT is the best place to buy and sell cars, phones, electronics, real estate, and more in Ghana. Find great deals near you.',
+  description:
+    'WillfindITT is the best place to buy and sell cars, phones, electronics, real estate, and more in Ghana. Find great deals near you.',
   icons: {
     icon: '/images/logo-favicon.png',
   },
   openGraph: {
     type: 'website',
     locale: 'en_GH',
-    url: 'https://willfind8.com',
-    siteName: 'Willfind8',
-    title: 'Willfind8 - Buy and Sell Anything in Ghana',
-    description: 'Willfind8 is the best place to buy and sell cars, phones, electronics, real estate, and more in Ghana.',
+    url: 'https://willfinditt.com',
+    siteName: 'WillfindITT',
+    title: 'WillfindITT - Buy and Sell Anything in Ghana',
+    description:
+      'WillfindITT is the best place to buy and sell cars, phones, electronics, real estate, and more in Ghana.',
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Willfind8 - Buy and Sell Anything in Ghana',
-    description: 'Willfind8 is the best place to buy and sell cars, phones, electronics, real estate, and more in Ghana.',
+    title: 'WillfindITT - Buy and Sell Anything in Ghana',
+    description:
+      'WillfindITT is the best place to buy and sell cars, phones, electronics, real estate, and more in Ghana.',
   },
 };
 

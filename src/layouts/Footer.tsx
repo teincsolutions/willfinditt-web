@@ -93,19 +93,25 @@ export const Footer = () => {
             </h3>
             <div className="flex space-x-4">
               <a
-                href="#"
+                href="https://facebook.com/willfinditt"
+                target="_blank"
+                rel="noopener noreferrer"
                 className="w-10 h-10 bg-background-primary rounded-full flex items-center justify-center text-text-gray hover:text-primary hover:bg-primary/10 transition-all"
               >
                 FB
               </a>
               <a
-                href="#"
+                href="https://twitter.com/willfinditt"
+                target="_blank"
+                rel="noopener noreferrer"
                 className="w-10 h-10 bg-background-primary rounded-full flex items-center justify-center text-text-gray hover:text-primary hover:bg-primary/10 transition-all"
               >
                 TW
               </a>
               <a
-                href="#"
+                href="https://instagram.com/willfinditt"
+                target="_blank"
+                rel="noopener noreferrer"
                 className="w-10 h-10 bg-background-primary rounded-full flex items-center justify-center text-text-gray hover:text-primary hover:bg-primary/10 transition-all"
               >
                 IG
@@ -115,7 +121,7 @@ export const Footer = () => {
         </div>
         <div className="mt-12 pt-8 border-t border-border-custom text-center">
           <p className="text-text-light-gray text-xs">
-            &copy; {new Date().getFullYear()} Willfind8. All rights reserved.
+            &copy; {new Date().getFullYear()} WillfindITT. All rights reserved.
           </p>
         </div>
       </div>

@@ -4,7 +4,6 @@ pipeline {
     environment {
         DOCKER_IMAGE = 'teincsolutions/willfind8-web'
         NEXT_PUBLIC_API_URL = 'https://api.willfind8.com/api/v1'
-        NEXT_PUBLIC_GOOGLE_CLIENT_ID = ''
         NEXT_PUBLIC_SITE_URL = 'https://willfind8.com'
     }
 
@@ -27,12 +26,13 @@ pipeline {
             steps {
                 script {
                     // Set up environment file using envsubst
-                    sh '''
-                        echo "Setting up environment variables..."
-                        envsubst < .env.template > .env
-                        echo "Environment file created successfully"
-                        cat .env
-                    '''
+                    withCredentials([usernamePassword(credentialsId: 'google-client-credentials', usernameVariable: 'NEXT_PUBLIC_GOOGLE_CLIENT_ID', passwordVariable: 'GOOGLE_CLIENT_SECRET')]) {
+                        sh '''
+                            echo "Setting up environment variables..."
+                            envsubst < .env.template > .env
+                            echo "Environment file created successfully"
+                        '''
+                    }
                 }
             }
         }

@@ -1,24 +1,22 @@
-# Stage 1: Dependencies
-FROM node:20-alpine AS deps
+# Stage 1: Build
+FROM node:20-alpine AS builder
 RUN apk add --no-cache libc6-compat
 WORKDIR /app
+
+# Ensure we install ALL dependencies for the build
+ENV NODE_ENV=development
 
 # Copy package files
 COPY package.json package-lock.json* ./
 
-# Install dependencies
-RUN npm ci
+# Install dependencies - using install instead of ci for better peer dependency handling in some environments
+RUN npm install
 
-# Stage 2: Builder
-FROM node:20-alpine AS builder
-WORKDIR /app
-
-# Copy dependencies from deps stage
-COPY --from=deps /app/node_modules ./node_modules
+# Copy the rest of the application
 COPY . .
 
 # Build the Next.js application
-ENV NEXT_TELEMETRY_DISABLED=1
+# Next.js 15/16 will use the typescript module to transpile next.config.ts
 RUN npm run build
 
 # Stage 3: Runner

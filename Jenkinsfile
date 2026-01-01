@@ -40,12 +40,14 @@ pipeline {
         stage('Build Docker Image') {
             steps {
                 script {
-                    // Build Docker image using docker build
-                    sh """
-                        echo "Building Docker image with docker build..."
-                        docker build --network wf8-internal-net -t ${DOCKER_IMAGE}:${DOCKER_TAG}  .
-                        docker tag ${DOCKER_IMAGE}:${DOCKER_TAG} ${DOCKER_IMAGE}:latest
-                    """
+                    // Build Docker image with retry and host network for reliable external access
+                    retry(3) {
+                        sh """
+                            echo "Building Docker image with docker build..."
+                            docker build --network host -t ${DOCKER_IMAGE}:${DOCKER_TAG} .
+                            docker tag ${DOCKER_IMAGE}:${DOCKER_TAG} ${DOCKER_IMAGE}:latest
+                        """
+                    }
                 }
             }
         }

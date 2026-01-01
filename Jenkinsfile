@@ -60,7 +60,7 @@ pipeline {
                         echo "Testing Docker image..."
                         docker stop willfinditt-web-test || true
                         docker rm willfinditt-web-test || true
-                        docker run -d --name willfinditt-web-test --network wf8-internal-net ${DOCKER_IMAGE}:${DOCKER_TAG}
+                        docker run -d --name willfinditt-web-test --network wf8-internal-net --env-file .env ${DOCKER_IMAGE}:${DOCKER_TAG}
                         sleep 30
                         if curl -f http://willfinditt-web-test:3000 > /dev/null 2>&1; then
                             echo "Image test passed!"

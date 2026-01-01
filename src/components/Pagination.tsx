@@ -20,10 +20,10 @@ export const Pagination: React.FC<PaginationProps> = ({
         <button
           key={page}
           onClick={() => onPageChange(page)}
-          className={`px-3 py-1 rounded ${
+          className={`px-4 py-2 rounded-lg font-medium transition-all shadow-sm ${
             page === currentPage
-              ? 'bg-blue-500 text-white'
-              : 'bg-gray-200 text-gray-700'
+              ? 'bg-primary text-white shadow-primary/20'
+              : 'bg-background-primary text-text-gray hover:bg-primary/10 hover:text-primary'
           }`}
         >
           {page}

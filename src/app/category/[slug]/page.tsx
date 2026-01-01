@@ -48,7 +48,7 @@ export default function CategoryPage() {
     <div className="container mx-auto px-4 py-8">
       <div className="flex flex-col lg:flex-row gap-8">
         {/* Filters Sidebar */}
-        <aside className="w-full lg:w-64 bg-white p-6 rounded-lg shadow-md">
+        <aside className="w-full lg:w-64 bg-background p-6 rounded-lg shadow-md">
           <h3 className="text-lg font-semibold mb-4">Filters</h3>
 
           <div className="space-y-4">
@@ -60,7 +60,7 @@ export default function CategoryPage() {
                 type="number"
                 value={filters.minPrice}
                 onChange={(e) => handleFilterChange('minPrice', e.target.value)}
-                className="w-full border border-gray-300 rounded px-3 py-2"
+                className="w-full border border-border-custom rounded px-3 py-2"
                 placeholder="0"
               />
             </div>
@@ -73,7 +73,7 @@ export default function CategoryPage() {
                 type="number"
                 value={filters.maxPrice}
                 onChange={(e) => handleFilterChange('maxPrice', e.target.value)}
-                className="w-full border border-gray-300 rounded px-3 py-2"
+                className="w-full border border-border-custom rounded px-3 py-2"
                 placeholder="10000"
               />
             </div>
@@ -84,7 +84,7 @@ export default function CategoryPage() {
                 type="text"
                 value={filters.location}
                 onChange={(e) => handleFilterChange('location', e.target.value)}
-                className="w-full border border-gray-300 rounded px-3 py-2"
+                className="w-full border border-border-custom rounded px-3 py-2"
                 placeholder="City, State"
               />
             </div>
@@ -98,7 +98,7 @@ export default function CategoryPage() {
                 onChange={(e) =>
                   handleFilterChange('condition', e.target.value)
                 }
-                className="w-full border border-gray-300 rounded px-3 py-2"
+                className="w-full border border-border-custom rounded px-3 py-2"
               >
                 <option value="">Any</option>
                 <option value={AdCondition.NEW}>New</option>
@@ -132,7 +132,7 @@ export default function CategoryPage() {
         <main className="flex-1">
           <div className="flex justify-between items-center mb-6">
             <h1 className="text-2xl font-bold">Category Ads</h1>
-            {ads && <p className="text-gray-600">{ads.meta.total} results</p>}
+            {ads && <p className="text-text-gray">{ads.meta.total} results</p>}
           </div>
 
           {isLoading ? (
@@ -153,7 +153,7 @@ export default function CategoryPage() {
             </>
           ) : (
             <div className="text-center py-8">
-              <p className="text-gray-600">No ads found in this category.</p>
+              <p className="text-text-gray">No ads found in this category.</p>
             </div>
           )}
         </main>

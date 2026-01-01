@@ -24,10 +24,10 @@ export default function FavoritesPage() {
       {!favorites || favorites.length === 0 ? (
         <div className="text-center py-12">
           <div className="text-6xl mb-4">❤️</div>
-          <h2 className="text-2xl font-semibold text-gray-700 mb-2">
+          <h2 className="text-2xl font-semibold text-text mb-2">
             No favorites yet
           </h2>
-          <p className="text-gray-500 mb-6">
+          <p className="text-text-gray mb-6">
             Start browsing and add some ads to your favorites!
           </p>
           <Link href="/">
@@ -43,7 +43,7 @@ export default function FavoritesPage() {
                 onClick={() => handleRemoveFavorite(ad.id)}
                 variant="outline"
                 size="sm"
-                className="absolute top-2 right-2 bg-white"
+                className="absolute top-2 right-2 bg-background"
               >
                 Remove
               </Button>

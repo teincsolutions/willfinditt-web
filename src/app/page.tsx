@@ -1,18 +1,26 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import { useAds } from '@/hooks/useAds';
+import { useParentCategories } from '@/hooks/useCategories';
 import { ListingCard } from '@/components/ListingCard';
+import { CategoryTiles } from '@/components/CategoryTiles';
 import { Pagination } from '@/components/Pagination';
 import { Button } from '@/components/Button';
 
 export default function Home() {
-  const [sortBy, setSortBy] = useState('newest');
+  const [sortBy, setSortBy] = useState('trending');
   const [currentPage, setCurrentPage] = useState(1);
+
+  // Fetch categories for tiles
+  const { data: categories = [], isLoading: categoriesLoading } = useParentCategories(true);
 
   // Map frontend sort options to API parameters
   const getSortParams = (sortOption: string) => {
     switch (sortOption) {
+      case 'trending':
+        return { sortBy: 'views', sortOrder: 'desc' as const };
       case 'newest':
         return { sortBy: 'createdAt', sortOrder: 'desc' as const };
       case 'oldest':
@@ -44,31 +52,77 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-background">
       {/* Hero Section */}
-      <section className="bg-gradient-to-r from-blue-600 to-purple-700 text-white py-16">
-        <div className="max-w-4xl mx-auto px-4 text-center">
-          <h1 className="text-4xl font-bold mb-4">Find What You Need</h1>
-          <p className="text-lg mb-6 max-w-2xl mx-auto">
+      <section className="bg-primary text-white py-16 relative overflow-hidden">
+        {/* Background decoration */}
+        <div className="absolute inset-0 overflow-hidden">
+          <div className="absolute -top-40 -right-40 w-80 h-80 bg-secondary/10 rounded-full blur-3xl" />
+          <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-primaryLight/10 rounded-full blur-3xl" />
+        </div>
+
+        <div className="max-w-4xl mx-auto px-4 text-center relative z-10">
+          <h1 className="text-4xl md:text-5xl font-bold mb-4">
+            Find What You Need
+          </h1>
+          <p className="text-lg md:text-xl mb-6 max-w-2xl mx-auto text-orange-100">
             Discover amazing deals on new and used items from trusted sellers
           </p>
-          <div className="text-sm">
-            Browse {ads?.meta?.total || 0} listings from our marketplace
+          <div className="flex items-center justify-center gap-6 text-sm">
+            <div className="flex items-center gap-2">
+              <span className="w-2 h-2 bg-success rounded-full animate-pulse" />
+              <span>{ads?.meta?.total?.toLocaleString() || 0} listings</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="w-2 h-2 bg-secondary rounded-full" />
+              <span>{categories.length} categories</span>
+            </div>
+          </div>
+
+          {/* Quick Actions */}
+          <div className="flex items-center justify-center gap-4 mt-8">
+            <Link href="/ads/new">
+              <Button className="bg-secondary text-black hover:bg-yellow shadow-lg font-bold">
+                <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                </svg>
+                Post an Ad
+              </Button>
+            </Link>
+            <Link href="/search">
+              <Button variant="outline" className="border-white/30 text-white hover:bg-background/10">
+                <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+                Browse All
+              </Button>
+            </Link>
           </div>
         </div>
       </section>
+
+      {/* Category Tiles Section */}
+      <CategoryTiles categories={categories} isLoading={categoriesLoading} />
 
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 py-8">
         {/* Sorting and Results Header */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
           <div>
-            <h2 className="text-2xl font-bold text-gray-900">All Listings</h2>
-            <p className="text-gray-600">{ads?.meta?.total || 0} items found</p>
+            <h2 className="text-2xl font-bold text-text">Latest Listings</h2>
+            <p className="text-text-gray">{ads?.meta?.total?.toLocaleString() || 0} items found</p>
           </div>
 
-          {/* Sorting Options - Horizontal Cards */}
+          {/* Sorting Options */}
           <div className="flex flex-wrap gap-2">
+            <Button
+              variant={sortBy === 'trending' ? 'primary' : 'outline'}
+              size="sm"
+              onClick={() => handleSortChange('trending')}
+              className="rounded-full"
+            >
+              🔥 Trending
+            </Button>
             <Button
               variant={sortBy === 'newest' ? 'primary' : 'outline'}
               size="sm"
@@ -91,7 +145,7 @@ export default function Home() {
               onClick={() => handleSortChange('price_low')}
               className="rounded-full"
             >
-              💰 Price: Low to High
+              💰 Low to High
             </Button>
             <Button
               variant={sortBy === 'price_high' ? 'primary' : 'outline'}
@@ -99,7 +153,7 @@ export default function Home() {
               onClick={() => handleSortChange('price_high')}
               className="rounded-full"
             >
-              💎 Price: High to Low
+              💎 High to Low
             </Button>
           </div>
         </div>
@@ -121,12 +175,12 @@ export default function Home() {
             {[...Array(12)].map((_, i) => (
               <div
                 key={i}
-                className="bg-white rounded-xl shadow-sm border border-gray-200 p-5 animate-pulse"
+                className="bg-background rounded-xl shadow-sm border border-border-custom p-5 animate-pulse"
               >
-                <div className="h-48 bg-gray-200 rounded-lg mb-4"></div>
-                <div className="h-4 bg-gray-200 rounded mb-2"></div>
-                <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
-                <div className="h-6 bg-gray-200 rounded w-1/2"></div>
+                <div className="h-48 bg-background-primary/30 rounded-lg mb-4" />
+                <div className="h-4 bg-background-primary/30 rounded mb-2" />
+                <div className="h-4 bg-background-primary/30 rounded w-3/4 mb-2" />
+                <div className="h-6 bg-background-primary/30 rounded w-1/2" />
               </div>
             ))}
           </div>
@@ -137,14 +191,17 @@ export default function Home() {
             ))}
           </div>
         ) : (
-          <div className="text-center py-12">
+          <div className="text-center py-16 bg-background rounded-2xl border border-border-custom">
             <div className="text-6xl mb-4">📭</div>
-            <h3 className="text-xl font-semibold text-gray-900 mb-2">
-              No listings found
+            <h3 className="text-xl font-semibold text-text mb-2">
+              No listings yet
             </h3>
-            <p className="text-gray-600">
-              Try adjusting your filters or check back later for new listings.
+            <p className="text-text-gray mb-6">
+              Be the first to post an ad and reach thousands of buyers!
             </p>
+            <Link href="/ads/new">
+              <Button>Post Your First Ad</Button>
+            </Link>
           </div>
         )}
 

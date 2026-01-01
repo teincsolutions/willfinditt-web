@@ -50,28 +50,28 @@ function SearchContent() {
     <div className="container mx-auto px-4 py-8">
       {/* Active Filters Display */}
       {(category || location || minPrice || maxPrice || condition) && (
-        <div className="mb-6 p-4 bg-blue-50 rounded-lg">
+        <div className="mb-6 p-4 bg-background-primary/50 rounded-xl border border-primary/10 shadow-sm">
           <div className="flex flex-wrap items-center gap-2">
-            <span className="text-sm font-medium text-gray-700">
+            <span className="text-sm font-medium text-text">
               Active filters:
             </span>
             {category && (
-              <span className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-blue-100 text-blue-800">
+              <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-primary/10 text-primary border border-primary/20">
                 Category: {category}
               </span>
             )}
             {location && (
-              <span className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-green-100 text-green-800">
+              <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-successLight text-success border border-success/20">
                 Location: {location}
               </span>
             )}
             {(minPrice || maxPrice) && (
-              <span className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-purple-100 text-purple-800">
+              <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-secondary/10 text-secondary border border-secondary/20">
                 Price: {minPrice || '0'} - {maxPrice || '∞'}
               </span>
             )}
             {condition && (
-              <span className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-orange-100 text-orange-800">
+              <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-primaryLight text-primary border border-primary/20">
                 Condition: {condition}
               </span>
             )}
@@ -84,7 +84,7 @@ function SearchContent() {
         <h1 className="text-2xl font-bold">
           Search Results {q && `for "${q}"`}
         </h1>
-        {ads && <p className="text-gray-600">{ads.meta.total} results</p>}
+        {ads && <p className="text-text-gray">{ads.meta.total} results</p>}
       </div>
 
       {isLoading ? (
@@ -105,7 +105,7 @@ function SearchContent() {
         </>
       ) : (
         <div className="text-center py-8">
-          <p className="text-gray-600">No ads found matching your criteria.</p>
+          <p className="text-text-gray">No ads found matching your criteria.</p>
         </div>
       )}
     </div>

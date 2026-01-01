@@ -60,7 +60,7 @@ export const searchAds = async (
 export const getUserAds = async (
   params: AdsListParams = {}
 ): Promise<AdsResponse> => {
-  const apiParams = { ...params };
+  const apiParams: Record<string, unknown> = { ...params };
   if (params.categoryFields && params.categoryFields.length > 0) {
     apiParams.categoryFields = encodeURIComponent(
       JSON.stringify(params.categoryFields)
@@ -74,7 +74,7 @@ export const getUserAds = async (
 export const getSavedAds = async (
   params: AdsListParams = {}
 ): Promise<AdsResponse> => {
-  const apiParams = { ...params };
+  const apiParams: Record<string, unknown> = { ...params };
   if (params.categoryFields && params.categoryFields.length > 0) {
     apiParams.categoryFields = encodeURIComponent(
       JSON.stringify(params.categoryFields)
@@ -104,7 +104,7 @@ export const getAdAdmin = async (id: string): Promise<Ad> => {
 export const getPendingAds = async (
   params: AdsListParams = {}
 ): Promise<AdsResponse> => {
-  const apiParams = { ...params };
+  const apiParams: Record<string, unknown> = { ...params };
   if (params.categoryFields && params.categoryFields.length > 0) {
     apiParams.categoryFields = encodeURIComponent(
       JSON.stringify(params.categoryFields)
@@ -128,7 +128,7 @@ export const rejectAd = async (id: string): Promise<Ad> => {
 export const getAllAdsAdmin = async (
   params: AdsListParams = {}
 ): Promise<AdsResponse> => {
-  const apiParams = { ...params };
+  const apiParams: Record<string, unknown> = { ...params };
   if (params.categoryFields && params.categoryFields.length > 0) {
     apiParams.categoryFields = encodeURIComponent(
       JSON.stringify(params.categoryFields)
@@ -150,7 +150,7 @@ export const updateAdStatusAdmin = async (
 export const getDeletedAds = async (
   params: AdsListParams = {}
 ): Promise<AdsResponse> => {
-  const apiParams = { ...params };
+  const apiParams: Record<string, unknown> = { ...params };
   if (params.categoryFields && params.categoryFields.length > 0) {
     apiParams.categoryFields = encodeURIComponent(
       JSON.stringify(params.categoryFields)

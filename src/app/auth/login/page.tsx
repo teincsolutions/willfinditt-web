@@ -16,8 +16,15 @@ const schema = yup.object({
 
 export default function LoginPage() {
   const router = useRouter();
+  const { login, isAuthenticated, isLoading } = useAuth();
   const [error, setError] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+
+  React.useEffect(() => {
+    if (!isLoading && isAuthenticated) {
+      router.push('/');
+    }
+  }, [isLoading, isAuthenticated, router]);
 
   const {
     register,
@@ -42,25 +49,25 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-background flex items-center justify-center p-4">
       <div className="max-w-md w-full">
         {/* Header */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-blue-600 to-purple-600 rounded-2xl mb-4">
+          <div className="inline-flex items-center justify-center w-16 h-16 bg-primary rounded-2xl mb-4 shadow-lg shadow-primary/20">
             <span className="text-2xl font-bold text-white">W</span>
           </div>
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
+          <h1 className="text-3xl font-bold text-text mb-2">
             Welcome back
           </h1>
-          <p className="text-gray-600">Sign in to your Willfind8 account</p>
+          <p className="text-text-gray">Sign in to your Willfind8 account</p>
         </div>
 
         {/* Form Card */}
-        <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-8">
+        <div className="bg-background rounded-2xl shadow-xl border border-border-custom p-8">
           {/* Google Sign In */}
           <button
             onClick={handleGoogleSignIn}
-            className="w-full flex items-center justify-center gap-3 px-4 py-3 border border-gray-300 rounded-xl text-gray-700 font-medium hover:bg-gray-50 transition-colors mb-6"
+            className="w-full flex items-center justify-center gap-3 px-4 py-3 border border-border-custom rounded-xl text-text font-medium hover:bg-background transition-colors mb-6"
           >
             <svg className="w-5 h-5" viewBox="0 0 24 24">
               <path
@@ -86,10 +93,10 @@ export default function LoginPage() {
           {/* Divider */}
           <div className="relative mb-6">
             <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-gray-200" />
+              <div className="w-full border-t border-border-custom" />
             </div>
             <div className="relative flex justify-center text-sm">
-              <span className="px-4 bg-white text-gray-500">
+              <span className="px-4 bg-background text-text-gray">
                 or continue with email
               </span>
             </div>
@@ -98,30 +105,30 @@ export default function LoginPage() {
           {/* Form */}
           <form className="space-y-6" onSubmit={handleSubmit(onSubmit)}>
             {error && (
-              <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
+              <div className="bg-errorLight border border-error/20 text-error px-4 py-3 rounded-lg text-sm">
                 {error}
               </div>
             )}
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-text mb-2">
                 Email address
               </label>
               <input
                 {...register('email')}
                 type="email"
                 placeholder="Enter your email"
-                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                className="w-full px-4 py-3 border border-border-custom rounded-xl focus:ring-2 focus:ring-primary focus:border-primary transition-colors"
               />
               {errors.email && (
-                <p className="mt-1 text-sm text-red-600">
+                <p className="mt-1 text-sm text-error">
                   {errors.email.message}
                 </p>
               )}
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-text mb-2">
                 Password
               </label>
               <div className="relative">
@@ -129,12 +136,12 @@ export default function LoginPage() {
                   {...register('password')}
                   type={showPassword ? 'text' : 'password'}
                   placeholder="Enter your password"
-                  className="w-full px-4 py-3 pr-12 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                  className="w-full px-4 py-3 pr-12 border border-border-custom rounded-xl focus:ring-2 focus:ring-primary focus:border-primary transition-colors"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-text-light-gray hover:text-text-gray"
                 >
                   {showPassword ? (
                     <svg
@@ -174,7 +181,7 @@ export default function LoginPage() {
                 </button>
               </div>
               {errors.password && (
-                <p className="mt-1 text-sm text-red-600">
+                <p className="mt-1 text-sm text-error">
                   {errors.password.message}
                 </p>
               )}
@@ -184,13 +191,13 @@ export default function LoginPage() {
               <label className="flex items-center">
                 <input
                   type="checkbox"
-                  className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                  className="w-4 h-4 text-primary border-border-custom rounded focus:ring-primary"
                 />
-                <span className="ml-2 text-sm text-gray-600">Remember me</span>
+                <span className="ml-2 text-sm text-text-gray">Remember me</span>
               </label>
               <Link
                 href="/auth/forgot-password"
-                className="text-sm text-blue-600 hover:text-blue-500 font-medium"
+                className="text-sm text-primary hover:text-primaryLight font-medium"
               >
                 Forgot password?
               </Link>
@@ -199,7 +206,7 @@ export default function LoginPage() {
             <Button
               type="submit"
               disabled={isSubmitting}
-              className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold py-3 rounded-xl transition-all duration-200 transform hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+              className="w-full bg-gradient-to-r from-primary to-secondary hover:opacity-90 text-white font-semibold py-3 rounded-xl transition-all duration-200 transform hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
             >
               {isSubmitting ? (
                 <div className="flex items-center justify-center gap-2">
@@ -214,11 +221,11 @@ export default function LoginPage() {
 
           {/* Footer */}
           <div className="mt-6 text-center">
-            <p className="text-gray-600">
+            <p className="text-text-gray">
               Don't have an account?{' '}
               <Link
                 href="/auth/register"
-                className="text-blue-600 hover:text-blue-500 font-semibold"
+                className="text-primary hover:text-primaryLight font-semibold"
               >
                 Sign up
               </Link>
@@ -227,12 +234,12 @@ export default function LoginPage() {
         </div>
 
         {/* Footer Links */}
-        <div className="mt-8 text-center text-sm text-gray-500">
+        <div className="mt-8 text-center text-sm text-text-gray">
           <div className="flex justify-center space-x-6">
-            <Link href="/terms" className="hover:text-gray-700">
+            <Link href="/terms" className="hover:text-text">
               Terms of Service
             </Link>
-            <Link href="/privacy" className="hover:text-gray-700">
+            <Link href="/privacy" className="hover:text-text">
               Privacy Policy
             </Link>
           </div>

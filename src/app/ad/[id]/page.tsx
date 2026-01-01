@@ -1,11 +1,12 @@
 'use client';
 
 import { useParams } from 'next/navigation';
-import Image from 'next/image';
+import { OptimizedImage } from '@/components/OptimizedImage';
 import { useAd } from '@/hooks/useAds';
 import { useAddFavorite, useRemoveFavorite } from '@/hooks/useFavorites';
 import { Button } from '@/components/Button';
 import { useState } from 'react';
+import { RelatedAds } from '@/components/RelatedAds';
 
 export default function AdDetailPage() {
   const params = useParams();
@@ -35,9 +36,9 @@ export default function AdDetailPage() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* Image Carousel */}
         <div className="space-y-4">
-          <div className="relative h-96 bg-gray-100 rounded-lg overflow-hidden">
-            <Image
-              src={ad.images[currentImageIndex] || '/placeholder.jpg'}
+          <div className="relative h-96 bg-background/50 rounded-lg overflow-hidden">
+            <OptimizedImage
+              src={ad.images[currentImageIndex]}
               alt={ad.title}
               fill
               className="object-cover"
@@ -49,13 +50,13 @@ export default function AdDetailPage() {
                 <button
                   key={index}
                   onClick={() => setCurrentImageIndex(index)}
-                  className={`relative w-20 h-20 rounded border-2 ${
+                  className={`relative w-20 h-20 rounded border-2 transition-all ${
                     index === currentImageIndex
-                      ? 'border-blue-500'
-                      : 'border-gray-300'
+                      ? 'border-primary shadow-sm shadow-primary/20'
+                      : 'border-border-custom hover:border-primary/30'
                   }`}
                 >
-                  <Image
+                  <OptimizedImage
                     src={image}
                     alt={`${ad.title} ${index + 1}`}
                     fill
@@ -70,11 +71,11 @@ export default function AdDetailPage() {
         {/* Ad Details */}
         <div className="space-y-6">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">{ad.title}</h1>
-            <p className="text-2xl font-semibold text-blue-600 mt-2">
-              {ad.price ? `$${ad.price}` : 'Price not specified'}
+            <h1 className="text-3xl font-bold text-text">{ad.title}</h1>
+            <p className="text-2xl font-bold text-primary mt-2">
+              {ad.price ? `$${ad.price.toLocaleString()}` : 'Price not specified'}
             </p>
-            <p className="text-gray-600 mt-1">
+            <p className="text-text-gray mt-1">
               {ad.address || ad.city?.name || 'Location not specified'}
             </p>
           </div>
@@ -86,7 +87,7 @@ export default function AdDetailPage() {
             <Button>Contact Seller</Button>
           </div>
 
-          <div className="bg-gray-50 p-4 rounded-lg">
+          <div className="bg-background-primary/20 p-4 rounded-lg border border-primary/5">
             <h3 className="font-semibold mb-2">Details</h3>
             <div className="grid grid-cols-2 gap-4 text-sm">
               <div>
@@ -106,18 +107,19 @@ export default function AdDetailPage() {
 
           <div>
             <h3 className="font-semibold mb-2">Description</h3>
-            <p className="text-gray-700 whitespace-pre-line">
-              {ad.description}
-            </p>
+            <div 
+              className="text-text-gray ad-description-content"
+              dangerouslySetInnerHTML={{ __html: ad.description }}
+            />
           </div>
 
           {/* Seller Info */}
-          <div className="bg-gray-50 p-4 rounded-lg">
+          <div className="bg-background-primary/20 p-4 rounded-lg border border-primary/5">
             <h3 className="font-semibold mb-2">Seller Information</h3>
             <div className="flex items-center space-x-4">
-              <div className="w-12 h-12 bg-gray-300 rounded-full flex items-center justify-center">
+              <div className="w-12 h-12 bg-background-primary rounded-full flex items-center justify-center">
                 {ad.user.avatar ? (
-                  <Image
+                  <OptimizedImage
                     src={ad.user.avatar}
                     alt={
                       `${ad.user.firstName || ''} ${ad.user.lastName || ''}`.trim() ||
@@ -128,7 +130,7 @@ export default function AdDetailPage() {
                     className="rounded-full"
                   />
                 ) : (
-                  <span className="text-gray-600 font-semibold">
+                  <span className="text-text-gray font-semibold">
                     {(
                       ad.user.firstName ||
                       ad.user.lastName ||
@@ -146,7 +148,7 @@ export default function AdDetailPage() {
                     ? `${ad.user.firstName} ${ad.user.lastName}`
                     : ad.user.username}
                 </p>
-                <p className="text-sm text-gray-600">
+                <p className="text-sm text-text-gray">
                   Member since {new Date(ad.createdAt).getFullYear()}
                 </p>
               </div>
@@ -158,12 +160,7 @@ export default function AdDetailPage() {
       {/* Related Ads */}
       <div className="mt-12">
         <h2 className="text-2xl font-bold mb-6">Related Ads</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {/* Related ads would go here */}
-          <div className="text-center text-gray-500">
-            Related ads loading...
-          </div>
-        </div>
+        <RelatedAds categoryId={ad.category.id} currentAdId={ad.id} />
       </div>
     </div>
   );

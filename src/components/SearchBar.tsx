@@ -22,16 +22,16 @@ export const SearchBar = () => {
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder="Search ads..."
-          className="w-full pl-4 pr-10 py-2 border border-gray-300 rounded-l-lg focus:border-blue-500 focus:outline-none text-gray-900 placeholder-gray-500 text-sm"
+          className="w-full pl-4 pr-10 py-2 border border-border-custom rounded-l-lg focus:border-primary focus:outline-none text-text placeholder-placeholder text-sm"
           onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
         />
-        <div className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400">
+        <div className="absolute right-3 top-1/2 transform -translate-y-1/2 text-text-light-gray">
           🔍
         </div>
       </div>
       <Button
         onClick={handleSearch}
-        className="rounded-l-none px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm"
+        className="rounded-l-none px-4 py-2 bg-primary hover:opacity-90 text-white text-sm"
       >
         Search
       </Button>

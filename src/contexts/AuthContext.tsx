@@ -1,10 +1,9 @@
 'use client';
 
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { useMe, useLogin, useRegister, useLogout } from '@/hooks/useAuth';
 import { User, LoginData, RegisterData } from '@/types/user';
-import { isAuthenticated } from '@/lib/auth';
 
 interface AuthContextType {
   user: User | null;
@@ -13,27 +12,42 @@ interface AuthContextType {
   login: (data: LoginData) => Promise<void>;
   register: (data: RegisterData) => Promise<void>;
   logout: () => Promise<void>;
+  refreshUser: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
 
-  const meQuery = useMe();
+  // Use React Query as the single source of truth
+  const { data: userData, isLoading, refetch } = useMe();
+  
   const loginMutation = useLogin();
   const registerMutation = useRegister();
   const logoutMutation = useLogout();
 
+  // Ensure we have a valid user object
+  const user = useMemo(() => {
+    if (userData && (userData.id || userData.email || userData.username)) {
+      return userData as User;
+    }
+    return null;
+  }, [userData]);
+
   const login = async (data: LoginData) => {
     try {
       await loginMutation.mutateAsync(data);
-      // Refetch user data after successful login
-      const userData = await meQuery.refetch();
-      setUser(userData.data || null);
-      router.push('/');
+      await refetch();
+      
+      // Support redirecting back to original page
+      if (typeof window !== 'undefined') {
+        const params = new URLSearchParams(window.location.search);
+        const redirectUrl = params.get('redirect') || '/';
+        router.push(redirectUrl);
+      } else {
+        router.push('/');
+      }
     } catch (error) {
       throw error;
     }
@@ -42,9 +56,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const register = async (data: RegisterData) => {
     try {
       await registerMutation.mutateAsync(data);
-      // Refetch user data after successful registration
-      const userData = await meQuery.refetch();
-      setUser(userData.data || null);
+      await refetch();
       router.push('/');
     } catch (error) {
       throw error;
@@ -54,13 +66,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const logout = async () => {
     try {
       await logoutMutation.mutateAsync();
-      setUser(null);
       router.push('/');
     } catch (error) {
-      // Even if logout fails on server, clear local state
-      setUser(null);
+      console.error('Logout failed', error);
       router.push('/');
     }
+  };
+
+  const refreshUser = async () => {
+    await refetch();
   };
 
   const value: AuthContextType = {
@@ -70,6 +84,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     login,
     register,
     logout,
+    refreshUser,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

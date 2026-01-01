@@ -1,26 +1,99 @@
-@import "tailwindcss";
-
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+@import 'tailwindcss';
 
 @theme inline {
+  --color-primary: var(--primary);
+  --color-secondary: var(--secondary);
+  --color-accent: var(--accent);
+  
   --color-background: var(--background);
-  --color-foreground: var(--foreground);
+  --color-surface: var(--surface);
+  --color-card: var(--card);
+  --color-background-primary: var(--background-primary);
+  
+  --color-text: var(--foreground);
+  --color-text-gray: var(--text-gray);
+  --color-text-light-gray: var(--text-light-gray);
+  
+  --color-success: var(--success);
+  --color-successLight: var(--success-light);
+  --color-warning: var(--warning);
+  --color-error: var(--error);
+  --color-errorLight: var(--error-light);
+  --color-primaryLight: var(--primary-light);
+  --color-border-custom: var(--border);
+
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
 
+:root {
+  color-scheme: light dark;
+  
+  --background: #ffffff;
+  --foreground: #1a1a1a;
+  --surface: #ffffff;
+  --card: #ffffff;
+  --background-primary: #fefaec;
+  --primary: #ef702a;
+  --primary-light: #fff4ed;
+  --secondary: #ffcb11;
+  --accent: #ffcb11;
+  --text-gray: #64748b;
+  --text-light-gray: #a0a0a0;
+  --success: #4bb543;
+  --success-light: #f0fdf4;
+  --warning: #ffaa00;
+  --error: #ff3b30;
+  --error-light: #fef2f2;
+  --border: #e2e8f0;
+}
+
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --background: #0f172a;
+    --foreground: #f8fafc;
+    --surface: #1e293b;
+    --card: #1e293b;
+    --background-primary: #1e293b;
+    --primary: #ff823a;
+    --primary-light: #2d1f15;
+    --secondary: #ffd84a;
+    --accent: #ffd84a;
+    --text-gray: #94a3b8;
+    --text-light-gray: #64748b;
+    --success: #22946e;
+    --success-light: #064e3b;
+    --warning: #ffb547;
+    --error: #ff6b6b;
+    --error-light: #450a0a;
+    --border: #334155;
   }
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
+}
+
+/* Ad description HTML content styles */
+.ad-description-content p {
+  margin-bottom: 1rem;
+}
+.ad-description-content ul, .ad-description-content ol {
+  margin-bottom: 1rem;
+  padding-left: 1.5rem;
+}
+.ad-description-content ul {
+  list-style-type: disc;
+}
+.ad-description-content ol {
+  list-style-type: decimal;
+}
+.ad-description-content strong {
+  font-weight: 600;
+}
+.ad-description-content a {
+  color: var(--primary);
+  text-decoration: underline;
 }

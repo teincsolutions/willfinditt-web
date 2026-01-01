@@ -34,19 +34,20 @@ api.interceptors.response.use(
             refreshToken,
           }
         );
-        const newAccessToken = refreshResponse.data.accessToken;
-        const newRefreshToken = refreshResponse.data.refreshToken;
-
-        setAccessToken(newAccessToken);
-        if (newRefreshToken) setRefreshToken(newRefreshToken);
-
-        error.config.headers.Authorization = `Bearer ${newAccessToken}`;
-        return api.request(error.config);
+        const newAccessToken = refreshResponse.data.accessToken || refreshResponse.data.tokens?.accessToken;
+        const newRefreshToken = refreshResponse.data.refreshToken || refreshResponse.data.tokens?.refreshToken;
+ 
+        if (newAccessToken) {
+          setAccessToken(newAccessToken);
+          if (newRefreshToken) setRefreshToken(newRefreshToken);
+ 
+          error.config.headers.Authorization = `Bearer ${newAccessToken}`;
+          return api.request(error.config);
+        }
+        throw new Error('Refresh failed');
       } catch (refreshError) {
         clearTokens();
-        if (typeof window !== 'undefined') {
-          window.location.href = '/auth/login';
-        }
+        return Promise.reject(refreshError);
       }
     }
     return Promise.reject(error);

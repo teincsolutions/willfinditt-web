@@ -14,8 +14,24 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: 'Willfind8',
-  description: 'Find what you need',
+  title: {
+    template: '%s | Willfind8',
+    default: 'Willfind8 - Buy and Sell Anything in Ghana',
+  },
+  description: 'Willfind8 is the best place to buy and sell cars, phones, electronics, real estate, and more in Ghana. Find great deals near you.',
+  openGraph: {
+    type: 'website',
+    locale: 'en_GH',
+    url: 'https://willfind8.com',
+    siteName: 'Willfind8',
+    title: 'Willfind8 - Buy and Sell Anything in Ghana',
+    description: 'Willfind8 is the best place to buy and sell cars, phones, electronics, real estate, and more in Ghana.',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Willfind8 - Buy and Sell Anything in Ghana',
+    description: 'Willfind8 is the best place to buy and sell cars, phones, electronics, real estate, and more in Ghana.',
+  },
 };
 
 export default function RootLayout({
@@ -26,7 +42,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased bg-gray-50`}
+        className={`${geistSans.variable} ${geistMono.variable} antialiased bg-background`}
       >
         <ClientLayout>{children}</ClientLayout>
       </body>

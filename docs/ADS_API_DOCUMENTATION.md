@@ -2,7 +2,7 @@
 
 ## Overview
 
-The Ads API provides comprehensive functionality for managing advertisements in the WillFind8 platform. It supports creating, reading, updating, and deleting ads, along with advanced search capabilities, user-specific operations, and administrative controls.
+The Ads API provides comprehensive functionality for managing advertisements in the Willfinditt platform. It supports creating, reading, updating, and deleting ads, along with advanced search capabilities, user-specific operations, and administrative controls.
 
 ### Base URL
 

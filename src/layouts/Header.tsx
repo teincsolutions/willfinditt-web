@@ -262,7 +262,7 @@ export const Header = () => {
             <nav className="flex items-center justify-between py-2 relative">
               {/* All Categories Button with Mega Menu */}
               <div
-                className="relative py-2"
+                className="py-2"
                 onMouseEnter={handleMouseEnter}
                 onMouseLeave={handleMouseLeave}
               >

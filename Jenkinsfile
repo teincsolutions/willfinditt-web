@@ -43,7 +43,7 @@ pipeline {
                     // Build Docker image using docker build
                     sh """
                         echo "Building Docker image with docker build..."
-                        docker build -t ${DOCKER_IMAGE}:${DOCKER_TAG} .
+                        docker build --network wf8-internal-net -t ${DOCKER_IMAGE}:${DOCKER_TAG}  .
                         docker tag ${DOCKER_IMAGE}:${DOCKER_TAG} ${DOCKER_IMAGE}:latest
                     """
                 }

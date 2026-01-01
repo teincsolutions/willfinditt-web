@@ -14,6 +14,8 @@ const schema = yup.object({
   password: yup.string().required('Password is required'),
 });
 
+import { OptimizedImage } from '@/components/OptimizedImage';
+
 export default function LoginPage() {
   const router = useRouter();
   const { login, isAuthenticated, isLoading } = useAuth();
@@ -53,13 +55,18 @@ export default function LoginPage() {
       <div className="max-w-md w-full">
         {/* Header */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-primary rounded-2xl mb-4 shadow-lg shadow-primary/20">
-            <span className="text-2xl font-bold text-white">W</span>
+          <div className="relative inline-flex items-center justify-center w-20 h-20 mb-4 overflow-hidden rounded-2xl shadow-lg shadow-primary/20 bg-primary">
+            <OptimizedImage
+              src="/images/logo-icon.png"
+              alt="WillfindITT Logo"
+              fill
+              className="object-contain p-2"
+            />
           </div>
           <h1 className="text-3xl font-bold text-text mb-2">
             Welcome back
           </h1>
-          <p className="text-text-gray">Sign in to your Willfind8 account</p>
+          <p className="text-text-gray">Sign in to your WillfindITT account</p>
         </div>
 
         {/* Form Card */}
@@ -239,7 +246,7 @@ export default function LoginPage() {
             <Link href="/terms" className="hover:text-text">
               Terms of Service
             </Link>
-            <Link href="/privacy" className="hover:text-text">
+            <Link href="/privacy-policy" className="hover:text-text">
               Privacy Policy
             </Link>
           </div>

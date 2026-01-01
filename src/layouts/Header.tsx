@@ -11,6 +11,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useLocation } from '@/contexts/LocationContext';
 import { useParentCategories } from '@/hooks/useCategories';
 import { useUnreadCount } from '@/hooks/useNotifications';
+import { OptimizedImage } from '@/components/OptimizedImage';
 
 export const Header = () => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -18,8 +19,9 @@ export const Header = () => {
   const [isLocationMenuOpen, setIsLocationMenuOpen] = useState(false);
   const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false);
   const { user, isAuthenticated, logout } = useAuth();
-  const { selectedCountry, setSelectedCountry, countries, selectedCity } = useLocation();
-  
+  const { selectedCountry, setSelectedCountry, countries, selectedCity } =
+    useLocation();
+
   const closeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const locationCloseTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -35,7 +37,8 @@ export const Header = () => {
   };
 
   const handleLocationMouseEnter = () => {
-    if (locationCloseTimeoutRef.current) clearTimeout(locationCloseTimeoutRef.current);
+    if (locationCloseTimeoutRef.current)
+      clearTimeout(locationCloseTimeoutRef.current);
     setIsLocationMenuOpen(true);
   };
 
@@ -47,7 +50,7 @@ export const Header = () => {
 
   // Fetch categories for navigation
   const { data: categories = [] } = useParentCategories(true);
-  
+
   // Fetch unread notifications count
   const { data: unreadCount = 0 } = useUnreadCount();
 
@@ -80,11 +83,16 @@ export const Header = () => {
 
             {/* Logo */}
             <Link href="/" className="flex items-center space-x-2">
-              <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center shadow-sm">
-                <span className="text-white font-bold text-xl">W</span>
+              <div className="relative w-10 h-10 overflow-hidden rounded-lg">
+                <OptimizedImage
+                  src="/images/logo-icon.png"
+                  alt="WillfindITT Logo"
+                  fill
+                  className="object-contain"
+                />
               </div>
               <span className="text-2xl font-bold text-text hidden sm:block">
-                Willfind8
+                Willfind<span className="font-black text-primary">ITT</span>
               </span>
             </Link>
 
@@ -94,20 +102,32 @@ export const Header = () => {
                 <select
                   value={selectedCountry?.id || ''}
                   onChange={(e) => {
-                    const country = countries.find(c => c.id === e.target.value);
+                    const country = countries.find(
+                      (c) => c.id === e.target.value
+                    );
                     if (country) setSelectedCountry(country);
                   }}
                   className="appearance-none bg-transparent hover:bg-background-primary/50 text-text font-bold text-sm py-2 px-3 rounded-lg border border-transparent hover:border-border-custom transition-all outline-none cursor-pointer pr-8"
                 >
-                  {countries.map(country => (
+                  {countries.map((country) => (
                     <option key={country.id} value={country.id}>
                       🇬🇭 {country.name}
                     </option>
                   ))}
                 </select>
                 <div className="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none text-text-gray">
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" />
+                  <svg
+                    className="w-4 h-4"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2.5}
+                      d="M19 9l-7 7-7-7"
+                    />
                   </svg>
                 </div>
               </div>
@@ -122,11 +142,26 @@ export const Header = () => {
             <div className="hidden lg:flex items-center space-x-3">
               {/* Sell Button */}
               <Link href="/ads/new">
-                <Button size="sm" className="bg-success hover:opacity-90 shadow-md">
-                  <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                  </svg>
-                  Sell
+                <Button
+                  size="sm"
+                  className="bg-primary hover:opacity-90 shadow-md flex flex-row items-center"
+                >
+                  <div>
+                    <svg
+                      className="w-4 h-4 mr-1"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M12 4v16m8-8H4"
+                      />
+                    </svg>
+                  </div>
+                  <span>Sell</span>
                 </Button>
               </Link>
 
@@ -136,8 +171,18 @@ export const Header = () => {
                 className="p-2 hover:bg-background/50 rounded-lg transition-colors relative"
                 title="Favorites"
               >
-                <svg className="w-6 h-6 text-text-gray" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                <svg
+                  className="w-6 h-6 text-text-gray"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
+                  />
                 </svg>
               </Link>
 
@@ -147,8 +192,18 @@ export const Header = () => {
                 className="p-2 hover:bg-background/50 rounded-lg transition-colors relative"
                 title="Messages"
               >
-                <svg className="w-6 h-6 text-text-gray" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                <svg
+                  className="w-6 h-6 text-text-gray"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
+                  />
                 </svg>
                 {unreadCount > 0 && (
                   <span className="absolute -top-1 -right-1 w-5 h-5 bg-error text-white text-xs font-bold rounded-full flex items-center justify-center">
@@ -163,8 +218,18 @@ export const Header = () => {
                 className="p-2 hover:bg-background/50 rounded-lg transition-colors relative"
                 title="Notifications"
               >
-                <svg className="w-6 h-6 text-text-gray" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                <svg
+                  className="w-6 h-6 text-text-gray"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
+                  />
                 </svg>
               </Link>
 
@@ -201,16 +266,30 @@ export const Header = () => {
                     {isAuthenticated ? (
                       <>
                         <div className="px-4 py-3 border-b border-border-custom">
-                          <p className="font-semibold text-text">{user?.name}</p>
-                          <p className="text-sm text-text-gray">{user?.email}</p>
+                          <p className="font-semibold text-text">
+                            {user?.name}
+                          </p>
+                          <p className="text-sm text-text-gray">
+                            {user?.email}
+                          </p>
                         </div>
                         <Link
                           href="/account"
                           className="flex items-center gap-3 px-4 py-2.5 text-text hover:bg-background transition-colors"
                           onClick={() => setIsDropdownOpen(false)}
                         >
-                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                          <svg
+                            className="w-5 h-5"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                            />
                           </svg>
                           <span>My Account</span>
                         </Link>
@@ -219,8 +298,18 @@ export const Header = () => {
                           className="flex items-center gap-3 px-4 py-2.5 text-text hover:bg-background transition-colors"
                           onClick={() => setIsDropdownOpen(false)}
                         >
-                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                          <svg
+                            className="w-5 h-5"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"
+                            />
                           </svg>
                           <span>My Ads</span>
                         </Link>
@@ -232,8 +321,18 @@ export const Header = () => {
                           }}
                           className="flex items-center gap-3 px-4 py-2.5 text-error hover:bg-errorLight transition-colors w-full text-left"
                         >
-                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                          <svg
+                            className="w-5 h-5"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
+                            />
                           </svg>
                           <span>Sign Out</span>
                         </button>
@@ -245,8 +344,18 @@ export const Header = () => {
                           className="flex items-center gap-3 px-4 py-2.5 text-text hover:bg-background transition-colors"
                           onClick={() => setIsDropdownOpen(false)}
                         >
-                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
+                          <svg
+                            className="w-5 h-5"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"
+                            />
                           </svg>
                           <span>Sign In</span>
                         </Link>
@@ -255,8 +364,18 @@ export const Header = () => {
                           className="flex items-center gap-3 px-4 py-2.5 text-text hover:bg-background transition-colors"
                           onClick={() => setIsDropdownOpen(false)}
                         >
-                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
+                          <svg
+                            className="w-5 h-5"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"
+                            />
                           </svg>
                           <span>Create Account</span>
                         </Link>
@@ -273,8 +392,18 @@ export const Header = () => {
                 href="/messages"
                 className="p-2 hover:bg-background-primary rounded-lg transition-colors relative"
               >
-                <svg className="w-5 h-5 text-text-gray" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                <svg
+                  className="w-5 h-5 text-text-gray"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
+                  />
                 </svg>
                 {unreadCount > 0 && (
                   <span className="absolute -top-1 -right-1 w-4 h-4 bg-error text-white text-[10px] font-bold rounded-full flex items-center justify-center">
@@ -286,8 +415,18 @@ export const Header = () => {
                 href="/ads/new"
                 className="p-2 bg-success hover:opacity-90 rounded-lg transition-colors"
               >
-                <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                <svg
+                  className="w-5 h-5 text-white"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 4v16m8-8H4"
+                  />
                 </svg>
               </Link>
             </div>
@@ -308,17 +447,32 @@ export const Header = () => {
                 onMouseLeave={handleMouseLeave}
               >
                 <div className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg font-medium shadow-sm hover:shadow-lg transition-all cursor-pointer select-none">
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 6h16M4 12h16M4 18h16" />
-                  </svg>
-                  <span>All Categories</span>
-                  <svg 
-                    className={`w-4 h-4 transition-transform duration-300 ${isMegaMenuOpen ? 'rotate-180' : ''}`} 
-                    fill="none" 
-                    stroke="currentColor" 
+                  <svg
+                    className="w-5 h-5"
+                    fill="none"
+                    stroke="currentColor"
                     viewBox="0 0 24 24"
                   >
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" />
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2.5}
+                      d="M4 6h16M4 12h16M4 18h16"
+                    />
+                  </svg>
+                  <span>All Categories</span>
+                  <svg
+                    className={`w-4 h-4 transition-transform duration-300 ${isMegaMenuOpen ? 'rotate-180' : ''}`}
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2.5}
+                      d="M19 9l-7 7-7-7"
+                    />
                   </svg>
                 </div>
 
@@ -328,7 +482,8 @@ export const Header = () => {
                   isOpen={isMegaMenuOpen}
                   onClose={() => {
                     setIsMegaMenuOpen(false);
-                    if (closeTimeoutRef.current) clearTimeout(closeTimeoutRef.current);
+                    if (closeTimeoutRef.current)
+                      clearTimeout(closeTimeoutRef.current);
                   }}
                 />
               </div>
@@ -341,14 +496,21 @@ export const Header = () => {
               >
                 <div className="flex items-center gap-2 px-4 py-2 bg-background-primary/50 text-text border border-border-custom rounded-lg font-medium shadow-sm hover:shadow-lg hover:border-primary transition-all cursor-pointer select-none">
                   <span className="text-primary">📍</span>
-                  <span className="whitespace-nowrap">{selectedCity?.name || 'Gh, Anywhere'}</span>
-                  <svg 
-                    className={`w-4 h-4 transition-transform duration-300 ${isLocationMenuOpen ? 'rotate-180' : ''}`} 
-                    fill="none" 
-                    stroke="currentColor" 
+                  <span className="whitespace-nowrap">
+                    {selectedCity?.name || 'Gh, Anywhere'}
+                  </span>
+                  <svg
+                    className={`w-4 h-4 transition-transform duration-300 ${isLocationMenuOpen ? 'rotate-180' : ''}`}
+                    fill="none"
+                    stroke="currentColor"
                     viewBox="0 0 24 24"
                   >
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" />
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2.5}
+                      d="M19 9l-7 7-7-7"
+                    />
                   </svg>
                 </div>
 
@@ -356,7 +518,8 @@ export const Header = () => {
                   isOpen={isLocationMenuOpen}
                   onClose={() => {
                     setIsLocationMenuOpen(false);
-                    if (locationCloseTimeoutRef.current) clearTimeout(locationCloseTimeoutRef.current);
+                    if (locationCloseTimeoutRef.current)
+                      clearTimeout(locationCloseTimeoutRef.current);
                   }}
                 />
               </div>

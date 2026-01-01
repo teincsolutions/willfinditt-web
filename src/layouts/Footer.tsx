@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { OptimizedImage } from '@/components/OptimizedImage';
 
 export const Footer = () => {
   return (
@@ -7,60 +8,106 @@ export const Footer = () => {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-12">
           <div className="space-y-4">
             <Link href="/" className="flex items-center space-x-2">
-              <div className="w-8 h-8 bg-primary rounded flex items-center justify-center shadow-sm">
-                <span className="text-white font-bold text-lg">W</span>
+              <div className="relative w-8 h-8 overflow-hidden rounded bg-primary shadow-sm">
+                <OptimizedImage
+                  src="/images/logo-icon.png"
+                  alt="WillfindITT Logo"
+                  fill
+                  className="object-contain p-1"
+                />
               </div>
-              <span className="text-xl font-bold text-text">Willfind8</span>
+              <span className="text-xl font-bold text-text">
+                Willfind<span className="font-black text-primary">ITT</span>
+              </span>
             </Link>
             <p className="text-text-gray text-sm leading-relaxed">
-              Find everything you need in one place. The most trusted classifieds platform in Ghana.
+              Find everything you need in one place. The most trusted
+              classifieds platform in Ghana.
             </p>
           </div>
           <div>
-            <h3 className="text-sm font-bold uppercase tracking-wider text-text mb-6">Links</h3>
+            <h3 className="text-sm font-bold uppercase tracking-wider text-text mb-6">
+              Links
+            </h3>
             <ul className="space-y-3">
               <li>
-                <Link href="/about" className="text-text-gray hover:text-primary text-sm transition-colors">
+                <Link
+                  href="/about-us"
+                  className="text-text-gray hover:text-primary text-sm transition-colors"
+                >
                   About Us
                 </Link>
               </li>
               <li>
-                <Link href="/contact" className="text-text-gray hover:text-primary text-sm transition-colors">
+                <Link
+                  href="/contact"
+                  className="text-text-gray hover:text-primary text-sm transition-colors"
+                >
                   Contact
                 </Link>
               </li>
               <li>
-                <Link href="/terms" className="text-text-gray hover:text-primary text-sm transition-colors">
+                <Link
+                  href="/terms"
+                  className="text-text-gray hover:text-primary text-sm transition-colors"
+                >
                   Terms of Service
                 </Link>
               </li>
             </ul>
           </div>
           <div>
-            <h3 className="text-sm font-bold uppercase tracking-wider text-text mb-6">Support</h3>
+            <h3 className="text-sm font-bold uppercase tracking-wider text-text mb-6">
+              Support
+            </h3>
             <ul className="space-y-3">
               <li>
-                <Link href="/help" className="text-text-gray hover:text-primary text-sm transition-colors">
+                <Link
+                  href="/help"
+                  className="text-text-gray hover:text-primary text-sm transition-colors"
+                >
                   Help Center
                 </Link>
               </li>
               <li>
-                <Link href="/privacy" className="text-text-gray hover:text-primary text-sm transition-colors">
+                <Link
+                  href="/privacy-policy"
+                  className="text-text-gray hover:text-primary text-sm transition-colors"
+                >
                   Privacy Policy
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="/seller-policy"
+                  className="text-text-gray hover:text-primary text-sm transition-colors"
+                >
+                  Seller Policy
                 </Link>
               </li>
             </ul>
           </div>
           <div>
-            <h3 className="text-sm font-bold uppercase tracking-wider text-text mb-6">Follow Us</h3>
+            <h3 className="text-sm font-bold uppercase tracking-wider text-text mb-6">
+              Follow Us
+            </h3>
             <div className="flex space-x-4">
-              <a href="#" className="w-10 h-10 bg-background-primary rounded-full flex items-center justify-center text-text-gray hover:text-primary hover:bg-primary/10 transition-all">
+              <a
+                href="#"
+                className="w-10 h-10 bg-background-primary rounded-full flex items-center justify-center text-text-gray hover:text-primary hover:bg-primary/10 transition-all"
+              >
                 FB
               </a>
-              <a href="#" className="w-10 h-10 bg-background-primary rounded-full flex items-center justify-center text-text-gray hover:text-primary hover:bg-primary/10 transition-all">
+              <a
+                href="#"
+                className="w-10 h-10 bg-background-primary rounded-full flex items-center justify-center text-text-gray hover:text-primary hover:bg-primary/10 transition-all"
+              >
                 TW
               </a>
-              <a href="#" className="w-10 h-10 bg-background-primary rounded-full flex items-center justify-center text-text-gray hover:text-primary hover:bg-primary/10 transition-all">
+              <a
+                href="#"
+                className="w-10 h-10 bg-background-primary rounded-full flex items-center justify-center text-text-gray hover:text-primary hover:bg-primary/10 transition-all"
+              >
                 IG
               </a>
             </div>

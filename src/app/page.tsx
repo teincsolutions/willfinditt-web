@@ -15,7 +15,8 @@ export default function Home() {
   const [currentPage, setCurrentPage] = useState(1);
 
   // Fetch categories for tiles
-  const { data: categories = [], isLoading: categoriesLoading } = useParentCategories(true);
+  const { data: categories = [], isLoading: categoriesLoading } =
+    useParentCategories(true);
 
   // Map frontend sort options to API parameters
   const getSortParams = (sortOption: string) => {
@@ -44,7 +45,7 @@ export default function Home() {
       sortBy: sortParams.sortBy,
       sortOrder: sortParams.sortOrder,
       statuses: [AdStatus.ACTIVE],
-    }
+    },
   });
 
   const handleSortChange = (sort: string) => {
@@ -87,17 +88,40 @@ export default function Home() {
           {/* Quick Actions */}
           <div className="flex items-center justify-center gap-4 mt-8">
             <Link href="/ads/new">
-              <Button className="bg-secondary text-black hover:bg-yellow shadow-lg font-bold">
-                <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+              <Button className="bg-secondary text-black hover:bg-yellow shadow-lg font-bold flex flex-row items-center">
+                <svg
+                  className="w-5 h-5 mr-2"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 4v16m8-8H4"
+                  />
                 </svg>
                 Post an Ad
               </Button>
             </Link>
             <Link href="/search">
-              <Button variant="outline" className="border-white/30 text-white hover:bg-background/10">
-                <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              <Button
+                variant="outline"
+                className="border-white/30 text-white hover:bg-background/10 flex flex-row items-center"
+              >
+                <svg
+                  className="w-5 h-5 mr-2"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                  />
                 </svg>
                 Browse All
               </Button>
@@ -115,7 +139,9 @@ export default function Home() {
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
           <div>
             <h2 className="text-2xl font-bold text-text">Latest Listings</h2>
-            <p className="text-text-gray">{ads?.meta?.total?.toLocaleString() || 0} items found</p>
+            <p className="text-text-gray">
+              {ads?.meta?.total?.toLocaleString() || 0} items found
+            </p>
           </div>
 
           {/* Sorting Options */}

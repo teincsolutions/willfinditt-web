@@ -63,6 +63,11 @@ api.interceptors.response.use(
     const errorCode = error.response?.data?.code;
     const statusCode = error.response?.status;
 
+     const refreshToken = getRefreshToken();
+        if (!refreshToken) {
+             return Promise.reject(error);
+        }
+
     // Handle Token Expiration
     if (statusCode === 401 && errorCode === 'TOKEN_EXPIRED' && !originalRequest._retry && !isAuthRequest) {
       
@@ -81,11 +86,6 @@ api.interceptors.response.use(
       isRefreshing = true;
 
       try {
-        const refreshToken = getRefreshToken();
-        if (!refreshToken) {
-            throw new Error('Session expired');
-        }
-
         const refreshResponse = await axios.post(
           `${process.env.NEXT_PUBLIC_API_URL}/auth/refresh`,
           { refreshToken },

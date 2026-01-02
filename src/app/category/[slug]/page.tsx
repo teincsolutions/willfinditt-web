@@ -360,11 +360,11 @@ function CategoryContent() {
           </div>
 
           {isLoading ? (
-            <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-8 items-start">
+            <div className="columns-2 gap-3 md:grid md:grid-cols-2 lg:grid-cols-3 md:gap-8">
               {[...Array(6)].map((_, i) => (
                 <div
                   key={i}
-                  className="bg-background rounded-xl overflow-hidden animate-pulse border border-border-custom flex flex-col h-full"
+                  className="break-inside-avoid mb-3 md:mb-0 bg-background rounded-xl overflow-hidden animate-pulse border border-border-custom flex flex-col h-full"
                 >
                   <div className="aspect-[4/3] bg-background-primary/20" />
                   <div className="p-3 sm:p-5 flex-1 flex flex-col space-y-3">
@@ -380,9 +380,11 @@ function CategoryContent() {
             </div>
           ) : ads.length > 0 ? (
             <>
-              <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-8 mb-12 items-start">
+              <div className="columns-2 gap-3 md:grid md:grid-cols-2 lg:grid-cols-3 md:gap-8 mb-12">
                 {ads.map((ad) => (
-                  <ListingCard key={ad.id} ad={ad} />
+                  <div key={ad.id} className="break-inside-avoid mb-3 md:mb-0">
+                    <ListingCard ad={ad} />
+                  </div>
                 ))}
               </div>
 

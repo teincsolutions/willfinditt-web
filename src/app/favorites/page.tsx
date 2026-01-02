@@ -35,9 +35,12 @@ export default function FavoritesPage() {
           </Link>
         </div>
       ) : (
-        <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-6 items-start">
+        <div className="columns-2 gap-3 md:grid md:grid-cols-2 lg:grid-cols-3 md:gap-6">
           {favorites.map((ad) => (
-            <div key={ad.id} className="relative">
+            <div
+              key={ad.id}
+              className="relative break-inside-avoid mb-3 md:mb-0"
+            >
               <ListingCard ad={ad} />
               <Button
                 onClick={() => handleRemoveFavorite(ad.id)}

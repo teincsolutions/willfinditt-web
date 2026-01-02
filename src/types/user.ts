@@ -22,12 +22,14 @@ export interface User {
 }
 
 export interface LoginData {
-  email: string;
+  email?: string;
+  phone?: string;
   password: string;
 }
 
 export interface RegisterData {
-  email: string;
+  email?: string;
+  phone?: string;
   password: string;
   firstName: string;
   lastName: string;

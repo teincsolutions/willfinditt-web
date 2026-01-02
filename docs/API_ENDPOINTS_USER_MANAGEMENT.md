@@ -1,4 +1,4 @@
-# WillFind8 API - Admin & User Management Endpoints
+# Willfinditt API - Admin & User Management Endpoints
 
 **Base URL:** `https://api.willfind8.com/api/v1` (Production)  
 **Base URL:** `http://localhost:3000/api/v1` (Development)
@@ -45,7 +45,6 @@ Authorization: Bearer {access_token}
 ```json
 {
   "access_token": "eyJhbGciOiJIUzI1NiIs...",
-  "refresh_token": "cyJYbGceOigIUzI1NiIs..",
   "user": {
     "id": "cm1234567890",
     "email": "user@example.com",
@@ -101,7 +100,6 @@ Authorization: Bearer {access_token}
 ```json
 {
   "access_token": "eyJhbGciOiJIUzI1NiIs...",
-  "refresh_token": "cyJYbGceOigIUzI1NiIs..",
   "user": {
     "id": "cm1234567890",
     "email": "admin@example.com",
@@ -133,7 +131,6 @@ Authorization: Bearer {access_token}
 ```json
 {
   "access_token": "eyJhbGciOiJIUzI1NiIs...",
-  "refresh_token": "cyJYbGceOigIUzI1NiIs..",
   "user": {
     "id": "cm1234567890",
     "email": "user@example.com",
@@ -238,7 +235,6 @@ Authorization: Bearer {access_token}
 ```json
 {
   "access_token": "eyJhbGciOiJIUzI1NiIs...",
-  "refresh_token": "cyJYbGceOigIUzI1NiIs..",
   "user": { ... }
 }
 ```
@@ -706,7 +702,7 @@ Hello [User Name],
 
 You requested to reset your password. Click the link below:
 
-{FRONTEND_URL}/reset-password?token={resetToken}
+{FRONTEND_URL}/auth/reset-password?token={resetToken}
 
 This link will expire in 1 hour.
 

@@ -70,10 +70,18 @@ export const changePassword = async (data: ChangePasswordData): Promise<void> =>
   await api.post('/auth/change-password', data);
 };
 
-export const forgotPassword = async (email: string): Promise<void> => {
-  await api.post('/auth/forgot-password', { email });
+export const forgotPassword = async (data: { email?: string; phone?: string }): Promise<void> => {
+  await api.post('/auth/forgot-password', data);
 };
 
 export const resetPassword = async (data: any): Promise<void> => {
   await api.post('/auth/reset-password', data);
+};
+
+export const verifyResetPhoneOtp = async (data: { phone: string; otp: string }): Promise<void> => {
+  await api.post('/auth/verify-reset-phone-otp', data);
+};
+
+export const resetPasswordWithPhone = async (data: { phone: string; otp: string; newPassword: string }): Promise<void> => {
+  await api.post('/auth/reset-password-phone', data);
 };

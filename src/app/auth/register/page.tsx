@@ -18,7 +18,20 @@ const schema = yup.object({
     .string()
     .required('Last name is required')
     .min(2, 'Must be at least 2 characters'),
-  email: yup.string().email('Invalid email').required('Email is required'),
+  email: yup
+    .string()
+    .email('Invalid email')
+    .when('phone', {
+      is: (val: string) => !val || val.length === 0,
+      then: (schema) =>
+        schema.required('Email is required when phone is empty'),
+      otherwise: (schema) => schema.notRequired(),
+    }),
+  phone: yup.string().when('email', {
+    is: (val: string) => !val || val.length === 0,
+    then: (schema) => schema.required('Phone is required when email is empty'),
+    otherwise: (schema) => schema.notRequired(),
+  }),
   password: yup
     .string()
     .required('Password is required')
@@ -37,7 +50,15 @@ const schema = yup.object({
     .oneOf([true], 'You must agree to the terms and conditions'),
 });
 
-type RegisterFormData = yup.InferType<typeof schema>;
+interface RegisterFormData {
+  firstName: string;
+  lastName: string;
+  email: string | undefined;
+  phone: string | undefined;
+  password: string;
+  confirmPassword: string;
+  agreeToTerms: boolean;
+}
 
 import { OptimizedImage } from '@/components/OptimizedImage';
 
@@ -59,7 +80,7 @@ export default function RegisterPage() {
     handleSubmit,
     formState: { errors, isSubmitting },
   } = useForm<RegisterFormData>({
-    resolver: yupResolver(schema),
+    resolver: yupResolver(schema) as any,
   });
 
   const onSubmit = async (data: RegisterFormData) => {
@@ -68,8 +89,9 @@ export default function RegisterPage() {
       await register({
         firstName: data.firstName,
         lastName: data.lastName,
-        email: data.email,
-        username: data.email.split('@')[0],
+        email: data.email || undefined,
+        phone: data.phone || undefined,
+        username: (data.email || data.phone || '').split('@')[0],
         password: data.password,
       });
     } catch (err: unknown) {
@@ -87,7 +109,7 @@ export default function RegisterPage() {
       <div className="max-w-md w-full">
         {/* Header */}
         <div className="text-center mb-8">
-          <div className="relative inline-flex items-center justify-center w-20 h-20 mb-4 overflow-hidden rounded-2xl shadow-lg shadow-primary/20 bg-primary">
+          <div className="relative inline-flex items-center justify-center w-20 h-20 mb-4 overflow-hidden rounded-2xli">
             <OptimizedImage
               src="/images/logo-favicon.png"
               alt="WillfindITT Logo"
@@ -138,7 +160,7 @@ export default function RegisterPage() {
             </div>
             <div className="relative flex justify-center text-sm">
               <span className="px-4 bg-background text-text-gray">
-                or create account with email
+                or create account with email or phone
               </span>
             </div>
           </div>
@@ -186,21 +208,39 @@ export default function RegisterPage() {
               </div>
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-text mb-2">
-                Email address
-              </label>
-              <input
-                {...registerField('email')}
-                type="email"
-                placeholder="Enter your email"
-                className="w-full px-4 py-3 border border-border-custom rounded-xl focus:ring-2 focus:ring-primary focus:border-primary transition-colors"
-              />
-              {errors.email && (
-                <p className="mt-1 text-sm text-error">
-                  {errors.email.message}
-                </p>
-              )}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-text mb-2">
+                  Email address
+                </label>
+                <input
+                  {...registerField('email')}
+                  type="email"
+                  placeholder="Enter your email"
+                  className="w-full px-4 py-3 border border-border-custom rounded-xl focus:ring-2 focus:ring-primary focus:border-primary transition-colors"
+                />
+                {errors.email && (
+                  <p className="mt-1 text-sm text-error">
+                    {errors.email.message}
+                  </p>
+                )}
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-text mb-2">
+                  Phone number
+                </label>
+                <input
+                  {...registerField('phone')}
+                  type="tel"
+                  placeholder="Enter your phone"
+                  className="w-full px-4 py-3 border border-border-custom rounded-xl focus:ring-2 focus:ring-primary focus:border-primary transition-colors"
+                />
+                {errors.phone && (
+                  <p className="mt-1 text-sm text-error">
+                    {errors.phone.message}
+                  </p>
+                )}
+              </div>
             </div>
 
             <div>

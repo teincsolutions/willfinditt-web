@@ -10,7 +10,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/Button';
 
 const schema = yup.object({
-  email: yup.string().email('Invalid email').required('Email is required'),
+  identifier: yup.string().required('Email or phone number is required'),
   password: yup.string().required('Password is required'),
 });
 
@@ -36,10 +36,15 @@ export default function LoginPage() {
     resolver: yupResolver(schema),
   });
 
-  const onSubmit = async (data: { email: string; password: string }) => {
+  const onSubmit = async (data: { identifier: string; password: string }) => {
     try {
       setError('');
-      await login(data);
+      const isEmail = data.identifier.includes('@');
+      const loginParams = {
+        password: data.password,
+        [isEmail ? 'email' : 'phone']: data.identifier,
+      };
+      await login(loginParams);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Login failed');
     }
@@ -55,7 +60,7 @@ export default function LoginPage() {
       <div className="max-w-md w-full">
         {/* Header */}
         <div className="text-center mb-8">
-          <div className="relative inline-flex items-center justify-center w-20 h-20 mb-4 overflow-hidden rounded-2xl shadow-lg shadow-primary/20 bg-primary">
+          <div className="relative inline-flex items-center justify-center w-20 h-20 mb-4 overflow-hidden rounded-2xl">
             <OptimizedImage
               src="/images/logo-favicon.png"
               alt="WillfindITT Logo"
@@ -102,7 +107,7 @@ export default function LoginPage() {
             </div>
             <div className="relative flex justify-center text-sm">
               <span className="px-4 bg-background text-text-gray">
-                or continue with email
+                or continue with email or phone
               </span>
             </div>
           </div>
@@ -117,17 +122,17 @@ export default function LoginPage() {
 
             <div>
               <label className="block text-sm font-medium text-text mb-2">
-                Email address
+                Email or Phone number
               </label>
               <input
-                {...register('email')}
-                type="email"
-                placeholder="Enter your email"
+                {...register('identifier')}
+                type="text"
+                placeholder="Enter your email or phone"
                 className="w-full px-4 py-3 border border-border-custom rounded-xl focus:ring-2 focus:ring-primary focus:border-primary transition-colors"
               />
-              {errors.email && (
+              {errors.identifier && (
                 <p className="mt-1 text-sm text-error">
-                  {errors.email.message}
+                  {errors.identifier.message}
                 </p>
               )}
             </div>

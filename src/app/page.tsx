@@ -202,21 +202,26 @@ export default function Home() {
 
         {/* Ads Grid */}
         {isLoading ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-6 items-start">
             {[...Array(12)].map((_, i) => (
               <div
                 key={i}
-                className="bg-background rounded-xl shadow-sm border border-border-custom p-5 animate-pulse"
+                className="bg-background rounded-xl shadow-sm border border-border-custom overflow-hidden animate-pulse flex flex-col h-full"
               >
-                <div className="h-48 bg-background-primary/30 rounded-lg mb-4" />
-                <div className="h-4 bg-background-primary/30 rounded mb-2" />
-                <div className="h-4 bg-background-primary/30 rounded w-3/4 mb-2" />
-                <div className="h-6 bg-background-primary/30 rounded w-1/2" />
+                <div className="aspect-[4/3] bg-background-primary/30" />
+                <div className="p-3 sm:p-5 flex-1 flex flex-col space-y-3">
+                  <div className="h-4 bg-background-primary/30 rounded w-3/4 mb-2" />
+                  <div className="h-3 bg-background-primary/30 rounded w-1/2 mb-2" />
+                  <div className="mt-auto flex justify-between items-center">
+                    <div className="h-6 bg-background-primary/30 rounded w-1/3" />
+                    <div className="h-3 bg-background-primary/30 rounded w-1/4" />
+                  </div>
+                </div>
               </div>
             ))}
           </div>
         ) : ads?.data.length ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-6 items-start">
             {ads.data.map((ad: any) => (
               <ListingCard key={ad.id} ad={ad} />
             ))}

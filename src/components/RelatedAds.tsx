@@ -15,7 +15,7 @@ export const RelatedAds = ({ categoryId, currentAdId }: RelatedAdsProps) => {
       categoryIds: [categoryId],
       limit: 5,
       statuses: [AdStatus.ACTIVE],
-    }
+    },
   });
 
   const relatedAds = adsResponse?.data
@@ -24,14 +24,20 @@ export const RelatedAds = ({ categoryId, currentAdId }: RelatedAdsProps) => {
 
   if (isLoading) {
     return (
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6 items-start">
         {[...Array(4)].map((_, i) => (
-          <div key={i} className="bg-background rounded-xl shadow-sm h-[320px] animate-pulse">
-            <div className="h-48 bg-background-primary/30 rounded-t-xl" />
-            <div className="p-4 space-y-3">
-              <div className="h-6 bg-background-primary/30 rounded w-3/4" />
-              <div className="h-4 bg-background-primary/30 rounded w-full" />
-              <div className="h-6 bg-background-primary/30 rounded w-1/3" />
+          <div
+            key={i}
+            className="bg-background rounded-xl shadow-sm border border-border-custom overflow-hidden animate-pulse flex flex-col h-full"
+          >
+            <div className="aspect-[4/3] bg-background-primary/30" />
+            <div className="p-3 sm:p-5 flex-1 flex flex-col space-y-3">
+              <div className="h-4 bg-background-primary/30 rounded w-3/4" />
+              <div className="h-3 bg-background-primary/30 rounded w-1/2" />
+              <div className="mt-auto flex justify-between items-center">
+                <div className="h-6 bg-background-primary/30 rounded w-1/3" />
+                <div className="h-3 bg-background-primary/30 rounded w-1/4" />
+              </div>
             </div>
           </div>
         ))}
@@ -48,7 +54,7 @@ export const RelatedAds = ({ categoryId, currentAdId }: RelatedAdsProps) => {
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+    <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6 items-start">
       {relatedAds.map((ad) => (
         <ListingCard key={ad.id} ad={ad} />
       ))}

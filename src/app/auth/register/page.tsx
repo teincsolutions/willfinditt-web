@@ -9,46 +9,50 @@ import * as yup from 'yup';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/Button';
 
-const schema = yup.object({
-  firstName: yup
-    .string()
-    .required('First name is required')
-    .min(2, 'Must be at least 2 characters'),
-  lastName: yup
-    .string()
-    .required('Last name is required')
-    .min(2, 'Must be at least 2 characters'),
-  email: yup
-    .string()
-    .email('Invalid email')
-    .when('phone', {
+const schema = yup.object().shape(
+  {
+    firstName: yup
+      .string()
+      .required('First name is required')
+      .min(2, 'Must be at least 2 characters'),
+    lastName: yup
+      .string()
+      .required('Last name is required')
+      .min(2, 'Must be at least 2 characters'),
+    email: yup
+      .string()
+      .email('Invalid email')
+      .when('phone', {
+        is: (val: string) => !val || val.length === 0,
+        then: (schema) =>
+          schema.required('Email is required when phone is empty'),
+        otherwise: (schema) => schema.notRequired(),
+      }),
+    phone: yup.string().when('email', {
       is: (val: string) => !val || val.length === 0,
       then: (schema) =>
-        schema.required('Email is required when phone is empty'),
+        schema.required('Phone is required when email is empty'),
       otherwise: (schema) => schema.notRequired(),
     }),
-  phone: yup.string().when('email', {
-    is: (val: string) => !val || val.length === 0,
-    then: (schema) => schema.required('Phone is required when email is empty'),
-    otherwise: (schema) => schema.notRequired(),
-  }),
-  password: yup
-    .string()
-    .required('Password is required')
-    .min(8, 'Password must be at least 8 characters')
-    .matches(
-      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/,
-      'Password must contain at least one uppercase letter, one lowercase letter, and one number'
-    ),
-  confirmPassword: yup
-    .string()
-    .required('Please confirm your password')
-    .oneOf([yup.ref('password')], 'Passwords must match'),
-  agreeToTerms: yup
-    .boolean()
-    .required('You must agree to the terms and conditions')
-    .oneOf([true], 'You must agree to the terms and conditions'),
-});
+    password: yup
+      .string()
+      .required('Password is required')
+      .min(8, 'Password must be at least 8 characters')
+      .matches(
+        /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/,
+        'Password must contain at least one uppercase letter, one lowercase letter, and one number'
+      ),
+    confirmPassword: yup
+      .string()
+      .required('Please confirm your password')
+      .oneOf([yup.ref('password')], 'Passwords must match'),
+    agreeToTerms: yup
+      .boolean()
+      .required('You must agree to the terms and conditions')
+      .oneOf([true], 'You must agree to the terms and conditions'),
+  },
+  [['email', 'phone']]
+);
 
 interface RegisterFormData {
   firstName: string;

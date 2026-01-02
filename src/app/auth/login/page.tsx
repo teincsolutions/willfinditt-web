@@ -24,7 +24,7 @@ export default function LoginPage() {
 
   React.useEffect(() => {
     if (!isLoading && isAuthenticated) {
-      router.push('/');
+      router.replace('/');
     }
   }, [isLoading, isAuthenticated, router]);
 
@@ -57,7 +57,27 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
-      <div className="max-w-md w-full">
+      <div className="max-w-md w-full relative">
+        {/* Back Button */}
+        <Link
+          href="/"
+          className="absolute -top-12 left-0 text-text-gray hover:text-text flex items-center gap-2 transition-colors"
+        >
+          <svg
+            className="w-5 h-5"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M10 19l-7-7m0 0l7-7m-7 7h18"
+            />
+          </svg>
+          Back to Home
+        </Link>
         {/* Header */}
         <div className="text-center mb-8">
           <div className="relative inline-flex items-center justify-center w-20 h-20 mb-4 overflow-hidden rounded-2xl">

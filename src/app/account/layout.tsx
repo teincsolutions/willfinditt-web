@@ -23,7 +23,7 @@ export default function AccountLayout({
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
-      router.push('/auth/login?redirect=' + pathname);
+      router.replace('/auth/login?redirect=' + pathname);
     }
   }, [isLoading, isAuthenticated, router, pathname]);
 
@@ -32,13 +32,14 @@ export default function AccountLayout({
     router.push('/');
   };
 
-  if (isLoading) return <div className="p-10 text-center">Loading account...</div>;
+  if (isLoading)
+    return <div className="p-10 text-center">Loading account...</div>;
 
   return (
     <div className="bg-background min-h-screen py-8">
       <div className="container mx-auto px-4 max-w-5xl">
         <h1 className="text-3xl font-bold text-text mb-8">My Account</h1>
-        
+
         <div className="flex flex-col md:flex-row gap-8">
           {/* Sidebar */}
           <aside className="w-full md:w-64 flex-shrink-0">
@@ -61,9 +62,9 @@ export default function AccountLayout({
                     </Link>
                   );
                 })}
-                
+
                 <hr className="my-2 border-border-custom" />
-                
+
                 <button
                   onClick={handleLogout}
                   className="flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-error hover:bg-errorLight transition-colors text-left w-full"

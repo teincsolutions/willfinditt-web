@@ -296,6 +296,60 @@ All responses follow a consistent JSON structure. Successful responses return da
 - `403` - Not authorized (not ad owner)
 - `404` - Ad not found
 
+### 1.5 Close Ad
+
+**Endpoint:** `PATCH /ads/{id}/close`
+
+**Description:** Mark an ad as closed (no longer available). This is different from marking as sold. Only the ad owner can close their ads.
+
+**Authentication:** Required (JWT Bearer token)
+
+**Parameters:**
+
+- `id` (path) - Ad ID (required)
+
+**Request Body:**
+
+```json
+{
+  "reason": "Sold elsewhere" // Optional
+}
+```
+
+**Response (200 OK):**
+
+```json
+{
+  "id": "ad_123",
+  "status": "CLOSED",
+  "closedAt": "2024-01-15T10:30:00.000Z",
+  "closureReason": "Sold elsewhere",
+  "updatedAt": "2024-01-15T10:30:00.000Z"
+}
+```
+
+### 1.6 Reactivate Ad
+
+**Endpoint:** `PATCH /ads/{id}/reactivate`
+
+**Description:** Reactivate a closed, expired, or sold ad. The ad will be set to PENDING status and requires admin approval to become ACTIVE again. Only the ad owner can reactivate their ads.
+
+**Authentication:** Required (JWT Bearer token)
+
+**Parameters:**
+
+- `id` (path) - Ad ID (required)
+
+**Response (200 OK):**
+
+```json
+{
+  "id": "ad_123",
+  "status": "PENDING",
+  "updatedAt": "2024-01-15T10:30:00.000Z"
+}
+```
+
 ---
 
 ## 2. Search and Filtering
@@ -752,6 +806,10 @@ All error responses follow this structure:
 - `PENDING` - Ad is pending admin approval
 - `ACTIVE` - Ad is live and visible
 - `SOLD` - Ad has been sold
+- `CLOSED` - Ad has been closed by the user
+- `EXPIRED` - Ad has reached its expiration date
+- `ARCHIVED` - Ad has been moved to long-term storage
+- `SUSPENDED` - Ad has been suspended by an admin
 - `DELETED` - Ad has been soft deleted
 
 ### AdCondition Enum:

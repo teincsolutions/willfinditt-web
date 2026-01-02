@@ -25,3 +25,7 @@ export const addFavorite = async (adId: string): Promise<void> => {
 export const removeFavorite = async (adId: string): Promise<void> => {
   await api.delete(`/users/favorites/${adId}`);
 };
+
+export const deleteAccount = async (): Promise<void> => {
+  await api.delete('/users/me');
+};

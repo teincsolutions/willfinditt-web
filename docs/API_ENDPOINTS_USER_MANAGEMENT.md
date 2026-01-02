@@ -302,6 +302,46 @@ Authorization: Bearer {access_token}
 
 ---
 
+### Deactivate Own Account
+
+**Endpoint:** `PATCH /users/me/deactivate`  
+**Authentication:** Required (Bearer token)  
+**Description:** Deactivate your own account. You will be logged out and won't be able to log in until an admin reactivates your account.
+
+**Success Response (200 OK):**
+
+```json
+{
+  "id": "cm1234567890",
+  "isActive": false,
+  "updatedAt": "2024-12-07T10:00:00.000Z"
+}
+```
+
+---
+
+### Delete Own Account (Soft Delete)
+
+**Endpoint:** `DELETE /users/me`  
+**Authentication:** Required (Bearer token)  
+**Description:** Request account deletion. This is a **soft delete** - your account will be deactivated and marked for deletion. Data is retained for a 30-day grace period before permanent anonymization.
+
+**Impact on Your Ads:**
+- **Immediate:** All your ACTIVE and PENDING ads will be closed automatically with the reason "Account deleted by owner"
+- **SOLD/EXPIRED ads:** These remain unchanged to preserve transaction history and SEO value
+- **After 30 days:** All remaining ads (CLOSED, SOLD, EXPIRED) will be archived permanently
+
+**Grace Period:**
+- You have 30 days to reactivate your account by contacting support
+- During this period, your data is retained but your account is inactive
+- After 30 days, your personal data will be permanently anonymized
+
+**Success Response (204 No Content):**
+
+> No body returned
+
+---
+
 ## Admin Operations
 
 ### Create User Account

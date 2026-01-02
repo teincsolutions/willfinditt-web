@@ -83,15 +83,15 @@ export const Header = () => {
 
             {/* Logo */}
             <Link href="/" className="flex items-center space-x-2">
-              <div className="relative w-10 h-10 overflow-hidden rounded-lg">
+              <div className="relative w-10 h-10 overflow-hidden rounded-xl">
                 <OptimizedImage
-                  src="/images/logo-icon.png"
+                  src="/images/logo-favicon.png"
                   alt="WillfindITT Logo"
                   fill
                   className="object-contain"
                 />
               </div>
-              <span className="text-2xl font-bold text-text hidden sm:block">
+              <span className="text-xl font-bold text-text">
                 Willfind<span className="font-black text-primary">ITT</span>
               </span>
             </Link>

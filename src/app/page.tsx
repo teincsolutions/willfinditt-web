@@ -150,41 +150,100 @@ export default function Home() {
               variant={sortBy === 'trending' ? 'primary' : 'outline'}
               size="sm"
               onClick={() => handleSortChange('trending')}
-              className="rounded-full"
+              className="rounded-full flex items-center gap-1.5"
             >
-              🔥 Trending
+              <svg
+                className="w-3.5 h-3.5 text-orange-500"
+                fill="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path d="M13.5.67s.74 2.65.74 4.8c0 2.06-1.35 3.73-3.41 3.73-2.07 0-3.63-1.67-3.63-3.73l.03-.36C5.21 7.51 4 10.62 4 14c0 4.42 3.58 8 8 8s8-3.58 8-8c0-6.12-6.5-13.33-6.5-13.33zM12 18c-2.21 0-4-1.79-4-4 0-1.28.61-2.42 1.55-3.15C9.74 12.03 10.74 13 12 13c1.26 0 2.26-.97 2.45-2.15.94.73 1.55 1.87 1.55 3.15 0 2.21-1.79 4-4 4z" />
+              </svg>
+              Trending
             </Button>
             <Button
               variant={sortBy === 'newest' ? 'primary' : 'outline'}
               size="sm"
               onClick={() => handleSortChange('newest')}
-              className="rounded-full"
+              className="rounded-full flex items-center gap-1.5"
             >
-              🆕 Newest
+              <svg
+                className="w-3.5 h-3.5 text-primary"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-7.714 2.143L11 21l-2.286-6.857L1 12l7.714-2.143L11 3z"
+                />
+              </svg>
+              Newest
             </Button>
             <Button
               variant={sortBy === 'oldest' ? 'primary' : 'outline'}
               size="sm"
               onClick={() => handleSortChange('oldest')}
-              className="rounded-full"
+              className="rounded-full flex items-center gap-1.5"
             >
-              📅 Oldest
+              <svg
+                className="w-3.5 h-3.5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                />
+              </svg>
+              Oldest
             </Button>
             <Button
               variant={sortBy === 'price_low' ? 'primary' : 'outline'}
               size="sm"
               onClick={() => handleSortChange('price_low')}
-              className="rounded-full"
+              className="rounded-full flex items-center gap-1.5"
             >
-              💰 Low to High
+              <svg
+                className="w-3.5 h-3.5 text-success"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"
+                />
+              </svg>
+              Low to High
             </Button>
             <Button
               variant={sortBy === 'price_high' ? 'primary' : 'outline'}
               size="sm"
               onClick={() => handleSortChange('price_high')}
-              className="rounded-full"
+              className="rounded-full flex items-center gap-1.5"
             >
-              💎 High to Low
+              <svg
+                className="w-3.5 h-3.5 text-secondary"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 8V4m0 0L8 8m4-4l4 4m-8 8h8a2 2 0 002-2v-3a2 2 0 00-2-2h-8m0 5V9m0 5c0 1.1.9 2 2 2h1"
+                />
+              </svg>
+              High to Low
             </Button>
           </div>
         </div>
@@ -228,7 +287,23 @@ export default function Home() {
           </div>
         ) : (
           <div className="text-center py-16 bg-background rounded-2xl border border-border-custom">
-            <div className="text-6xl mb-4">📭</div>
+            <div className="flex justify-center mb-4">
+              <div className="w-20 h-20 bg-background-primary rounded-full flex items-center justify-center text-text-light-gray">
+                <svg
+                  className="w-10 h-10"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={1.5}
+                    d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+                  />
+                </svg>
+              </div>
+            </div>
             <h3 className="text-xl font-semibold text-text mb-2">
               No listings yet
             </h3>

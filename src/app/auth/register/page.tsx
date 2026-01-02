@@ -89,7 +89,7 @@ export default function RegisterPage() {
         <div className="text-center mb-8">
           <div className="relative inline-flex items-center justify-center w-20 h-20 mb-4 overflow-hidden rounded-2xl shadow-lg shadow-primary/20 bg-primary">
             <OptimizedImage
-              src="/images/logo-icon.png"
+              src="/images/logo-favicon.png"
               alt="WillfindITT Logo"
               fill
               className="object-contain p-2"

@@ -57,15 +57,13 @@ export default function LoginPage() {
         <div className="text-center mb-8">
           <div className="relative inline-flex items-center justify-center w-20 h-20 mb-4 overflow-hidden rounded-2xl shadow-lg shadow-primary/20 bg-primary">
             <OptimizedImage
-              src="/images/logo-icon.png"
+              src="/images/logo-favicon.png"
               alt="WillfindITT Logo"
               fill
               className="object-contain p-2"
             />
           </div>
-          <h1 className="text-3xl font-bold text-text mb-2">
-            Welcome back
-          </h1>
+          <h1 className="text-3xl font-bold text-text mb-2">Welcome back</h1>
           <p className="text-text-gray">Sign in to your WillfindITT account</p>
         </div>
 

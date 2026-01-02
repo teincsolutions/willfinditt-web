@@ -32,7 +32,7 @@ export const MobileDrawer = ({
 
       {/* Drawer */}
       <div
-        className={`fixed left-0 top-0 bottom-0 w-80 max-w-[85vw] bg-background z-50 transform transition-transform duration-300 ease-out ${
+        className={`fixed left-0 top-0 bottom-0 w-80 max-w-[85vw] bg-background z-50 transform transition-transform duration-300 ease-out flex flex-col ${
           isOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
@@ -41,7 +41,7 @@ export const MobileDrawer = ({
           <Link href="/" onClick={onClose} className="flex items-center gap-2">
             <div className="relative w-10 h-10 overflow-hidden rounded-xl">
               <OptimizedImage
-                src="/images/logo-icon.png"
+                src="/images/logo-favicon.png"
                 alt="WillfindITT Logo"
                 fill
                 className="object-contain"
@@ -112,8 +112,20 @@ export const MobileDrawer = ({
                 onClick={onClose}
                 className="flex items-center gap-4 p-3 rounded-2xl hover:bg-background-primary transition-all group"
               >
-                <div className="w-11 h-11 bg-successLight flex items-center justify-center rounded-xl text-success text-xl group-hover:scale-110 transition-transform">
-                  ➕
+                <div className="w-11 h-11 bg-successLight flex items-center justify-center rounded-xl text-success group-hover:scale-110 transition-transform">
+                  <svg
+                    className="w-6 h-6"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2.5}
+                      d="M12 4v16m8-8H4"
+                    />
+                  </svg>
                 </div>
                 <div className="flex-1">
                   <span className="font-bold text-text block">Post an Ad</span>
@@ -128,8 +140,14 @@ export const MobileDrawer = ({
                 onClick={onClose}
                 className="flex items-center gap-4 p-3 rounded-2xl hover:bg-background-primary transition-all group"
               >
-                <div className="w-11 h-11 bg-errorLight flex items-center justify-center rounded-xl text-error text-xl group-hover:scale-110 transition-transform">
-                  ❤️
+                <div className="w-11 h-11 bg-errorLight flex items-center justify-center rounded-xl text-error group-hover:scale-110 transition-transform">
+                  <svg
+                    className="w-6 h-6"
+                    fill="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
+                  </svg>
                 </div>
                 <div className="flex-1">
                   <span className="font-bold text-text block">Favorites</span>
@@ -144,8 +162,20 @@ export const MobileDrawer = ({
                 onClick={onClose}
                 className="flex items-center gap-4 p-3 rounded-2xl hover:bg-background-primary transition-all group"
               >
-                <div className="w-11 h-11 bg-primaryLight flex items-center justify-center rounded-xl text-primary text-xl group-hover:scale-110 transition-transform">
-                  💬
+                <div className="w-11 h-11 bg-primaryLight flex items-center justify-center rounded-xl text-primary group-hover:scale-110 transition-transform">
+                  <svg
+                    className="w-6 h-6"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M8 10h.01M12 10h.01M16 10h.01M21 16c0 1.1-.9 2-2 2H7l-4 4V4c0-1.1.9-2 2-2h14c1.1 0 2 .9 2 2v12z"
+                    />
+                  </svg>
                 </div>
                 <div className="flex-1">
                   <span className="font-bold text-text block">Messages</span>
@@ -160,8 +190,20 @@ export const MobileDrawer = ({
                 onClick={onClose}
                 className="flex items-center gap-4 p-3 rounded-2xl hover:bg-background-primary transition-all group"
               >
-                <div className="w-11 h-11 bg-background-primary flex items-center justify-center rounded-xl text-brown text-xl group-hover:scale-110 transition-transform">
-                  👤
+                <div className="w-11 h-11 bg-background-primary flex items-center justify-center rounded-xl text-brown group-hover:scale-110 transition-transform">
+                  <svg
+                    className="w-6 h-6"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                    />
+                  </svg>
                 </div>
                 <div className="flex-1">
                   <span className="font-bold text-text block">
@@ -240,8 +282,20 @@ export const MobileDrawer = ({
                         className="w-8 h-8 object-cover"
                       />
                     ) : (
-                      <div className="w-8 h-8 bg-background-primary rounded-lg flex items-center justify-center">
-                        <span className="text-sm">📦</span>
+                      <div className="w-8 h-8 bg-background-primary rounded-lg flex items-center justify-center text-text-light-gray">
+                        <svg
+                          className="w-5 h-5"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"
+                          />
+                        </svg>
                       </div>
                     )}
                     <span className="font-medium flex-1">{category.name}</span>
@@ -275,7 +329,19 @@ export const MobileDrawer = ({
               }}
               className="w-full flex items-center justify-center gap-2 px-4 py-3 text-error hover:bg-errorLight rounded-xl transition-colors"
             >
-              <span>🚪</span>
+              <svg
+                className="w-5 h-5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
+                />
+              </svg>
               <span className="font-medium">Sign Out</span>
             </button>
           </div>

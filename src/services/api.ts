@@ -133,14 +133,6 @@ api.interceptors.response.use(
         }
         return Promise.reject(error);
     }
-    
-    // Fallback for generic 401s (legacy or un-coded)
-    if (statusCode === 401 && !isAuthRequest && !originalRequest._retry) {
-       clearTokens();
-       if (typeof window !== 'undefined') {
-          window.location.href = '/auth/login';
-        }
-    }
 
     return Promise.reject(error);
   }

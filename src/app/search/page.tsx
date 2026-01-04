@@ -26,18 +26,43 @@ function SearchContent() {
   const cityId = searchParams.get('cityId') || '';
   const condition = searchParams.get('condition') || '';
 
-  // Parse fieldValues from URL (fieldValues[0][categoryFieldId]=...&fieldValues[0][value]=...)
-  const fieldValues = useMemo(() => {
-    const values: { categoryFieldId: string; value: string }[] = [];
+  // Parse categoryFields from URL (matches API format)
+  const categoryFields = useMemo(() => {
+    const fields: Array<{
+      fieldName: string;
+      value: string | string[] | { min?: number; max?: number };
+      categoryId?: string;
+    }> = [];
+
     let i = 0;
     while (true) {
-      const fieldId = searchParams.get(`fieldValues[${i}][categoryFieldId]`);
-      const value = searchParams.get(`fieldValues[${i}][value]`);
-      if (!fieldId || !value) break;
-      values.push({ categoryFieldId: fieldId, value });
+      const fieldName = searchParams.get(`categoryFields[${i}][fieldName]`);
+      if (!fieldName) break;
+
+      const value = searchParams.get(`categoryFields[${i}][value]`);
+      const minValue = searchParams.get(`categoryFields[${i}][value][min]`);
+      const maxValue = searchParams.get(`categoryFields[${i}][value][max]`);
+
+      if (minValue !== null || maxValue !== null) {
+        // NUMBER field with range
+        fields.push({
+          fieldName,
+          value: {
+            ...(minValue ? { min: Number(minValue) } : {}),
+            ...(maxValue ? { max: Number(maxValue) } : {}),
+          },
+        });
+      } else if (value) {
+        // Check if it's comma-separated (CHECKBOX multi-select)
+        if (value.includes(',')) {
+          fields.push({ fieldName, value: value.split(',') });
+        } else {
+          fields.push({ fieldName, value });
+        }
+      }
       i++;
     }
-    return values.length > 0 ? values : undefined;
+    return fields.length > 0 ? fields : undefined;
   }, [searchParams]);
 
   const [sort, setSort] = useState({
@@ -57,7 +82,7 @@ function SearchContent() {
       conditions: condition ? [condition as AdCondition] : undefined,
       sortBy: sort.sortBy,
       sortOrder: sort.sortOrder as 'asc' | 'desc',
-      fieldValues,
+      categoryFields,
     },
     facets: {
       categories: true,
@@ -101,7 +126,7 @@ function SearchContent() {
             minPrice ||
             maxPrice ||
             condition ||
-            (fieldValues && fieldValues.length > 0)) && (
+            (categoryFields && categoryFields.length > 0)) && (
             <div className="mb-8 p-6 bg-background rounded-2xl border border-border-custom shadow-sm flex flex-wrap items-center gap-3">
               <span className="text-sm font-bold text-text-gray uppercase tracking-widest mr-2">
                 Active filters:
@@ -126,9 +151,9 @@ function SearchContent() {
                   {condition}
                 </span>
               )}
-              {fieldValues && fieldValues.length > 0 && (
+              {categoryFields && categoryFields.length > 0 && (
                 <span className="inline-flex items-center px-4 py-1.5 rounded-full text-xs font-bold bg-purple-500/10 text-purple-600 border border-purple-500/20">
-                  {fieldValues.length} Custom Filters
+                  {categoryFields.length} Custom Filters
                 </span>
               )}
             </div>

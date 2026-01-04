@@ -189,10 +189,7 @@ export interface AdSearchParams {
   sortOrder?: 'asc' | 'desc';
   promotionFilter?: 'all' | 'promoted_only' | 'non_promoted_only';
   statuses?: AdStatus[];
-  fieldValues?: {
-    categoryFieldId: string;
-    value: string;
-  }[];
+  categoryFields?: CategoryFieldFilter[];
   minimal?: boolean; // For lightweight responses
 }
 

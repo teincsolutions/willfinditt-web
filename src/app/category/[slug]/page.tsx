@@ -36,7 +36,7 @@ function CategoryContent() {
   });
 
   const [categoryFieldFilters, setCategoryFieldFilters] = useState<
-    { categoryFieldId: string; value: string }[]
+    CategoryFieldFilter[]
   >([]);
 
   // Use the advanced search endpoint
@@ -52,7 +52,7 @@ function CategoryContent() {
         : undefined,
       sortBy: filters.sortBy,
       sortOrder: filters.sortOrder as 'asc' | 'desc',
-      fieldValues:
+      categoryFields:
         categoryFieldFilters.length > 0 ? categoryFieldFilters : undefined,
       cityIds: searchParams.get('cityId')
         ? [searchParams.get('cityId') as string]
@@ -75,18 +75,18 @@ function CategoryContent() {
     setFilters((prev) => ({ ...prev, [key]: value, page: 1 }));
   };
 
-  const handleCategoryFieldChange = (fieldId: string, value: string) => {
+  const handleCategoryFieldChange = (fieldName: string, value: string) => {
     setCategoryFieldFilters((prev) => {
-      const existing = prev.find((f) => f.categoryFieldId === fieldId);
+      const existing = prev.find((f) => f.fieldName === fieldName);
       if (value === '') {
-        return prev.filter((f) => f.categoryFieldId !== fieldId);
+        return prev.filter((f) => f.fieldName !== fieldName);
       }
       if (existing) {
         return prev.map((f) =>
-          f.categoryFieldId === fieldId ? { ...f, value } : f
+          f.fieldName === fieldName ? { ...f, value } : f
         );
       } else {
-        return [...prev, { categoryFieldId: fieldId, value }];
+        return [...prev, { fieldName, value }];
       }
     });
     // Reset to page 1 on filter change
@@ -143,12 +143,15 @@ function CategoryContent() {
                       {field.type === 'SELECT' && field.options && (
                         <select
                           value={
-                            categoryFieldFilters.find(
-                              (f) => f.categoryFieldId === field.id
-                            )?.value || ''
+                            (categoryFieldFilters.find(
+                              (f) => f.fieldName === field.name
+                            )?.value as string) || ''
                           }
                           onChange={(e) =>
-                            handleCategoryFieldChange(field.id, e.target.value)
+                            handleCategoryFieldChange(
+                              field.name,
+                              e.target.value
+                            )
                           }
                           className="w-full bg-background-primary/30 border border-border-custom rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none font-bold"
                         >
@@ -163,16 +166,16 @@ function CategoryContent() {
                       {field.type === 'RADIO' && field.options && (
                         <div className="grid grid-cols-1 gap-2">
                           {field.options.map((option) => {
-                            const isActive =
-                              categoryFieldFilters.find(
-                                (f) => f.categoryFieldId === field.id
-                              )?.value === option.value;
+                            const currentValue = categoryFieldFilters.find(
+                              (f) => f.fieldName === field.name
+                            )?.value;
+                            const isActive = currentValue === option.value;
                             return (
                               <button
                                 key={option.value}
                                 onClick={() =>
                                   handleCategoryFieldChange(
-                                    field.id,
+                                    field.name,
                                     isActive ? '' : option.value
                                   )
                                 }
@@ -192,12 +195,15 @@ function CategoryContent() {
                         <input
                           type={field.type === 'NUMBER' ? 'number' : 'text'}
                           value={
-                            categoryFieldFilters.find(
-                              (f) => f.categoryFieldId === field.id
-                            )?.value || ''
+                            (categoryFieldFilters.find(
+                              (f) => f.fieldName === field.name
+                            )?.value as string) || ''
                           }
                           onChange={(e) =>
-                            handleCategoryFieldChange(field.id, e.target.value)
+                            handleCategoryFieldChange(
+                              field.name,
+                              e.target.value
+                            )
                           }
                           placeholder={`Enter ${field.label.toLowerCase()}`}
                           className="w-full bg-background-primary/30 border border-border-custom rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none font-medium"
@@ -209,12 +215,12 @@ function CategoryContent() {
                             type="checkbox"
                             checked={
                               categoryFieldFilters.find(
-                                (f) => f.categoryFieldId === field.id
+                                (f) => f.fieldName === field.name
                               )?.value === 'true'
                             }
                             onChange={(e) =>
                               handleCategoryFieldChange(
-                                field.id,
+                                field.name,
                                 e.target.checked ? 'true' : ''
                               )
                             }

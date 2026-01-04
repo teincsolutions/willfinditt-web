@@ -36,7 +36,7 @@ export interface CategoryField {
 
 export interface CategoryFieldFilter {
   fieldName: string;
-  value: string;
+  value: string | string[] | { min?: number; max?: number };
   categoryId?: string;
 }
 

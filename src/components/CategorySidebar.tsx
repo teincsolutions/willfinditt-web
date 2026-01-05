@@ -208,6 +208,9 @@ export const CategorySidebar = ({
     });
     keysToDelete.forEach((key) => params.delete(key));
 
+    // Reset pagination when applying new filters
+    params.delete('page');
+
     // Add field values using fieldName format (matches API)
     let index = 0;
     fieldValues.forEach((value, fieldName) => {

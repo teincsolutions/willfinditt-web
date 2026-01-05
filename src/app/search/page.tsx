@@ -1,7 +1,7 @@
 'use client';
 
 import { Suspense } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useState, useMemo } from 'react';
 import { useSearchAds } from '@/hooks/useAds';
 import { ListingCard } from '@/components/ListingCard';
@@ -11,13 +11,13 @@ import { AdCondition, AdSearchSortBy, AdSearchSortOrder } from '@/types/ad';
 import { CategorySidebar } from '@/components/CategorySidebar';
 
 function SearchContent() {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const q = searchParams.get('q') || '';
 
-  const [pagination, setPagination] = useState({
-    page: 1,
-    limit: 12,
-  });
+  // Get pagination from URL
+  const page = Number(searchParams.get('page')) || 1;
+  const limit = 12;
 
   // Get URL params directly
   const categoryId = searchParams.get('categoryId') || '';
@@ -25,6 +25,11 @@ function SearchContent() {
   const maxPrice = searchParams.get('maxPrice') || '';
   const cityId = searchParams.get('cityId') || '';
   const condition = searchParams.get('condition') || '';
+  const sortBy =
+    (searchParams.get('sortBy') as AdSearchSortBy) || AdSearchSortBy.CREATED_AT;
+  const sortOrder =
+    (searchParams.get('sortOrder') as AdSearchSortOrder) ||
+    AdSearchSortOrder.DESC;
 
   // Parse categoryFields from URL (matches API format)
   const categoryFields = useMemo(() => {
@@ -65,23 +70,18 @@ function SearchContent() {
     return fields.length > 0 ? fields : undefined;
   }, [searchParams]);
 
-  const [sort, setSort] = useState({
-    sortBy: AdSearchSortBy.CREATED_AT,
-    sortOrder: AdSearchSortOrder.DESC,
-  });
-
   const { data: adsResponse, isLoading } = useSearchAds({
     search: {
       query: q,
-      page: pagination.page,
-      limit: pagination.limit,
+      page,
+      limit,
       categoryIds: categoryId ? [categoryId] : undefined,
       cityIds: cityId ? [cityId] : undefined,
       priceMin: minPrice ? Number(minPrice) : undefined,
       priceMax: maxPrice ? Number(maxPrice) : undefined,
       conditions: condition ? [condition as AdCondition] : undefined,
-      sortBy: sort.sortBy,
-      sortOrder: sort.sortOrder as 'asc' | 'desc',
+      sortBy,
+      sortOrder: sortOrder as 'asc' | 'desc',
       categoryFields,
     },
     facets: {
@@ -95,21 +95,31 @@ function SearchContent() {
   const ads = adsResponse?.data || [];
   const meta = adsResponse?.meta;
 
-  const handlePageChange = (page: number) => {
-    setPagination((prev) => ({ ...prev, page }));
+  const handlePageChange = (newPage: number) => {
+    const params = new URLSearchParams(searchParams.toString());
+    params.set('page', newPage.toString());
+    router.push(`/search?${params.toString()}`);
   };
 
-  const handleSortChange = (sortBy: AdSearchSortBy) => {
-    setSort((prev) => ({
-      ...prev,
-      sortBy,
-      sortOrder:
-        prev.sortBy === sortBy
-          ? prev.sortOrder === AdSearchSortOrder.ASC
-            ? AdSearchSortOrder.DESC
-            : AdSearchSortOrder.ASC
-          : AdSearchSortOrder.DESC,
-    }));
+  const handleSortChange = (newSortBy: AdSearchSortBy) => {
+    const params = new URLSearchParams(searchParams.toString());
+
+    // Toggle order if clicking same sort
+    let newOrder = AdSearchSortOrder.DESC;
+    if (sortBy === newSortBy) {
+      newOrder =
+        sortOrder === AdSearchSortOrder.ASC
+          ? AdSearchSortOrder.DESC
+          : AdSearchSortOrder.ASC;
+    }
+
+    params.set('sortBy', newSortBy);
+    params.set('sortOrder', newOrder);
+
+    // Reset to page 1 on sort change
+    params.set('page', '1');
+
+    router.push(`/search?${params.toString()}`);
   };
 
   return (
@@ -178,19 +188,19 @@ function SearchContent() {
             <div className="flex items-center gap-3 bg-background p-2 rounded-2xl border border-border-custom shadow-sm overflow-x-auto">
               <button
                 onClick={() => handleSortChange(AdSearchSortBy.CREATED_AT)}
-                className={`px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap ${sort.sortBy === AdSearchSortBy.CREATED_AT ? 'bg-primary text-white shadow-md' : 'text-text-gray hover:bg-background-primary'}`}
+                className={`px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap ${sortBy === AdSearchSortBy.CREATED_AT ? 'bg-primary text-white shadow-md' : 'text-text-gray hover:bg-background-primary'}`}
               >
                 Newest
               </button>
               <button
                 onClick={() => handleSortChange(AdSearchSortBy.PRICE)}
-                className={`px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap ${sort.sortBy === AdSearchSortBy.PRICE ? 'bg-primary text-white shadow-md' : 'text-text-gray hover:bg-background-primary'}`}
+                className={`px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap ${sortBy === AdSearchSortBy.PRICE ? 'bg-primary text-white shadow-md' : 'text-text-gray hover:bg-background-primary'}`}
               >
                 Price
               </button>
               <button
                 onClick={() => handleSortChange(AdSearchSortBy.VIEWS)}
-                className={`px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap ${sort.sortBy === AdSearchSortBy.VIEWS ? 'bg-primary text-white shadow-md' : 'text-text-gray hover:bg-background-primary'}`}
+                className={`px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap ${sortBy === AdSearchSortBy.VIEWS ? 'bg-primary text-white shadow-md' : 'text-text-gray hover:bg-background-primary'}`}
               >
                 Popular
               </button>

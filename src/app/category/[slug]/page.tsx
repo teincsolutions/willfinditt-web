@@ -211,7 +211,11 @@ function CategoryContent() {
   };
 
   const handlePageChange = (page: number) => {
-    setFilters((prev) => ({ ...prev, page }));
+    setFilters((prev) => {
+      const next = { ...prev, page };
+      setActiveFilters(next);
+      return next;
+    });
   };
 
   const clearFilters = () => {

@@ -48,7 +48,7 @@ pipeline {
                                 docker build --network host \
                                     --build-arg NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL} \
                                     --build-arg NEXT_PUBLIC_SITE_URL=${NEXT_PUBLIC_SITE_URL} \
-                                    --build-arg NEXT_PUBLIC_GOOGLE_CLIENT_ID=\${NEXT_PUBLIC_GOOGLE_CLIENT_ID} \
+                                    --build-arg NEXT_PUBLIC_GOOGLE_CLIENT_ID=${NEXT_PUBLIC_GOOGLE_CLIENT_ID} \
                                     -t ${DOCKER_IMAGE}:${DOCKER_TAG} .
                                 docker tag ${DOCKER_IMAGE}:${DOCKER_TAG} ${DOCKER_IMAGE}:latest
                             """

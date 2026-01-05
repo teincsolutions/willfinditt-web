@@ -8,6 +8,9 @@ import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/Button';
+import { googleLogin } from '@/services/auth.service';
+import { toast } from 'sonner';
+import { useGoogleLogin } from '@react-oauth/google';
 
 const schema = yup.object({
   identifier: yup.string().required('Email or phone number is required'),
@@ -18,25 +21,27 @@ import { OptimizedImage } from '@/components/OptimizedImage';
 
 export default function LoginPage() {
   const router = useRouter();
-  const { login, isAuthenticated, isLoading } = useAuth();
+  const { login, isAuthenticated, isLoading: authLoading } = useAuth();
   const [error, setError] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [isSubmittingForm, setIsSubmittingForm] = useState(false); // Local state for form submission
 
   useEffect(() => {
-    if (!isLoading && isAuthenticated) {
+    if (!authLoading && isAuthenticated) {
       router.replace('/');
     }
-  }, [isAuthenticated, router]);
+  }, [isAuthenticated, router, authLoading]);
 
   const {
     register,
     handleSubmit,
-    formState: { errors, isSubmitting },
+    formState: { errors },
   } = useForm({
     resolver: yupResolver(schema),
   });
 
   const onSubmit = async (data: { identifier: string; password: string }) => {
+    setIsSubmittingForm(true);
     try {
       setError('');
       const isEmail = data.identifier.includes('@');
@@ -45,14 +50,37 @@ export default function LoginPage() {
         [isEmail ? 'email' : 'phone']: data.identifier,
       };
       await login(loginParams);
+      toast.success('Login successful!');
+      router.push('/');
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Login failed');
+      toast.error(err instanceof Error ? err.message : 'Login failed');
+    } finally {
+      setIsSubmittingForm(false);
     }
   };
 
+  const loginWithGoogle = useGoogleLogin({
+    onSuccess: async (tokenResponse) => {
+      setIsSubmittingForm(true); // Use the same submitting state for Google login
+      try {
+        await googleLogin(tokenResponse.access_token);
+        toast.success('Login with Google successful!');
+        router.push('/');
+      } catch (error: any) {
+        toast.error(error.message || 'Google login failed');
+      } finally {
+        setIsSubmittingForm(false);
+      }
+    },
+    onError: () => {
+      toast.error('Google login failed');
+      setIsSubmittingForm(false);
+    },
+  });
+
   const handleGoogleSignIn = () => {
-    // TODO: Implement Google OAuth
-    console.log('Google sign in clicked');
+    loginWithGoogle();
   };
 
   return (
@@ -237,10 +265,10 @@ export default function LoginPage() {
 
             <Button
               type="submit"
-              disabled={isSubmitting}
+              disabled={isSubmittingForm}
               className="w-full bg-gradient-to-r from-primary to-secondary hover:opacity-90 text-white font-semibold py-3 rounded-xl transition-all duration-200 transform hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
             >
-              {isSubmitting ? (
+              {isSubmittingForm ? (
                 <div className="flex items-center justify-center gap-2">
                   <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
                   Signing in...

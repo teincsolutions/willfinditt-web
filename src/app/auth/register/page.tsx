@@ -6,7 +6,9 @@ import Link from 'next/link';
 import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
-import { useAuth } from '@/contexts/AuthContext';
+import { register, googleLogin } from '@/services/auth.service';
+import { toast } from 'sonner';
+import { useGoogleLogin } from '@react-oauth/google';
 import { Button } from '@/components/Button';
 
 const schema = yup.object().shape(
@@ -68,16 +70,10 @@ import { OptimizedImage } from '@/components/OptimizedImage';
 
 export default function RegisterPage() {
   const router = useRouter();
-  const { register, isAuthenticated, isLoading } = useAuth();
   const [error, setError] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-
-  useEffect(() => {
-    if (!isLoading && isAuthenticated) {
-      router.replace('/');
-    }
-  }, [isAuthenticated, router]);
+  const [isLoading, setIsLoading] = useState(false);
 
   const {
     register: registerField,
@@ -89,22 +85,38 @@ export default function RegisterPage() {
 
   const onSubmit = async (data: RegisterFormData) => {
     try {
-      setError('');
-      await register({
-        firstName: data.firstName,
-        lastName: data.lastName,
-        email: data.email || undefined,
-        phone: data.phone || undefined,
-        password: data.password,
-      });
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Registration failed');
+      setIsLoading(true);
+      await register(data);
+      toast.success('Registration successful!');
+      router.push('/');
+    } catch (error: any) {
+      toast.error(error.message || 'Registration failed');
+    } finally {
+      setIsLoading(false);
     }
   };
 
+  const registerWithGoogle = useGoogleLogin({
+    onSuccess: async (tokenResponse) => {
+      try {
+        setIsLoading(true);
+        await googleLogin(tokenResponse.access_token);
+        toast.success('Google registration successful!');
+        router.push('/');
+      } catch (error: any) {
+        toast.error(error.message || 'Google registration failed');
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    onError: () => {
+      toast.error('Google registration failed');
+      setIsLoading(false);
+    },
+  });
+
   const handleGoogleSignUp = () => {
-    // TODO: Implement Google OAuth
-    console.log('Google sign up clicked');
+    registerWithGoogle();
   };
 
   return (

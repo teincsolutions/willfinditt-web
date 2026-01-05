@@ -39,21 +39,32 @@ function CategoryContent() {
     CategoryFieldFilter[]
   >([]);
 
+  // Active filters used for fetching data
+  const [activeFilters, setActiveFilters] = useState(filters);
+  const [activeCategoryFieldFilters, setActiveCategoryFieldFilters] =
+    useState(categoryFieldFilters);
+
   // Use the advanced search endpoint
   const { data: adsResponse, isLoading: adsLoading } = useSearchAds({
     search: {
       categoryIds: activeCategory?.id ? [activeCategory.id] : undefined,
-      page: filters.page,
-      limit: filters.limit,
-      priceMin: filters.minPrice ? Number(filters.minPrice) : undefined,
-      priceMax: filters.maxPrice ? Number(filters.maxPrice) : undefined,
-      conditions: filters.condition
-        ? [filters.condition as AdCondition]
+      page: activeFilters.page,
+      limit: activeFilters.limit,
+      priceMin: activeFilters.minPrice
+        ? Number(activeFilters.minPrice)
         : undefined,
-      sortBy: filters.sortBy,
-      sortOrder: filters.sortOrder as 'asc' | 'desc',
+      priceMax: activeFilters.maxPrice
+        ? Number(activeFilters.maxPrice)
+        : undefined,
+      conditions: activeFilters.condition
+        ? [activeFilters.condition as AdCondition]
+        : undefined,
+      sortBy: activeFilters.sortBy,
+      sortOrder: activeFilters.sortOrder as 'asc' | 'desc',
       categoryFields:
-        categoryFieldFilters.length > 0 ? categoryFieldFilters : undefined,
+        activeCategoryFieldFilters.length > 0
+          ? activeCategoryFieldFilters
+          : undefined,
       cityIds: searchParams.get('cityId')
         ? [searchParams.get('cityId') as string]
         : undefined,
@@ -72,7 +83,22 @@ function CategoryContent() {
   const meta = adsResponse?.meta;
 
   const handleFilterChange = (key: string, value: string) => {
-    setFilters((prev) => ({ ...prev, [key]: value, page: 1 }));
+    // For sort/pagination, apply immediately
+    if (['sortBy', 'sortOrder', 'page'].includes(key)) {
+      setFilters((prev) => {
+        const next = { ...prev, [key]: value };
+        setActiveFilters(next);
+        return next;
+      });
+    } else {
+      // For content filters, just update UI state
+      setFilters((prev) => ({ ...prev, [key]: value }));
+    }
+  };
+
+  const applyFilters = () => {
+    setActiveFilters({ ...filters, page: 1 });
+    setActiveCategoryFieldFilters(categoryFieldFilters);
   };
 
   const handleCategoryFieldChange = (fieldName: string, value: string) => {
@@ -89,8 +115,99 @@ function CategoryContent() {
         return [...prev, { fieldName, value }];
       }
     });
-    // Reset to page 1 on filter change
-    setFilters((prev) => ({ ...prev, page: 1 }));
+    // Don't reset page here, wait for apply
+  };
+
+  // Handle NUMBER field range changes (min/max)
+  const handleNumberRangeChange = (
+    fieldName: string,
+    type: 'min' | 'max',
+    value: string
+  ) => {
+    setCategoryFieldFilters((prev) => {
+      const existing = prev.find((f) => f.fieldName === fieldName);
+      const currentVal = existing?.value;
+      const rangeValue =
+        typeof currentVal === 'object' && !Array.isArray(currentVal)
+          ? { ...currentVal }
+          : { min: undefined, max: undefined };
+
+      if (value) {
+        rangeValue[type] = Number(value);
+      } else {
+        delete rangeValue[type];
+      }
+
+      // Remove if both min and max are empty
+      if (rangeValue.min === undefined && rangeValue.max === undefined) {
+        return prev.filter((f) => f.fieldName !== fieldName);
+      }
+
+      if (existing) {
+        return prev.map((f) =>
+          f.fieldName === fieldName ? { ...f, value: rangeValue } : f
+        );
+      } else {
+        return [...prev, { fieldName, value: rangeValue }];
+      }
+    });
+    // Don't reset page here, wait for apply
+  };
+
+  // Handle CHECKBOX multi-select changes
+  const handleCheckboxMultiSelect = (
+    fieldName: string,
+    optionValue: string,
+    checked: boolean
+  ) => {
+    setCategoryFieldFilters((prev) => {
+      const existing = prev.find((f) => f.fieldName === fieldName);
+      const currentVal = existing?.value;
+      let values: string[] = Array.isArray(currentVal) ? [...currentVal] : [];
+
+      if (checked) {
+        if (!values.includes(optionValue)) {
+          values.push(optionValue);
+        }
+      } else {
+        values = values.filter((v) => v !== optionValue);
+      }
+
+      if (values.length === 0) {
+        return prev.filter((f) => f.fieldName !== fieldName);
+      }
+
+      if (existing) {
+        return prev.map((f) =>
+          f.fieldName === fieldName ? { ...f, value: values } : f
+        );
+      } else {
+        return [...prev, { fieldName, value: values }];
+      }
+    });
+    // Don't reset page here, wait for apply
+  };
+
+  // Helper to get string value
+  const getStringValue = (fieldName: string): string => {
+    const filter = categoryFieldFilters.find((f) => f.fieldName === fieldName);
+    return typeof filter?.value === 'string' ? filter.value : '';
+  };
+
+  // Helper to get range value
+  const getRangeValue = (fieldName: string): { min?: number; max?: number } => {
+    const filter = categoryFieldFilters.find((f) => f.fieldName === fieldName);
+    const val = filter?.value;
+    if (typeof val === 'object' && !Array.isArray(val)) {
+      return val as { min?: number; max?: number };
+    }
+    return {};
+  };
+
+  // Helper to get array value for CHECKBOX multi-select
+  const getArrayValue = (fieldName: string): string[] => {
+    const filter = categoryFieldFilters.find((f) => f.fieldName === fieldName);
+    return Array.isArray(filter?.value) ? (filter.value as string[]) : [];
   };
 
   const handlePageChange = (page: number) => {
@@ -107,7 +224,16 @@ function CategoryContent() {
       sortBy: AdSearchSortBy.CREATED_AT,
       sortOrder: AdSearchSortOrder.DESC,
     });
-    setCategoryFieldFilters([]);
+    setActiveCategoryFieldFilters([]);
+    setActiveFilters({
+      page: 1,
+      limit: 12,
+      minPrice: '',
+      maxPrice: '',
+      condition: '',
+      sortBy: AdSearchSortBy.CREATED_AT,
+      sortOrder: AdSearchSortOrder.DESC,
+    });
   };
 
   return (
@@ -140,13 +266,11 @@ function CategoryContent() {
                       <label className="block text-sm font-bold text-text-gray mb-3 uppercase tracking-wider">
                         {field.label}
                       </label>
+
+                      {/* SELECT field - dropdown */}
                       {field.type === 'SELECT' && field.options && (
                         <select
-                          value={
-                            (categoryFieldFilters.find(
-                              (f) => f.fieldName === field.name
-                            )?.value as string) || ''
-                          }
+                          value={getStringValue(field.name)}
                           onChange={(e) =>
                             handleCategoryFieldChange(
                               field.name,
@@ -163,13 +287,13 @@ function CategoryContent() {
                           ))}
                         </select>
                       )}
+
+                      {/* RADIO field - single selection */}
                       {field.type === 'RADIO' && field.options && (
                         <div className="grid grid-cols-1 gap-2">
                           {field.options.map((option) => {
-                            const currentValue = categoryFieldFilters.find(
-                              (f) => f.fieldName === field.name
-                            )?.value;
-                            const isActive = currentValue === option.value;
+                            const isActive =
+                              getStringValue(field.name) === option.value;
                             return (
                               <button
                                 key={option.value}
@@ -191,14 +315,12 @@ function CategoryContent() {
                           })}
                         </div>
                       )}
-                      {(field.type === 'TEXT' || field.type === 'NUMBER') && (
+
+                      {/* TEXT field - simple input */}
+                      {field.type === 'TEXT' && (
                         <input
-                          type={field.type === 'NUMBER' ? 'number' : 'text'}
-                          value={
-                            (categoryFieldFilters.find(
-                              (f) => f.fieldName === field.name
-                            )?.value as string) || ''
-                          }
+                          type="text"
+                          value={getStringValue(field.name)}
                           onChange={(e) =>
                             handleCategoryFieldChange(
                               field.name,
@@ -209,15 +331,75 @@ function CategoryContent() {
                           className="w-full bg-background-primary/30 border border-border-custom rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none font-medium"
                         />
                       )}
-                      {field.type === 'CHECKBOX' && (
+
+                      {/* NUMBER field - range inputs (min/max) */}
+                      {field.type === 'NUMBER' && (
+                        <div className="grid grid-cols-2 gap-3">
+                          <input
+                            type="number"
+                            value={getRangeValue(field.name).min ?? ''}
+                            onChange={(e) =>
+                              handleNumberRangeChange(
+                                field.name,
+                                'min',
+                                e.target.value
+                              )
+                            }
+                            placeholder="Min"
+                            className="w-full bg-background-primary/30 border border-border-custom rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none font-medium"
+                          />
+                          <input
+                            type="number"
+                            value={getRangeValue(field.name).max ?? ''}
+                            onChange={(e) =>
+                              handleNumberRangeChange(
+                                field.name,
+                                'max',
+                                e.target.value
+                              )
+                            }
+                            placeholder="Max"
+                            className="w-full bg-background-primary/30 border border-border-custom rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none font-medium"
+                          />
+                        </div>
+                      )}
+
+                      {/* CHECKBOX field - multi-select from options */}
+                      {field.type === 'CHECKBOX' && field.options && (
+                        <div className="space-y-2">
+                          {field.options.map((option) => (
+                            <label
+                              key={option.value}
+                              className="flex items-center group cursor-pointer"
+                            >
+                              <input
+                                type="checkbox"
+                                checked={getArrayValue(field.name).includes(
+                                  option.value
+                                )}
+                                onChange={(e) =>
+                                  handleCheckboxMultiSelect(
+                                    field.name,
+                                    option.value,
+                                    e.target.checked
+                                  )
+                                }
+                                className="w-5 h-5 rounded border-border-custom text-primary focus:ring-primary/20 transition-all cursor-pointer"
+                              />
+                              <span className="ml-3 text-sm font-bold text-text-gray group-hover:text-text transition-colors">
+                                {option.label}
+                              </span>
+                            </label>
+                          ))}
+                        </div>
+                      )}
+
+                      {/* BOOLEAN field - simple toggle (for CHECKBOX without options) */}
+                      {field.type === 'BOOLEAN' && (
                         <label className="flex items-center group cursor-pointer">
                           <input
                             type="checkbox"
-                            checked={
-                              categoryFieldFilters.find(
-                                (f) => f.fieldName === field.name
-                              )?.value === 'true'
-                            }
+                            checked={getStringValue(field.name) === 'true'}
                             onChange={(e) =>
                               handleCategoryFieldChange(
                                 field.name,
@@ -227,7 +409,7 @@ function CategoryContent() {
                             className="w-5 h-5 rounded border-border-custom text-primary focus:ring-primary/20 transition-all cursor-pointer"
                           />
                           <span className="ml-3 text-sm font-bold text-text-gray group-hover:text-text transition-colors">
-                            {field.label}
+                            Yes
                           </span>
                         </label>
                       )}
@@ -311,6 +493,15 @@ function CategoryContent() {
                   <option value={AdSearchSortBy.VIEWS}>Most Popular</option>
                   <option value={AdSearchSortBy.RELEVANCE}>Relevance</option>
                 </select>
+              </div>
+
+              <div className="pt-4">
+                <Button
+                  onClick={applyFilters}
+                  className="w-full py-3 text-base"
+                >
+                  Apply Filters
+                </Button>
               </div>
             </div>
           </div>

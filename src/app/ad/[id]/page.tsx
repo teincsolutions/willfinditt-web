@@ -3,6 +3,7 @@
 import { useParams } from 'next/navigation';
 import { OptimizedImage } from '@/components/OptimizedImage';
 import { useAd } from '@/hooks/useAds';
+import { useCategoryFields } from '@/hooks/useCategories';
 import { useAddFavorite, useRemoveFavorite } from '@/hooks/useFavorites';
 import { Button } from '@/components/Button';
 import { useState } from 'react';
@@ -14,6 +15,7 @@ export default function AdDetailPage() {
   const id = params.id as string;
 
   const { data: ad, isLoading } = useAd(id);
+  const { data: categoryFields } = useCategoryFields(ad?.category?.id || '');
   const addFavorite = useAddFavorite();
   const removeFavorite = useRemoveFavorite();
 
@@ -32,9 +34,10 @@ export default function AdDetailPage() {
     addFavorite.mutate(id);
   };
 
-  const priceDisplay = ad.price && ad.price > 0 
-    ? formatCurrency(ad.price, 'en-GH', ad.currency || 'GHS')
-    : 'Contact for price';
+  const priceDisplay =
+    ad.price && ad.price > 0
+      ? formatCurrency(ad.price, 'en-GH', ad.currency || 'GHS')
+      : 'Contact for price';
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -103,16 +106,66 @@ export default function AdDetailPage() {
                 {ad.category.name}
               </div>
               {ad.isNegotiable && (
-                <div className="col-span-2">
+                <div>
                   <span className="font-medium">Negotiable:</span> Yes
                 </div>
               )}
+
+              {/* Dynamic Category Fields */}
+              {ad.fieldValues?.map((field) => {
+                const fieldDef = categoryFields?.find(
+                  (f) => f.id === field.categoryFieldId
+                );
+                let displayValue: React.ReactNode = field.value;
+
+                if (fieldDef?.options) {
+                  if (
+                    fieldDef.type === 'CHECKBOX' &&
+                    field.value.includes(',')
+                  ) {
+                    // Handle multi-select checkbox with Pills
+                    const values = field.value.split(',');
+                    const labels = values.map(
+                      (v) =>
+                        fieldDef.options?.find((opt) => opt.value === v)
+                          ?.label || v
+                    );
+                    displayValue = (
+                      <div className="flex flex-wrap gap-1.5 mt-1">
+                        {labels.map((label, idx) => (
+                          <span
+                            key={idx}
+                            className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-primary/10 text-primary border border-primary/20"
+                          >
+                            {label}
+                          </span>
+                        ))}
+                      </div>
+                    );
+                  } else {
+                    // Handle single select/radio/checkbox
+                    const option = fieldDef.options.find(
+                      (opt) => opt.value === field.value
+                    );
+                    if (option) displayValue = option.label;
+                  }
+                }
+
+                return (
+                  <div key={field.id}>
+                    <span className="font-medium">
+                      {field.categoryField.label}:
+                    </span>{' '}
+                    {displayValue}
+                  </div>
+                );
+              })}
             </div>
           </div>
 
           <div>
             <h3 className="font-semibold mb-2">Description</h3>
-            <div 
+            <div
               className="text-text-gray ad-description-content"
               dangerouslySetInnerHTML={{ __html: ad.description }}
             />

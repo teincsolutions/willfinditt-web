@@ -182,13 +182,31 @@ export const CategorySidebar = ({
   };
 
   const applyFilters = () => {
-    const params = new URLSearchParams();
+    // Start with existing params to preserve q, sortBy, etc.
+    const params = new URLSearchParams(searchParams.toString());
+
+    // Update basic filters
     if (filters.categoryId) params.set('categoryId', filters.categoryId);
-    const currentCityId = searchParams.get('cityId');
-    if (currentCityId) params.set('cityId', currentCityId);
+    else params.delete('categoryId');
+
     if (filters.minPrice) params.set('minPrice', filters.minPrice);
+    else params.delete('minPrice');
+
     if (filters.maxPrice) params.set('maxPrice', filters.maxPrice);
+    else params.delete('maxPrice');
+
     if (filters.condition) params.set('condition', filters.condition);
+    else params.delete('condition');
+
+    // Remove all existing categoryFields params before adding new ones
+    // We need to collect keys to delete first to avoid iterator issues
+    const keysToDelete: string[] = [];
+    params.forEach((_, key) => {
+      if (key.startsWith('categoryFields')) {
+        keysToDelete.push(key);
+      }
+    });
+    keysToDelete.forEach((key) => params.delete(key));
 
     // Add field values using fieldName format (matches API)
     let index = 0;

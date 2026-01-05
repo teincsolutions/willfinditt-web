@@ -110,26 +110,6 @@ export default function RegisterPage() {
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
       <div className="max-w-md w-full relative">
-        {/* Back Button */}
-        <Link
-          href="/"
-          className="absolute -top-12 left-0 text-text-gray hover:text-text flex items-center gap-2 transition-colors"
-        >
-          <svg
-            className="w-5 h-5"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M10 19l-7-7m0 0l7-7m-7 7h18"
-            />
-          </svg>
-          Back to Home
-        </Link>
         {/* Header */}
         <div className="text-center mb-8">
           <div className="relative inline-flex items-center justify-center w-20 h-20 mb-4 overflow-hidden rounded-2xli">
@@ -150,6 +130,26 @@ export default function RegisterPage() {
 
         {/* Form Card */}
         <div className="bg-background rounded-2xl shadow-xl border border-border-custom p-8">
+          {/* Back Button */}
+          <Link
+            href="/"
+            className="text-text-gray hover:text-text flex items-center gap-2 transition-colors mb-4"
+          >
+            <svg
+              className="w-5 h-5"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M10 19l-7-7m0 0l7-7m-7 7h18"
+              />
+            </svg>
+            Back to Home
+          </Link>
           {/* Google Sign Up */}
           <button
             onClick={handleGoogleSignUp}

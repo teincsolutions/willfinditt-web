@@ -269,7 +269,7 @@ export const MobileDrawer = ({
               {categories.map((category) => (
                 <li key={category.id}>
                   <Link
-                    href={`/category/${category.slug || category.id}`}
+                    href={`/category/${category.slug}?categoryId=${category.id}`}
                     onClick={onClose}
                     className="flex items-center gap-3 px-3 py-3 rounded-xl text-text hover:bg-background transition-colors"
                   >
@@ -279,7 +279,7 @@ export const MobileDrawer = ({
                         alt=""
                         width={32}
                         height={32}
-                        className="w-8 h-8 object-cover"
+                        className="w-8 h-8 object-cover rounded-lg"
                       />
                     ) : (
                       <div className="w-8 h-8 bg-background-primary rounded-lg flex items-center justify-center text-text-light-gray">
@@ -298,7 +298,9 @@ export const MobileDrawer = ({
                         </svg>
                       </div>
                     )}
-                    <span className="font-medium flex-1">{category.name}</span>
+                    <span className="font-medium capitalize flex-1">
+                      {category.name}
+                    </span>
                     <svg
                       className="w-4 h-4 text-text-light-gray"
                       fill="none"

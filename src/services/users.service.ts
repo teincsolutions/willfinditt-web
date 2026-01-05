@@ -29,3 +29,8 @@ export const removeFavorite = async (adId: string): Promise<void> => {
 export const deleteAccount = async (): Promise<void> => {
   await api.delete('/users/me');
 };
+
+export const getUser = async (id: string): Promise<User> => {
+  const response = await api.get(`/users/${id}`);
+  return response.data;
+};

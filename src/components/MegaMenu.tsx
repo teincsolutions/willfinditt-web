@@ -18,15 +18,15 @@ export const MegaMenu = ({ categories, isOpen, onClose }: MegaMenuProps) => {
 
   if (!isOpen) return null;
 
-  const activeCategoryData = categories.find((cat) => cat.id === activeCategory);
+  const activeCategoryData = categories.find(
+    (cat) => cat.id === activeCategory
+  );
 
   return (
-    <div
-      className="absolute left-0 right-0 top-full pt-3 z-50 animate-in fade-in slide-in-from-top-2 duration-200"
-    >
+    <div className="absolute left-0 right-0 top-full pt-3 z-50 animate-in fade-in slide-in-from-top-2 duration-200">
       {/* Invisible bridge to catch mouse movement */}
       <div className="absolute top-0 left-0 right-0 h-4 -translate-y-full bg-transparent" />
-      
+
       <div className="bg-background shadow-[0_25px_60px_-15px_rgba(0,0,0,0.5)] border border-border-custom rounded-b-3xl overflow-hidden">
         <div className="container mx-auto">
           <div className="flex w-full bg-background min-h-[550px] overflow-hidden">
@@ -64,7 +64,9 @@ export const MegaMenu = ({ categories, isOpen, onClose }: MegaMenuProps) => {
                           <span className="text-xl">📦</span>
                         </div>
                       )}
-                      <span className="font-bold text-base flex-1">{category.name}</span>
+                      <span className="font-bold text-base flex-1">
+                        {category.name}
+                      </span>
                       <svg
                         className={`w-4 h-4 transition-all duration-300 ${activeCategory === category.id ? 'opacity-100 translate-x-1 text-primary' : 'opacity-0 text-text-light-gray'}`}
                         fill="none"
@@ -90,10 +92,12 @@ export const MegaMenu = ({ categories, isOpen, onClose }: MegaMenuProps) => {
                 <>
                   <div className="flex items-center justify-between mb-10 pb-8 border-b border-border-custom sticky top-0 bg-background z-10 -mx-10 px-10">
                     <div>
-                        <h3 className="text-3xl font-black text-text mb-2 tracking-tight">
-                            {activeCategoryData.name}
-                        </h3>
-                        <p className="text-text-gray text-base font-medium">Explore the best of {activeCategoryData.name}</p>
+                      <h3 className="text-3xl font-black text-text mb-2 tracking-tight">
+                        {activeCategoryData.name}
+                      </h3>
+                      <p className="text-text-gray text-base font-medium">
+                        Explore the best of {activeCategoryData.name}
+                      </p>
                     </div>
                     <Link
                       href={`/category/${activeCategoryData.slug || activeCategoryData.id}?categoryId=${activeCategoryData.id}`}
@@ -101,13 +105,24 @@ export const MegaMenu = ({ categories, isOpen, onClose }: MegaMenuProps) => {
                       onClick={onClose}
                     >
                       View All Listings
-                      <svg className="w-5 h-5 transition-transform group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                      <svg
+                        className="w-5 h-5 transition-transform group-hover:translate-x-1"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M13 7l5 5m0 0l-5 5m5-5H6"
+                        />
                       </svg>
                     </Link>
                   </div>
-                  
-                  {activeCategoryData.children && activeCategoryData.children.length > 0 ? (
+
+                  {activeCategoryData.children &&
+                  activeCategoryData.children.length > 0 ? (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 2xl:grid-cols-4 gap-8">
                       {activeCategoryData.children.map((subcat) => (
                         <Link
@@ -117,26 +132,26 @@ export const MegaMenu = ({ categories, isOpen, onClose }: MegaMenuProps) => {
                           onClick={onClose}
                         >
                           <div className="w-16 h-16 rounded-2xl bg-background-primary flex-shrink-0 overflow-hidden flex items-center justify-center group-hover:scale-110 transition-transform shadow-sm border border-border-custom/50 group-hover:border-primary/20">
-                              {subcat.icon ? (
-                                <OptimizedImage
-                                    src={subcat.icon}
-                                    alt=""
-                                    width={64}
-                                    height={64}
-                                    className="w-full h-full object-cover"
-                                />
-                              ) : (
-                                  <span className="text-3xl">📄</span>
-                              )}
+                            {subcat.icon ? (
+                              <OptimizedImage
+                                src={subcat.icon}
+                                alt=""
+                                width={64}
+                                height={64}
+                                className="w-full h-full object-cover"
+                              />
+                            ) : (
+                              <span className="text-3xl">📄</span>
+                            )}
                           </div>
                           <div className="flex-1 min-w-0">
-                            <span className="font-bold text-text group-hover:text-primary transition-colors block text-base truncate mb-1">
+                            <span className="font-bold text-xs group-hover:text-primary transition-colors block text-base  mb-1">
                               {subcat.name}
                             </span>
                             {subcat._count?.ads !== undefined && (
                               <div className="flex items-center gap-1.5">
                                 <span className="w-1.5 h-1.5 rounded-full bg-success" />
-                                <p className="text-[12px] text-text-light-gray font-semibold">
+                                <p className="text-[10px] text-text-light-gray font-semibold">
                                   {subcat._count.ads.toLocaleString()} listings
                                 </p>
                               </div>
@@ -147,13 +162,27 @@ export const MegaMenu = ({ categories, isOpen, onClose }: MegaMenuProps) => {
                     </div>
                   ) : (
                     <div className="flex flex-col items-center justify-center py-24 bg-background-primary/10 rounded-[3rem] border border-dashed border-border-custom mt-10">
-                       <div className="w-24 h-24 bg-background-primary rounded-full flex items-center justify-center mb-8 shadow-md border border-border-custom">
-                            <svg className="w-12 h-12 text-primary/30" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
-                            </svg>
-                       </div>
-                       <p className="text-2xl font-bold text-text">Find amazing deals</p>
-                       <p className="text-text-gray mt-2 font-medium">No subcategories currently on display</p>
+                      <div className="w-24 h-24 bg-background-primary rounded-full flex items-center justify-center mb-8 shadow-md border border-border-custom">
+                        <svg
+                          className="w-12 h-12 text-primary/30"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={1.5}
+                            d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"
+                          />
+                        </svg>
+                      </div>
+                      <p className="text-2xl font-bold text-text">
+                        Find amazing deals
+                      </p>
+                      <p className="text-text-gray mt-2 font-medium">
+                        No subcategories currently on display
+                      </p>
                     </div>
                   )}
                 </>

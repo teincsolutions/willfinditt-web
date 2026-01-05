@@ -117,7 +117,7 @@ export default function CreateAdPage() {
 
     createAd.mutate(adData, {
       onSuccess: (ad) => {
-        router.push(`/ad/${ad.id}`);
+        router.push(`/ads/${ad.id}`);
       },
       onError: (error) => {
         console.error('Failed to create ad:', error);

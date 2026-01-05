@@ -1,6 +1,9 @@
+import { SellerProfile } from '@/services/seller.service';
+
 export interface User {
   id: string;
   email: string;
+  sellerProfile?: SellerProfile;
   username?: string;
   firstName?: string;
   lastName?: string;

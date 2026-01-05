@@ -15,7 +15,7 @@ export const ListingCard: React.FC<ListingCardProps> = ({ ad }) => {
 
   return (
     <Link
-      href={`/ad/${ad.id}`}
+      href={`/ads/${ad.id}`}
       className="group block h-auto sm:h-[450px] bg-background rounded-xl shadow-sm border border-border-custom overflow-hidden hover:shadow-2xl hover:border-primary/30 transition-all duration-300 transform hover:-translate-y-2"
     >
       <div className="relative overflow-hidden bg-background-primary/5 max-h-[279px] flex items-center justify-center">
@@ -24,11 +24,13 @@ export const ListingCard: React.FC<ListingCardProps> = ({ ad }) => {
           alt={ad.title}
           className="w-full h-auto object-cover group-hover:scale-110 transition-transform duration-300"
         />
-        <div className="absolute top-3 right-3 z-20">
-          <span className="bg-background/90 text-text text-[10px] sm:text-xs px-2 py-1 rounded-full font-medium shadow-sm">
-            {ad.condition}
-          </span>
-        </div>
+        {ad.condition && (
+          <div className="absolute top-3 right-3 z-20">
+            <span className="bg-background/90 text-text text-[10px] sm:text-xs px-2 py-1 rounded-full font-medium shadow-sm">
+              {ad.condition.replace(/_/g, ' ')}
+            </span>
+          </div>
+        )}
         {ad.isNegotiable && (
           <div className="absolute top-3 left-3 z-20">
             <span className="bg-success text-white text-[10px] sm:text-xs px-2 py-1 rounded-full font-medium shadow-sm">
@@ -67,17 +69,12 @@ export const ListingCard: React.FC<ListingCardProps> = ({ ad }) => {
             </span>
           </div>
         </div>
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 sm:gap-0 mt-2 pt-2 border-t border-border-custom/50 sm:border-t-0">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 sm:gap-0">
           <p
             className={`font-bold text-primary ${priceDisplay === 'Contact for price' ? 'text-xs sm:text-lg' : 'text-sm sm:text-2xl'}`}
           >
             {priceDisplay}
           </p>
-          <div className="text-left sm:text-right">
-            <p className="text-text-light-gray text-[10px] sm:text-xs">
-              {new Date(ad.createdAt).toLocaleDateString()}
-            </p>
-          </div>
         </div>
       </div>
     </Link>

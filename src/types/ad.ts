@@ -79,6 +79,9 @@ export interface UserSummaryDto {
   firstName?: string;
   lastName?: string;
   avatar?: string;
+  sellerProfile?: {
+    id: string;
+  };
 }
 
 export interface CategorySummaryDto {

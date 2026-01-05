@@ -9,12 +9,17 @@ interface CategoryTilesProps {
   isLoading?: boolean;
 }
 
-export const CategoryTiles = ({ categories, isLoading }: CategoryTilesProps) => {
+export const CategoryTiles = ({
+  categories,
+  isLoading,
+}: CategoryTilesProps) => {
   if (isLoading) {
     return (
       <section className="py-8">
         <div className="container mx-auto px-4">
-          <h2 className="text-2xl font-bold text-text mb-6">Browse Categories</h2>
+          <h2 className="text-2xl font-bold text-text mb-6">
+            Browse Categories
+          </h2>
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
             {[...Array(6)].map((_, i) => (
               <div key={i} className="animate-pulse">
@@ -42,13 +47,23 @@ export const CategoryTiles = ({ categories, isLoading }: CategoryTilesProps) => 
             className="text-primary hover:text-primary/80 font-medium text-sm flex items-center gap-1"
           >
             View all
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            <svg
+              className="w-4 h-4"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M9 5l7 7-7 7"
+              />
             </svg>
           </Link>
         </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-8 gap-4">
           {categories.slice(0, 12).map((category) => (
             <Link
               key={category.id}
@@ -70,18 +85,19 @@ export const CategoryTiles = ({ categories, isLoading }: CategoryTilesProps) => 
                     <span className="text-3xl">📦</span>
                   )}
                 </div>
- 
+
                 {/* Name */}
                 <h3 className="text-center font-medium text-text group-hover:text-primary transition-colors text-sm line-clamp-2">
                   {category.name}
                 </h3>
 
                 {/* Count badge */}
-                {category._count?.ads !== undefined && category._count.ads > 0 && (
-                  <p className="text-center text-xs text-text-light-gray mt-1">
-                    {category._count.ads.toLocaleString()} ads
-                  </p>
-                )}
+                {category._count?.ads !== undefined &&
+                  category._count.ads > 0 && (
+                    <p className="text-center text-xs text-text-light-gray mt-1">
+                      {category._count.ads.toLocaleString()} ads
+                    </p>
+                  )}
               </div>
             </Link>
           ))}

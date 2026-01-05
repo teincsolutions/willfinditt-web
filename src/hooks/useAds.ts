@@ -66,10 +66,14 @@ export const useDeleteAd = () => {
 };
 
 // Search and Filtering
-export const useSearchAds = (searchRequest: AdSearchRequest) => {
+export const useSearchAds = (
+  searchRequest: AdSearchRequest,
+  options?: { enabled?: boolean }
+) => {
   return useQuery({
     queryKey: ['ads', 'search', searchRequest],
     queryFn: () => searchAds(searchRequest),
+    enabled: options?.enabled,
   });
 };
 

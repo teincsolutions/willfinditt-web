@@ -6,6 +6,7 @@ import {
   markNotificationAsRead,
   markAllAsRead,
 } from '@/services/notifications.service';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface NotificationsParams {
   page?: number;
@@ -25,9 +26,11 @@ export const useNotifications = (params: NotificationsParams = {}) => {
 
 // Get unread notifications count (for header badge)
 export const useUnreadCount = () => {
+  const { isAuthenticated } = useAuth();
   return useQuery({
     queryKey: ['notifications', 'unread-count'],
     queryFn: getUnreadCount,
+    enabled: !!isAuthenticated,
     staleTime: 30 * 1000, // 30 seconds
     refetchInterval: 60 * 1000, // Refetch every minute
   });

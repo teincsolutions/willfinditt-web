@@ -21,7 +21,7 @@ export const SearchBar = () => {
           type="text"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="Search ads..."
+          placeholder="What are you looking for..."
           className="w-full pl-4 pr-10 py-2 border border-border-custom rounded-l-lg focus:border-primary focus:outline-none text-text placeholder-placeholder text-sm"
           onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
         />

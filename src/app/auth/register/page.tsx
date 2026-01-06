@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
-import { register, googleLogin } from '@/services/auth.service';
+import { register, socialAuth } from '@/services/auth.service';
 import { toast } from 'sonner';
 import { useGoogleLogin } from '@react-oauth/google';
 import { Button } from '@/components/Button';
@@ -100,7 +100,7 @@ export default function RegisterPage() {
     onSuccess: async (tokenResponse) => {
       try {
         setIsLoading(true);
-        await googleLogin(tokenResponse.access_token);
+        await socialAuth(tokenResponse.access_token, 'GOOGLE');
         toast.success('Google registration successful!');
         router.push('/');
       } catch (error: any) {

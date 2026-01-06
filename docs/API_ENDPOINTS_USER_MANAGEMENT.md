@@ -8,6 +8,8 @@
 ## Table of Contents
 
 - [Authentication](#authentication)
+  - [Email Verification](#verify-email-address)
+  - [Social Authentication](#social-authentication-google)
 - [User Management](#user-management)
 - [Admin Operations](#admin-operations)
 - [Password Management](#password-management)
@@ -241,6 +243,398 @@ Authorization: Bearer {access_token}
 
 ---
 
+### Verify Email Address
+
+**Endpoint:** `POST /auth/verify-email`  
+**Authentication:** None  
+**Description:** Verify email address using token sent to user's email. **This is required before login for admin-created users.**
+
+**Request Body:**
+
+```json
+{
+  "token": "abc123def456789..."
+}
+```
+
+**Success Response (200 OK):**
+
+```json
+{
+  "message": "Email verified successfully"
+}
+```
+
+**What Happens:**
+
+1. Validates email verification token
+2. Sets `emailVerified: true` in database
+3. Sets `isVerified: true` in database
+4. **Activates account** (`isActive: true`) - user can now login
+5. Clears email verification token (single-use)
+6. User can proceed to login
+
+**Error Response (400 Bad Request):**
+
+```json
+{
+  "statusCode": 400,
+  "message": "Invalid verification token",
+  "error": "Bad Request"
+}
+```
+
+**Important Notes:**
+
+- ✅ Email verification token is sent automatically when admin creates a user
+- ✅ Token is also sent during user registration flow
+- ✅ Account must be verified before login (admin-created users)
+- ✅ Email verification activates the account automatically
+- ✅ Token is single-use and cleared after successful verification
+- ✅ No expiration time on tokens (remains valid until used)
+
+---
+
+### Resend Verification Code
+
+**Endpoint:** `POST /auth/resend-verification`  
+**Authentication:** None  
+**Description:** Resend verification code/link to user's email or phone
+
+**Request Body:**
+
+```json
+{
+  "email": "user@example.com"
+}
+```
+
+**OR**
+
+```json
+{
+  "phone": "+233123456789"
+}
+```
+
+**Success Response (200 OK):**
+
+```json
+{
+  "message": "Verification code sent"
+}
+```
+
+**What Happens:**
+
+1. Finds user by email or phone
+2. Checks if already verified (skips if verified)
+3. Generates new verification token
+4. Sends new email verification link (for email) or SMS code (for phone)
+5. Previous token is invalidated
+
+**Error Response (404 Not Found):**
+
+```json
+{
+  "statusCode": 404,
+  "message": "User not found",
+  "error": "Not Found"
+}
+```
+
+**Use Cases:**
+
+- User didn't receive verification email
+- Verification email was deleted or lost
+- User registered but never verified
+- Admin created account and user needs new verification link
+
+**Example Verification Email:**
+
+```
+Subject: Verify Your Email Address - WillFindITT
+
+Hello [First Name],
+
+Please verify your email address by clicking the link below:
+
+{FRONTEND_URL}/auth/verify-email?token={token}
+
+If you didn't create an account, please ignore this email.
+
+Best regards,
+The Willfinditt Team
+```
+
+---
+
+### Social Authentication (Google)
+
+**Endpoint:** `GET /auth/google`  
+**Authentication:** None  
+**Description:** Initiate Google OAuth flow (redirects to Google sign-in page)
+
+**Usage:**
+
+```html
+<a href="https://api.willfind8.com/api/v1/auth/google">Sign in with Google</a>
+```
+
+**Flow:**
+1. User clicks "Sign in with Google"
+2. Redirected to Google OAuth consent screen
+3. User grants permissions
+4. Google redirects to `/auth/google/callback`
+5. Backend processes authentication
+6. User is logged in or account linking required
+
+---
+
+### Google OAuth Callback
+
+**Endpoint:** `GET /auth/google/callback`  
+**Authentication:** None (handled by Google OAuth)  
+**Description:** Google OAuth callback endpoint (auto-handled by backend)
+
+**Response:** Redirects to frontend with authentication result
+
+---
+
+### Social Authentication (Facebook)
+
+**Endpoint:** `GET /auth/facebook`  
+**Authentication:** None  
+**Description:** Initiate Facebook OAuth flow (redirects to Facebook sign-in page)
+
+**Usage:**
+
+```html
+<a href="https://api.willfind8.com/api/v1/auth/facebook">Sign in with Facebook</a>
+```
+
+**Flow:**
+1. User clicks "Sign in with Facebook"
+2. Redirected to Facebook OAuth consent screen
+3. User grants permissions
+4. Facebook redirects to `/auth/facebook/callback`
+5. Backend processes authentication
+6. User is logged in or account linking required
+
+---
+
+### Facebook OAuth Callback
+
+**Endpoint:** `GET /auth/facebook/callback`  
+**Authentication:** None (handled by Facebook OAuth)  
+**Description:** Facebook OAuth callback endpoint (auto-handled by backend)
+
+**Response:** Redirects to frontend with authentication result
+
+---
+
+### Social Authentication (Direct - Mobile/SPA)
+
+**Endpoint:** `POST /auth/social-auth`  
+**Authentication:** None  
+**Description:** Authenticate with social provider using access token (for mobile apps or SPAs)
+
+**Request Body:**
+
+```json
+{
+  "accessToken": "ya29.a0AfH6SMB...",
+  "provider": "GOOGLE"  // or "FACEBOOK"
+}
+```
+
+**Success Response (200 OK) - New User Created:**
+
+```json
+{
+  "access_token": "eyJhbGciOiJIUzI1NiIs...",
+  "refresh_token": "eyJhbGciOiJIUzI1NiIs...",
+  "user": {
+    "id": "cm1234567890",
+    "email": "user@gmail.com",
+    "username": "user_gmail",
+    "firstName": "John",
+    "lastName": "Doe",
+    "avatar": "https://lh3.googleusercontent.com/...",
+    "provider": "GOOGLE",
+    "emailVerified": true,
+    "isVerified": true,
+    "role": "USER"
+  }
+}
+```
+
+**Success Response (200 OK) - Existing Social User:**
+
+```json
+{
+  "access_token": "eyJhbGciOiJIUzI1NiIs...",
+  "refresh_token": "eyJhbGciOiJIUzI1NiIs...",
+  "user": {
+    "id": "cm1234567890",
+    "email": "user@gmail.com",
+    "provider": "GOOGLE",
+    ...
+  }
+}
+```
+
+**Account Linking Required Response (200 OK):**
+
+```json
+{
+  "access_token": "",
+  "user": {},
+  "requiresConfirmation": true,
+  "message": "Account linking confirmation sent to your email"
+}
+```
+
+**What Happens:**
+
+1. **New User (No Account Exists)**:
+   - Creates new user account with social provider info
+   - Sets `emailVerified: true` and `isVerified: true`
+   - Auto-generates username from name or email
+   - No password required
+   - Sends welcome email
+
+2. **Existing Social User**:
+   - Logs in directly
+   - Returns access token and user info
+
+3. **Local Account Exists (Same Email)**:
+   - Sends account linking confirmation email
+   - Requires user to confirm linking via email
+   - Prevents unauthorized account takeover
+
+**Error Response (401 Unauthorized):**
+
+```json
+{
+  "statusCode": 401,
+  "message": "Failed to verify Google token",
+  "error": "Unauthorized"
+}
+```
+
+**Supported Providers:**
+- `GOOGLE` - Google Sign-In
+- `FACEBOOK` - Facebook Login
+
+---
+
+### Link Social Account (Confirm)
+
+**Endpoint:** `POST /auth/link-social-account`  
+**Authentication:** None  
+**Description:** Confirm linking social account to existing local account (uses token from email)
+
+**Request Body:**
+
+```json
+{
+  "token": "linking-token-from-email"
+}
+```
+
+**Success Response (200 OK):**
+
+```json
+{
+  "access_token": "eyJhbGciOiJIUzI1NiIs...",
+  "refresh_token": "eyJhbGciOiJIUzI1NiIs...",
+  "user": {
+    "id": "cm1234567890",
+    "email": "user@example.com",
+    "provider": "GOOGLE",
+    "linkedProviders": [
+      {
+        "provider": "GOOGLE",
+        "providerId": "google-user-id"
+      }
+    ],
+    ...
+  }
+}
+```
+
+**What Happens:**
+
+1. Validates linking token from email
+2. Links social provider to existing local account
+3. Updates user provider to social (GOOGLE/FACEBOOK)
+4. User can now login with both methods:
+   - Email + password (original)
+   - Social provider (newly linked)
+
+**Error Response (400 Bad Request):**
+
+```json
+{
+  "statusCode": 400,
+  "message": "Invalid or expired linking token",
+  "error": "Bad Request"
+}
+```
+
+**Use Cases:**
+
+- User has local account (email + password)
+- User tries to sign in with Google/Facebook
+- Same email exists
+- System sends confirmation email
+- User clicks link in email
+- Accounts are linked
+
+---
+
+### Unlink Social Account
+
+**Endpoint:** `POST /auth/unlink-social-account`  
+**Authentication:** Required (Bearer token)  
+**Description:** Unlink social provider from account
+
+**Request Body:**
+
+```json
+{
+  "provider": "GOOGLE"  // or "FACEBOOK"
+}
+```
+
+**Success Response (200 OK):**
+
+```json
+{
+  "message": "GOOGLE account unlinked successfully"
+}
+```
+
+**Error Response (400 Bad Request):**
+
+```json
+{
+  "statusCode": 400,
+  "message": "Provider not linked to account",
+  "error": "Bad Request"
+}
+```
+
+**Important Notes:**
+
+- ✅ Can only unlink if account has password (can't remove only auth method)
+- ✅ Preserves original email/password login
+- ✅ User can re-link social account later
+- ✅ Removes provider info from user record
+
+---
+
 ## User Management
 
 ### Get Current User (Me)
@@ -393,8 +787,13 @@ Authorization: Bearer {access_token}
 
 - ✅ Password is **automatically hashed** (bcrypt) - never stored in plain text
 - ✅ Password is **never returned** in response
+- ✅ Account created with `isActive: false` by default - requires email verification
+- ✅ **Two emails sent automatically:**
+  - Account credentials email (username & temporary password)
+  - Email verification link (must verify before login)
 - ✅ Set `forcePasswordChange: true` to require password change on first login
-- ✅ User will receive account creation email (if configured)
+- ✅ User must verify email before they can login
+- ✅ Account is activated automatically upon email verification
 
 **Error Response (409 Conflict):**
 
@@ -785,6 +1184,75 @@ If you didn't request this, please ignore this email.
 
 **Request Body:**
 
+### Use Case 4: Social Authentication (Google/Facebook)
+
+#### Option A: Web OAuth Flow (Redirect)
+
+```javascript
+// User clicks "Sign in with Google"
+window.location.href = `${API_BASE}/auth/google`;
+
+// Google handles authentication
+// User is redirected back to your app with tokens
+```
+
+#### Option B: Mobile/SPA Flow (Direct Token)
+
+```javascript
+// 1. Get Google access token from Google SDK (client-side)
+import { GoogleSignin } from '@react-native-google-signin/google-signin';
+
+const { accessToken } = await GoogleSignin.signIn();
+
+// 2. Send token to backend
+const response = await fetch(`${API_BASE}/auth/social-auth`, {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({
+    accessToken: accessToken,
+    provider: 'GOOGLE',
+  }),
+});
+
+const result = await response.json();
+
+// 3. Handle different scenarios
+if (result.requiresConfirmation) {
+  // Account linking required
+  showNotification({
+    type: 'info',
+    message: 'Check your email to confirm account linking',
+  });
+} else if (result.access_token) {
+  // Success - new or existing social user
+  localStorage.setItem('token', result.access_token);
+  router.push('/dashboard');
+}
+```
+
+#### Option C: Account Linking Confirmation
+
+```javascript
+// User clicks link in email with token
+const token = new URLSearchParams(window.location.search).get('token');
+
+const response = await fetch(`${API_BASE}/auth/link-social-account`, {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({ token }),
+});
+
+const { access_token, user } = await response.json();
+
+// Account linked successfully
+localStorage.setItem('token', access_token);
+showNotification({
+  type: 'success',
+  message: `${user.provider} account linked successfully`,
+});
+router.push('/dashboard');
+```
+
 ```json
 {
   "token": "reset-token-from-email",
@@ -921,12 +1389,45 @@ const response = await fetch(`${API_BASE}/users`, {
   body: JSON.stringify({
     email: 'newadmin@example.com',
     username: 'newadmin',
+  }),
+});
+
+const user = await response.json();
+// user.forcePasswordChange === true
+// user.isActive === false (requires email verification)
+// user.emailVerified === false
+
+// 2. User receives TWO emails:
+// - Account credentials (username & password)
+// - Email verification link
+attempts login (before email verification)
+const loginResponseBefore = await fetch(`${API_BASE}/auth/login`, {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({
+    email: 'newadmin@example.com',
     password: 'TempPassword@123',
-    firstName: 'New',
-    lastName: 'Admin',
-    role: 'ADMIN',
-    forcePasswordChange: true, // ← Force password change
-    emailVerified: true,
+  }),
+});
+// Returns 401: Account not verified or inactive
+
+// 2. User verifies email first
+await fetch(`${API_BASE}/auth/verify-email`, {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({ token: 'token-from-email' }),
+});
+
+// 3. User logs in (after verification)
+// 3. User verifies email
+const verifyResponse = await fetch(`${API_BASE}/auth/verify-email`, {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({
+    token: 'verification-token-from-email',
+  }),
+});
+// Account is now active (isActive: true, emailVerified: true)
   }),
 });
 
@@ -1077,20 +1578,29 @@ function ProtectedRoute({ children }) {
   if (user?.forcePasswordChange && !isExemptRoute()) {
     return <Redirect to="/change-password" />;
   }
+  }'
 
-  return children;
-}
+# User receives two emails:
+# - Account credentials (username & temp password)
+# - Email verification link with token
 
-function isExemptRoute() {
-  const exemptPaths = ['/change-password', '/profile', '/logout'];
-  return exemptPaths.some((path) => location.pathname.includes(path));
-}
-```
+# 3. Verify email (get token from email)
+VERIFY_TOKEN="abc123def456..."
+curl -X POST http://localhost:3000/api/v1/auth/verify-email \
+  5. Try accessing protected endpoint (will fail due to forcePasswordChange)
+curl -X GET http://localhost:3000/api/v1/users/stats \
+  -H "Authorization: Bearer $USER_TOKEN"
 
----
+# 6. Change password
+curl -X POST http://localhost:3000/api/v1/auth/change-password \
+  -H "Authorization: Bearer $USER_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "currentPassword":"TempPass@123",
+    "newPassword":"NewPass@456"
+  }'
 
-## Testing
-
+# 7
 ### Example with cURL
 
 ```bash

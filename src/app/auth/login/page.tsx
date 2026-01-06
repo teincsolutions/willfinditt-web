@@ -8,7 +8,7 @@ import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/Button';
-import { googleLogin } from '@/services/auth.service';
+import { socialAuth } from '@/services/auth.service';
 import { toast } from 'sonner';
 import { useGoogleLogin } from '@react-oauth/google';
 
@@ -64,7 +64,7 @@ export default function LoginPage() {
     onSuccess: async (tokenResponse) => {
       setIsSubmittingForm(true); // Use the same submitting state for Google login
       try {
-        await googleLogin(tokenResponse.access_token);
+        await socialAuth(tokenResponse.access_token, 'GOOGLE');
         toast.success('Login with Google successful!');
         router.push('/');
       } catch (error: any) {

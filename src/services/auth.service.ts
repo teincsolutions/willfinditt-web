@@ -50,12 +50,20 @@ export const register = async (data: RegisterData): Promise<AuthResponse> => {
   }
 };
 
-export const googleLogin = async (idToken: string): Promise<AuthResponse> => {
+export const socialAuth = async (
+  accessToken: string,
+  provider: 'GOOGLE' | 'FACEBOOK'
+): Promise<AuthResponse> => {
   try {
-    const response = await api.post('/auth/google', { token: idToken });
-    const { accessToken, refreshToken } = extractTokens(response.data);
+    const response = await api.post('/auth/social-auth', {
+      accessToken,
+      provider,
+    });
+    const { accessToken: resToken, refreshToken } = extractTokens(
+      response.data
+    );
 
-    if (accessToken) setAccessToken(accessToken);
+    if (resToken) setAccessToken(resToken);
     if (refreshToken) setRefreshToken(refreshToken);
 
     return response.data;
@@ -65,6 +73,17 @@ export const googleLogin = async (idToken: string): Promise<AuthResponse> => {
     }
     throw error;
   }
+};
+
+export const verifyEmail = async (token: string): Promise<void> => {
+  await api.post('/auth/verify-email', { token });
+};
+
+export const resendVerification = async (data: {
+  email?: string;
+  phone?: string;
+}): Promise<void> => {
+  await api.post('/auth/resend-verification', data);
 };
 
 export const logout = async (): Promise<void> => {

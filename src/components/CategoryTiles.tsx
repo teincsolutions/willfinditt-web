@@ -67,7 +67,7 @@ export const CategoryTiles = ({
           {categories.slice(0, 12).map((category) => (
             <Link
               key={category.id}
-              href={`/category/${category.slug || category.id}`}
+              href={`/category/${category.slug}?categoryId=${category.id}`}
               className="group"
             >
               <div className="relative bg-background rounded-2xl p-4 shadow-sm border border-border-custom hover:shadow-lg hover:border-primary/20 transition-all duration-300 hover:-translate-y-1">

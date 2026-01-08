@@ -316,9 +316,11 @@ export const CategorySidebar = ({
           </h3>
           {categoryFields.map((field) => (
             <div key={field.id}>
-              <label className="block text-sm font-medium text-text mb-2">
-                {field.label}
-              </label>
+              {field.type !== 'TEXT' && (
+                <label className="block text-sm font-medium text-text mb-2">
+                  {field.label}
+                </label>
+              )}
 
               {/* SELECT field - dropdown */}
               {field.type === 'SELECT' && field.options && (

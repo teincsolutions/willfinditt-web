@@ -43,6 +43,7 @@ function CategoryContent() {
   const [activeFilters, setActiveFilters] = useState(filters);
   const [activeCategoryFieldFilters, setActiveCategoryFieldFilters] =
     useState(categoryFieldFilters);
+  const [isFilterDrawerOpen, setIsFilterDrawerOpen] = useState(false);
 
   // Use the advanced search endpoint
   const { data: adsResponse, isLoading: adsLoading } = useSearchAds({
@@ -99,6 +100,7 @@ function CategoryContent() {
   const applyFilters = () => {
     setActiveFilters({ ...filters, page: 1 });
     setActiveCategoryFieldFilters(categoryFieldFilters);
+    setIsFilterDrawerOpen(false);
   };
 
   const handleCategoryFieldChange = (fieldName: string, value: string) => {
@@ -242,9 +244,44 @@ function CategoryContent() {
 
   return (
     <div className="container mx-auto px-4 py-8">
+      {/* Mobile Filter Button */}
+      <div className="lg:hidden mb-6">
+        <button
+          onClick={() => setIsFilterDrawerOpen(true)}
+          className="w-full flex items-center justify-center gap-2 px-6 py-4 bg-background border border-border-custom rounded-2xl shadow-sm font-bold text-text hover:bg-background-primary transition-all"
+        >
+          <svg
+            className="w-5 h-5 text-primary"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"
+            />
+          </svg>
+          Filter Listings
+          {activeCategoryFieldFilters.length +
+            (filters.minPrice || filters.maxPrice || filters.condition
+              ? 1
+              : 0) >
+            0 && (
+            <span className="flex items-center justify-center w-5 h-5 rounded-full bg-primary text-white text-[10px]">
+              {activeCategoryFieldFilters.length +
+                (filters.minPrice || filters.maxPrice || filters.condition
+                  ? 1
+                  : 0)}
+            </span>
+          )}
+        </button>
+      </div>
+
       <div className="flex flex-col lg:flex-row gap-8">
-        {/* Filters Sidebar */}
-        <aside className="w-full lg:w-72 flex-shrink-0">
+        {/* Filters Sidebar (Desktop) */}
+        <aside className="hidden lg:block w-full lg:w-72 flex-shrink-0">
           <div className="bg-background p-6 rounded-2xl shadow-sm border border-border-custom sticky top-24 max-h-[calc(100vh-120px)] overflow-y-auto custom-scrollbar">
             <div className="flex items-center justify-between mb-6">
               <h3 className="text-xl font-bold text-text">Filters</h3>
@@ -495,6 +532,254 @@ function CategoryContent() {
             </div>
           </div>
         </aside>
+
+        {/* Mobile Filter Drawer */}
+        {isFilterDrawerOpen && (
+          <div className="fixed inset-0 z-[100] lg:hidden">
+            <div
+              className="fixed inset-0 bg-black/60 backdrop-blur-sm transition-opacity"
+              onClick={() => setIsFilterDrawerOpen(false)}
+            />
+            <div className="fixed right-0 top-0 bottom-0 w-[85%] max-w-sm bg-background shadow-2xl overflow-y-auto flex flex-col transform transition-transform duration-300">
+              <div className="flex items-center justify-between p-6 border-b border-border-custom sticky top-0 bg-background z-10">
+                <h2 className="text-xl font-black text-text italic">FILTERS</h2>
+                <button
+                  onClick={() => setIsFilterDrawerOpen(false)}
+                  className="p-2 hover:bg-background-primary rounded-xl transition-colors"
+                >
+                  <svg
+                    className="w-6 h-6 text-text-gray"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2.5}
+                      d="M6 18L18 6M6 6l12 12"
+                    />
+                  </svg>
+                </button>
+              </div>
+
+              <div className="p-6">
+                <div className="flex items-center justify-between mb-8">
+                  <h3 className="text-sm font-bold text-text-gray uppercase tracking-widest">
+                    Refine Search
+                  </h3>
+                  {(filters.minPrice ||
+                    filters.maxPrice ||
+                    filters.condition ||
+                    categoryFieldFilters.length > 0) && (
+                    <button
+                      onClick={clearFilters}
+                      className="text-xs font-bold text-primary hover:underline px-2 py-1 bg-primary/5 rounded-lg"
+                    >
+                      Reset All
+                    </button>
+                  )}
+                </div>
+
+                <div className="space-y-6">
+                  {/* Reuse internal filter logic here if possible, but for simplicity we'll just replicate or refactor later */}
+                  {/* Dynamic Category Fields */}
+                  {categoryFields && categoryFields.length > 0 && (
+                    <div className="space-y-8 pb-8 border-b border-border-custom">
+                      {categoryFields.map((field) => (
+                        <div key={field.id} className="space-y-4">
+                          {field.type !== 'TEXT' && (
+                            <label className="block text-sm font-bold text-text-gray uppercase tracking-widest">
+                              {field.label}
+                            </label>
+                          )}
+
+                          {/* SELECT */}
+                          {field.type === 'SELECT' && field.options && (
+                            <select
+                              value={getStringValue(field.name)}
+                              onChange={(e) =>
+                                handleCategoryFieldChange(
+                                  field.name,
+                                  e.target.value
+                                )
+                              }
+                              className="w-full bg-background-primary/30 border border-border-custom rounded-2xl px-5 py-4 text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none font-bold"
+                            >
+                              <option value="">Any {field.label}</option>
+                              {field.options.map((option) => (
+                                <option key={option.value} value={option.value}>
+                                  {option.label}
+                                </option>
+                              ))}
+                            </select>
+                          )}
+
+                          {/* RADIO with scroll */}
+                          {field.type === 'RADIO' && field.options && (
+                            <div className="grid grid-cols-1 gap-2 max-h-48 overflow-y-auto custom-scrollbar pr-2">
+                              {field.options.map((option) => {
+                                const isActive =
+                                  getStringValue(field.name) === option.value;
+                                return (
+                                  <button
+                                    key={option.value}
+                                    onClick={() =>
+                                      handleCategoryFieldChange(
+                                        field.name,
+                                        isActive ? '' : option.value
+                                      )
+                                    }
+                                    className={`flex items-center px-5 py-3.5 rounded-2xl text-xs font-bold transition-all border ${
+                                      isActive
+                                        ? 'bg-primary/10 border-primary text-primary shadow-sm'
+                                        : 'bg-background hover:bg-background-primary/50 border-border-custom text-text-gray hover:text-text'
+                                    }`}
+                                  >
+                                    {option.label}
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          )}
+
+                          {/* NUMBER range */}
+                          {field.type === 'NUMBER' && (
+                            <div className="grid grid-cols-2 gap-4">
+                              <input
+                                type="number"
+                                value={getRangeValue(field.name).min ?? ''}
+                                onChange={(e) =>
+                                  handleNumberRangeChange(
+                                    field.name,
+                                    'min',
+                                    e.target.value
+                                  )
+                                }
+                                placeholder="Min"
+                                className="w-full bg-background-primary/30 border border-border-custom rounded-2xl px-5 py-4 text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none font-medium"
+                              />
+                              <input
+                                type="number"
+                                value={getRangeValue(field.name).max ?? ''}
+                                onChange={(e) =>
+                                  handleNumberRangeChange(
+                                    field.name,
+                                    'max',
+                                    e.target.value
+                                  )
+                                }
+                                placeholder="Max"
+                                className="w-full bg-background-primary/30 border border-border-custom rounded-2xl px-5 py-4 text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none font-medium"
+                              />
+                            </div>
+                          )}
+
+                          {/* CHECKBOX with scroll */}
+                          {field.type === 'CHECKBOX' && field.options && (
+                            <div className="space-y-2.5 max-h-48 overflow-y-auto custom-scrollbar pr-2">
+                              {field.options.map((option) => (
+                                <label
+                                  key={option.value}
+                                  className="flex items-center group cursor-pointer p-1"
+                                >
+                                  <input
+                                    type="checkbox"
+                                    checked={getArrayValue(field.name).includes(
+                                      option.value
+                                    )}
+                                    onChange={(e) =>
+                                      handleCheckboxMultiSelect(
+                                        field.name,
+                                        option.value,
+                                        e.target.checked
+                                      )
+                                    }
+                                    className="w-6 h-6 rounded-lg border-border-custom text-primary focus:ring-primary/20 transition-all cursor-pointer"
+                                  />
+                                  <span className="ml-4 text-sm font-bold text-text-gray group-hover:text-text transition-colors">
+                                    {option.label}
+                                  </span>
+                                </label>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Price Range */}
+                  <div className="space-y-4">
+                    <label className="block text-sm font-bold text-text-gray uppercase tracking-widest">
+                      Price Range
+                    </label>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="relative">
+                        <span className="absolute left-4 top-1/2 -translate-y-1/2 text-text-light-gray font-bold">
+                          $
+                        </span>
+                        <input
+                          type="number"
+                          value={filters.minPrice}
+                          onChange={(e) =>
+                            handleFilterChange('minPrice', e.target.value)
+                          }
+                          className="w-full bg-background-primary/30 border border-border-custom rounded-2xl pl-8 pr-4 py-4 text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none font-medium"
+                          placeholder="Min"
+                        />
+                      </div>
+                      <div className="relative">
+                        <span className="absolute left-4 top-1/2 -translate-y-1/2 text-text-light-gray font-bold">
+                          $
+                        </span>
+                        <input
+                          type="number"
+                          value={filters.maxPrice}
+                          onChange={(e) =>
+                            handleFilterChange('maxPrice', e.target.value)
+                          }
+                          className="w-full bg-background-primary/30 border border-border-custom rounded-2xl pl-8 pr-4 py-4 text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none font-medium"
+                          placeholder="Max"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Condition */}
+                  <div className="space-y-4">
+                    <label className="block text-sm font-bold text-text-gray uppercase tracking-widest">
+                      Item Condition
+                    </label>
+                    <select
+                      value={filters.condition}
+                      onChange={(e) =>
+                        handleFilterChange('condition', e.target.value)
+                      }
+                      className="w-full bg-background-primary/30 border border-border-custom rounded-2xl px-5 py-4 text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none font-bold"
+                    >
+                      <option value="">All Conditions</option>
+                      <option value={AdCondition.NEW}>New</option>
+                      <option value={AdCondition.LIKE_NEW}>Like New</option>
+                      <option value={AdCondition.GOOD}>Good</option>
+                      <option value={AdCondition.FAIR}>Fair</option>
+                      <option value={AdCondition.POOR}>Poor</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="sticky bottom-0 left-0 right-0 pt-10 pb-6 bg-gradient-to-t from-background via-background to-transparent mt-10">
+                  <Button
+                    onClick={applyFilters}
+                    className="w-full py-5 text-lg font-black shadow-xl shadow-primary/30 rounded-2xl"
+                  >
+                    Set Filters
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Results */}
         <main className="flex-1 min-w-0">

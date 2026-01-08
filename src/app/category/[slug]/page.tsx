@@ -1,6 +1,6 @@
 'use client';
 
-import { useParams, useSearchParams } from 'next/navigation';
+import { useParams, useSearchParams, useRouter } from 'next/navigation';
 import { useState, Suspense } from 'react';
 import { useSearchAds } from '@/hooks/useAds';
 import { useCategory, useCategoryFields } from '@/hooks/useCategories';
@@ -14,8 +14,10 @@ import { CategoryFieldFilter } from '@/types/category';
 function CategoryContent() {
   const params = useParams();
   const searchParams = useSearchParams();
+  const router = useRouter();
   const slug = params.slug as string;
   const categoryIdFromQuery = searchParams.get('categoryId');
+  const pageFromUrl = Number(searchParams.get('page')) || 1;
 
   // Fetch current category directly by ID from query
   const { data: activeCategory, isLoading: categoryLoading } = useCategory(
@@ -49,7 +51,7 @@ function CategoryContent() {
   const { data: adsResponse, isLoading: adsLoading } = useSearchAds({
     search: {
       categoryIds: activeCategory?.id ? [activeCategory.id] : undefined,
-      page: activeFilters.page,
+      page: pageFromUrl,
       limit: activeFilters.limit,
       priceMin: activeFilters.minPrice
         ? Number(activeFilters.minPrice)
@@ -213,11 +215,10 @@ function CategoryContent() {
   };
 
   const handlePageChange = (page: number) => {
-    setFilters((prev) => {
-      const next = { ...prev, page };
-      setActiveFilters(next);
-      return next;
-    });
+    const params = new URLSearchParams(searchParams.toString());
+    params.set('page', page.toString());
+    router.push(`/category/${slug}?${params.toString()}`);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const clearFilters = () => {
@@ -495,6 +496,7 @@ function CategoryContent() {
                 >
                   <option value="">All Conditions</option>
                   <option value={AdCondition.NEW}>New</option>
+                  <option value={AdCondition.USED}>Used</option>
                   <option value={AdCondition.LIKE_NEW}>Like New</option>
                   <option value={AdCondition.GOOD}>Good</option>
                   <option value={AdCondition.FAIR}>Fair</option>
@@ -760,6 +762,7 @@ function CategoryContent() {
                     >
                       <option value="">All Conditions</option>
                       <option value={AdCondition.NEW}>New</option>
+                      <option value={AdCondition.USED}>Used</option>
                       <option value={AdCondition.LIKE_NEW}>Like New</option>
                       <option value={AdCondition.GOOD}>Good</option>
                       <option value={AdCondition.FAIR}>Fair</option>
@@ -862,7 +865,7 @@ function CategoryContent() {
               {meta && meta.totalPages > 1 && (
                 <div className="bg-background p-6 rounded-2xl border border-border-custom shadow-sm mb-10">
                   <Pagination
-                    currentPage={meta.page}
+                    currentPage={pageFromUrl}
                     totalPages={meta.totalPages}
                     onPageChange={handlePageChange}
                   />

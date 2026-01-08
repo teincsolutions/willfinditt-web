@@ -252,7 +252,7 @@ export default function Home() {
         {ads && ads.meta.totalPages > 1 && (
           <div className="mb-6">
             <Pagination
-              currentPage={ads.meta.page}
+              currentPage={currentPage}
               totalPages={ads.meta.totalPages}
               onPageChange={handlePageChange}
             />
@@ -322,7 +322,7 @@ export default function Home() {
         {ads && ads.meta.totalPages > 1 && (
           <div className="mt-8">
             <Pagination
-              currentPage={ads.meta.page}
+              currentPage={currentPage}
               totalPages={ads.meta.totalPages}
               onPageChange={handlePageChange}
             />

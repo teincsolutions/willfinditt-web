@@ -176,7 +176,8 @@ export default function AdDetailPage() {
             <h3 className="font-semibold mb-2">Details</h3>
             <div className="grid grid-cols-2 gap-4 text-sm">
               <div>
-                <span className="font-medium">Condition:</span> {ad.condition}
+                <span className="font-medium">Condition:</span>{' '}
+                {ad.condition?.replace(/_/g, ' ')}
               </div>
               <div>
                 <span className="font-medium">Category:</span>{' '}

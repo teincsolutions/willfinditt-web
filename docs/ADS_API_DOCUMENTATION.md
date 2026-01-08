@@ -400,38 +400,47 @@ The `categoryFields` parameter allows dynamic filtering based on custom category
 **URL-Encoded Example:**
 
 ```
-GET /ads?categoryFields=%5B%7B%22fieldName%22%3A%22brand%22%2C%22value%22%3A%22toyota%22%7D%2C%7B%22fieldName%22%3A%22transmission%22%2C%22value%22%3A%22automatic%22%7D%5D
+GET /ads?categoryFields=%5B%7B%22categoryFieldId%22%3A%22cmgf3wlg50001ms07yi05qb35%22%2C%22value%22%3A%22toyota%22%7D%5D
 ```
 
 **Field Filter Object:**
 
 | Property | Type | Required | Description |
 |----------|------|----------|-------------|
-| `fieldName` | string | Yes | Name of the category field |
-| `value` | string | Yes | Value to filter by |
-| `categoryId` | string | No | Specific category ID (for disambiguation) |
+| `categoryFieldId` | string | Yes | ID of the category field (from CategoryField table) |
+| `value` | string \| string[] | Yes | Value(s) to filter by. Use array for multi-select (OR logic) |
 
 **Real-World Examples:**
 
-1. **Filter Cars by Brand and Transmission:**
+1. **Filter by Brand:**
 
 ```
-GET /ads?categoryId=cat_vehicles&categoryFields=[{"fieldName":"brand","value":"toyota"},{"fieldName":"transmission","value":"automatic"}]
+GET /ads?categoryFields=[{"categoryFieldId":"cmgf3wlg50001ms07yi05qb35","value":"toyota"}]
 ```
 
-2. **Filter Electronics by Brand and Storage:**
+2. **Filter by Multiple Fields:**
 
 ```
-GET /ads?categoryId=cat_electronics&categoryFields=[{"fieldName":"brand","value":"apple"},{"fieldName":"storage","value":"256gb"}]
+GET /ads?categoryFields=[{"categoryFieldId":"cmgf3wlg50001ms07yi05qb35","value":"toyota"},{"categoryFieldId":"cmgf3wlg50002ms07abc12xyz","value":"automatic"}]
 ```
 
-3. **Filter Real Estate by Bedrooms and Amenities:**
+3. **Filter with Multiple Values (OR Logic):**
 
 ```
-GET /ads?categoryId=cat_apartments&categoryFields=[{"fieldName":"bedrooms","value":"3"},{"fieldName":"amenities","value":"pool"}]
+GET /ads?categoryFields=[{"categoryFieldId":"cmgf3wlg50001ms07yi05qb35","value":["toyota","honda","nissan"]}]
 ```
 
-**Note:** For CHECKBOX fields (multiple selection), the system matches if the ad's field value contains the search value. For example, searching `amenities=pool` will match ads with `"pool,gym,parking"`.
+This returns ads where brand is "toyota" OR "honda" OR "nissan".
+
+4. **Filter Checkbox Fields (comma-separated values):**
+
+For ads with checkbox values stored as `"air_condition,spare_tire"`:
+
+```
+GET /ads?categoryFields=[{"categoryFieldId":"cmgf3wlg50003ms07features","value":"air_condition"}]
+```
+
+**Note:** Matching is **case-insensitive** and uses `contains` to handle comma-separated checkbox values. Multiple fields use AND logic (all conditions must match).
 
 **Example Request:**
 
@@ -508,12 +517,11 @@ GET /ads?page=1&limit=10&categoryId=cat_123&minPrice=100&maxPrice=1000&search=ip
     "promotionFilter": "all",
     "categoryFields": [
       {
-        "fieldName": "brand",
-        "value": "apple",
-        "categoryId": "cat_electronics_123"
+        "categoryFieldId": "cmgf3wlg50001ms07yi05qb35",
+        "value": "apple"
       },
       {
-        "fieldName": "storage",
+        "categoryFieldId": "cmgf3wlg50002ms07storage",
         "value": "256gb"
       }
     ],
@@ -534,21 +542,29 @@ GET /ads?page=1&limit=10&categoryId=cat_123&minPrice=100&maxPrice=1000&search=ip
 
 #### Category Fields in Advanced Search
 
-The `categoryFields` array in the search body allows filtering by custom category-specific attributes:
+The `categoryFields` array in the search body allows filtering by custom category-specific attributes using their unique `categoryFieldId`.
 
 **Field Filter Structure:**
 
 ```json
 {
-  "fieldName": "brand",
-  "value": "toyota",
-  "categoryId": "cat_vehicles_123"
+  "categoryFieldId": "cmgf3wlg50001ms07yi05qb35",
+  "value": "toyota"
+}
+```
+
+**Multi-Value Filter Structure (OR Logic):**
+
+```json
+{
+  "categoryFieldId": "cmgf3wlg50001ms07yi05qb35",
+  "value": ["toyota", "honda", "nissan"]
 }
 ```
 
 **Real-World Search Examples:**
 
-**1. Search for Toyota Cars with Automatic Transmission:**
+**1. Search for Toyota Cars:**
 
 ```json
 {
@@ -556,14 +572,14 @@ The `categoryFields` array in the search body allows filtering by custom categor
     "query": "sedan",
     "categoryIds": ["cat_vehicles_123"],
     "categoryFields": [
-      { "fieldName": "brand", "value": "toyota" },
-      { "fieldName": "transmission", "value": "automatic" }
+      { "categoryFieldId": "cmgf3brand123", "value": "toyota" },
+      { "categoryFieldId": "cmgf3trans456", "value": "automatic" }
     ]
   }
 }
 ```
 
-**2. Search for 3-Bedroom Apartments with Pool:**
+**2. Search for 3-Bedroom Apartments:**
 
 ```json
 {
@@ -571,8 +587,8 @@ The `categoryFields` array in the search body allows filtering by custom categor
     "categoryIds": ["cat_apartments_456"],
     "priceMax": 3000,
     "categoryFields": [
-      { "fieldName": "bedrooms", "value": "3" },
-      { "fieldName": "amenities", "value": "pool" }
+      { "categoryFieldId": "cmgf3beds789", "value": "3" },
+      { "categoryFieldId": "cmgf3amenities", "value": "pool" }
     ]
   }
 }
@@ -586,81 +602,64 @@ The `categoryFields` array in the search body allows filtering by custom categor
     "query": "smartphone",
     "categoryIds": ["cat_phones_789"],
     "categoryFields": [
-      { "fieldName": "brand", "value": "samsung" },
-      { "fieldName": "storage", "value": "128gb" },
-      { "fieldName": "condition", "value": "like_new" },
-      { "fieldName": "has_warranty", "value": "true" }
+      { "categoryFieldId": "cmgf3brand123", "value": "samsung" },
+      { "categoryFieldId": "cmgf3storage456", "value": "128gb" }
     ]
   }
 }
 ```
 
-**4. Search for Recent Cars (Year Range Number):**
+**4. Search for Phones from Multiple Brands:**
 
 ```json
 {
   "search": {
-    "categoryIds": ["cat_vehicles_123"],
+    "query": "smartphone",
+    "categoryIds": ["cat_phones_789"],
     "categoryFields": [
-      { "fieldName": "year", "value": {"min": 2018, "max": 2023} }
+      { "categoryFieldId": "cmgf3brand123", "value": ["samsung", "apple", "google"] },
+      { "categoryFieldId": "cmgf3storage456", "value": ["128gb", "256gb"] }
     ]
   }
 }
 ```
 
-**5. Search for Cars by Mileage Range (Number):**
-
-```json
-{
-  "search": {
-    "categoryIds": ["cat_vehicles_123"],
-    "categoryFields": [
-      { "fieldName": "brand", "value": "toyota" },
-      { "fieldName": "mileage", "value": {"max": 50000} }
-    ]
-  }
-}
-```
-
-**6. Search for Apartments by Bedroom Range (Number):**
-
-```json
-{
-  "search": {
-    "categoryIds": ["cat_apartments_456"],
-    "categoryFields": [
-      { "fieldName": "bedrooms", "value": {"min": 2, "max": 4} },
-      { "fieldName": "square_feet", "value": {"min": 1000} }
-    ]
-  }
-}
-```
+This returns phones where brand is Samsung, Apple, or Google AND storage is 128GB or 256GB.
 
 **Field Matching Behavior:**
 
 | Field Type | Matching Logic | Example |
 |------------|----------------|---------|
-| TEXT | Exact match (case-insensitive) | `"ABC123"` matches `"abc123"` |
-| NUMBER | Exact or range match | `"2020"` or `{"min": 2015, "max": 2020}` |
-| SELECT | Exact value match | `"toyota"` matches option value |
-| RADIO | Exact value match | `"automatic"` matches option value |
-| CHECKBOX | Partial match (contains) | `"pool"` matches `"pool,gym,parking"` |
-| DATE | Exact date match | `"2020-01-15"` |
-| BOOLEAN | String boolean match | `"true"` or `"false"` |
+| TEXT | Case-insensitive contains match | `"air"` matches `"air_condition,spare_tire"` |
+| NUMBER | Case-insensitive contains match | `"2020"` |
+| SELECT | Case-insensitive contains match | `"toyota"` or `["toyota", "honda"]` |
+| RADIO | Case-insensitive contains match | `"automatic"` matches `"AUTOMATIC"` |
+| CHECKBOX | Case-insensitive contains match on comma-separated values | `"pool"` matches `"pool,gym,parking"` |
+| BOOLEAN | String boolean match (case-insensitive) | `"true"` or `"false"` |
 
-**NUMBER Range Filtering:**
+**Multi-Value Filtering:**
 
-For NUMBER fields, you can filter by exact value or specify a range:
+When you pass an array of values, the system uses OR logic within the field:
 
 ```json
-// Exact value
-{ "fieldName": "year", "value": "2020" }
-
-// Range filter (min and/or max)
-{ "fieldName": "year", "value": {"min": 2015, "max": 2020} }
-{ "fieldName": "mileage", "value": {"max": 50000} }
-{ "fieldName": "price_per_sqft", "value": {"min": 100} }
+{
+  "categoryFieldId": "cmgf3brand123",
+  "value": ["apple", "samsung", "google"]
+}
 ```
+
+This matches ads where brand is "apple" OR "samsung" OR "google".
+
+Multiple fields use AND logic:
+
+```json
+[
+  { "categoryFieldId": "cmgf3brand123", "value": ["apple", "samsung"] },
+  { "categoryFieldId": "cmgf3storage456", "value": "256gb" }
+]
+```
+
+This matches ads where (brand is "apple" OR "samsung") AND (storage is "256gb").
 
 **Response (200 OK):**
 

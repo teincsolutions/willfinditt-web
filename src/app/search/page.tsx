@@ -35,15 +35,15 @@ function SearchContent() {
   // Parse categoryFields from URL (matches API format)
   const categoryFields = useMemo(() => {
     const fields: Array<{
-      fieldName: string;
+      categoryFieldId: string;
       value: string | string[] | { min?: number; max?: number };
-      categoryId?: string;
+      fieldName?: string;
     }> = [];
 
     let i = 0;
     while (true) {
-      const fieldName = searchParams.get(`categoryFields[${i}][fieldName]`);
-      if (!fieldName) break;
+      const fieldId = searchParams.get(`categoryFields[${i}][categoryFieldId]`);
+      if (!fieldId) break;
 
       const value = searchParams.get(`categoryFields[${i}][value]`);
       const minValue = searchParams.get(`categoryFields[${i}][value][min]`);
@@ -52,7 +52,7 @@ function SearchContent() {
       if (minValue !== null || maxValue !== null) {
         // NUMBER field with range
         fields.push({
-          fieldName,
+          categoryFieldId: fieldId,
           value: {
             ...(minValue ? { min: Number(minValue) } : {}),
             ...(maxValue ? { max: Number(maxValue) } : {}),
@@ -61,9 +61,9 @@ function SearchContent() {
       } else if (value) {
         // Check if it's comma-separated (CHECKBOX multi-select)
         if (value.includes(',')) {
-          fields.push({ fieldName, value: value.split(',') });
+          fields.push({ categoryFieldId: fieldId, value: value.split(',') });
         } else {
-          fields.push({ fieldName, value });
+          fields.push({ categoryFieldId: fieldId, value });
         }
       }
       i++;
@@ -202,7 +202,7 @@ function SearchContent() {
               )}
               {condition && (
                 <span className="inline-flex items-center px-4 py-1.5 rounded-full text-xs font-bold bg-blue-500/10 text-blue-600 border border-blue-500/20">
-                  {condition}
+                  {condition.replace(/_/g, ' ')}
                 </span>
               )}
               {categoryFields && categoryFields.length > 0 && (

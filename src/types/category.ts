@@ -35,9 +35,9 @@ export interface CategoryField {
 }
 
 export interface CategoryFieldFilter {
-  fieldName: string;
+  categoryFieldId: string;
   value: string | string[] | { min?: number; max?: number };
-  categoryId?: string;
+  fieldName?: string; // Optional for backward compatibility during transition
 }
 
 export interface CategoriesResponse {

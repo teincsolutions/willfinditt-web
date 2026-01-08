@@ -12,6 +12,7 @@ export enum AdStatus {
 
 export enum AdCondition {
   NEW = 'NEW',
+  USED = 'USED',
   LIKE_NEW = 'LIKE_NEW',
   GOOD = 'GOOD',
   FAIR = 'FAIR',

@@ -26,7 +26,7 @@ export const CategorySidebar = ({
     condition: '',
   });
 
-  // Field values now use fieldName (matches API) and support different value types
+  // Field values now use categoryFieldId (matches API) and support different value types
   const [fieldValues, setFieldValues] = useState<
     Map<string, string | string[] | { min?: string; max?: string }>
   >(new Map());
@@ -58,25 +58,25 @@ export const CategorySidebar = ({
     >();
     let i = 0;
     while (true) {
-      const fieldName = searchParams.get(`categoryFields[${i}][fieldName]`);
+      const fieldId = searchParams.get(`categoryFields[${i}][categoryFieldId]`);
       const value = searchParams.get(`categoryFields[${i}][value]`);
       const minValue = searchParams.get(`categoryFields[${i}][value][min]`);
       const maxValue = searchParams.get(`categoryFields[${i}][value][max]`);
 
-      if (!fieldName) break;
+      if (!fieldId) break;
 
       if (minValue !== null || maxValue !== null) {
         // Range value for NUMBER fields
-        newFieldValues.set(fieldName, {
+        newFieldValues.set(fieldId, {
           min: minValue || '',
           max: maxValue || '',
         });
       } else if (value) {
         // Check if it's a comma-separated list (CHECKBOX multi-select)
         if (value.includes(',')) {
-          newFieldValues.set(fieldName, value.split(','));
+          newFieldValues.set(fieldId, value.split(','));
         } else {
-          newFieldValues.set(fieldName, value);
+          newFieldValues.set(fieldId, value);
         }
       }
       i++;
@@ -211,10 +211,10 @@ export const CategorySidebar = ({
     // Reset pagination when applying new filters
     params.delete('page');
 
-    // Add field values using fieldName format (matches API)
+    // Add field values using categoryFieldId format (matches API)
     let index = 0;
-    fieldValues.forEach((value, fieldName) => {
-      params.set(`categoryFields[${index}][fieldName]`, fieldName);
+    fieldValues.forEach((value, fieldId) => {
+      params.set(`categoryFields[${index}][categoryFieldId]`, fieldId);
 
       if (typeof value === 'string') {
         params.set(`categoryFields[${index}][value]`, value);
@@ -301,6 +301,7 @@ export const CategorySidebar = ({
         >
           <option value="">Any Condition</option>
           <option value="NEW">New</option>
+          <option value="USED">Used</option>
           <option value="LIKE_NEW">Like New</option>
           <option value="GOOD">Good</option>
           <option value="FAIR">Fair</option>
@@ -325,10 +326,8 @@ export const CategorySidebar = ({
               {/* SELECT field - dropdown */}
               {field.type === 'SELECT' && field.options && (
                 <select
-                  value={getStringValue(field.name)}
-                  onChange={(e) =>
-                    handleFieldChange(field.name, e.target.value)
-                  }
+                  value={getStringValue(field.id)}
+                  onChange={(e) => handleFieldChange(field.id, e.target.value)}
                   className="w-full border border-border-custom rounded-lg px-3 py-2 text-sm focus:border-primary focus:outline-none"
                 >
                   <option value="">Any {field.label.toLowerCase()}</option>
@@ -347,18 +346,18 @@ export const CategorySidebar = ({
                 <div className="grid grid-cols-2 gap-2">
                   <input
                     type="number"
-                    value={getRangeValue(field.name).min}
+                    value={getRangeValue(field.id).min}
                     onChange={(e) =>
-                      handleNumberRangeChange(field.name, 'min', e.target.value)
+                      handleNumberRangeChange(field.id, 'min', e.target.value)
                     }
                     placeholder="Min"
                     className="w-full border border-border-custom rounded-lg px-3 py-2 text-sm focus:border-primary focus:outline-none"
                   />
                   <input
                     type="number"
-                    value={getRangeValue(field.name).max}
+                    value={getRangeValue(field.id).max}
                     onChange={(e) =>
-                      handleNumberRangeChange(field.name, 'max', e.target.value)
+                      handleNumberRangeChange(field.id, 'max', e.target.value)
                     }
                     placeholder="Max"
                     className="w-full border border-border-custom rounded-lg px-3 py-2 text-sm focus:border-primary focus:outline-none"
@@ -372,10 +371,10 @@ export const CategorySidebar = ({
                   <label className="flex items-center group cursor-pointer">
                     <input
                       type="radio"
-                      name={field.name}
+                      name={field.id}
                       value=""
-                      checked={getStringValue(field.name) === ''}
-                      onChange={() => handleFieldChange(field.name, '')}
+                      checked={getStringValue(field.id) === ''}
+                      onChange={() => handleFieldChange(field.id, '')}
                       className="w-4 h-4 text-primary border-border-custom focus:ring-primary"
                     />
                     <span className="ml-2 text-sm text-text-gray group-hover:text-primary transition-colors">
@@ -389,11 +388,11 @@ export const CategorySidebar = ({
                     >
                       <input
                         type="radio"
-                        name={field.name}
+                        name={field.id}
                         value={option.value}
-                        checked={getStringValue(field.name) === option.value}
+                        checked={getStringValue(field.id) === option.value}
                         onChange={(e) =>
-                          handleFieldChange(field.name, e.target.value)
+                          handleFieldChange(field.id, e.target.value)
                         }
                         className="w-4 h-4 text-primary border-border-custom focus:ring-primary"
                       />
@@ -415,12 +414,10 @@ export const CategorySidebar = ({
                     >
                       <input
                         type="checkbox"
-                        checked={getArrayValue(field.name).includes(
-                          option.value
-                        )}
+                        checked={getArrayValue(field.id).includes(option.value)}
                         onChange={(e) =>
                           handleCheckboxChange(
-                            field.name,
+                            field.id,
                             option.value,
                             e.target.checked
                           )
@@ -440,10 +437,10 @@ export const CategorySidebar = ({
                 <label className="flex items-center group cursor-pointer">
                   <input
                     type="checkbox"
-                    checked={getStringValue(field.name) === 'true'}
+                    checked={getStringValue(field.id) === 'true'}
                     onChange={(e) =>
                       handleFieldChange(
-                        field.name,
+                        field.id,
                         e.target.checked ? 'true' : ''
                       )
                     }

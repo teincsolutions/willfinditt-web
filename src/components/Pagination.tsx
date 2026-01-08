@@ -1,3 +1,5 @@
+'use client';
+
 interface PaginationProps {
   currentPage: number;
   totalPages: number;
@@ -9,38 +11,50 @@ export const Pagination: React.FC<PaginationProps> = ({
   totalPages,
   onPageChange,
 }) => {
-  if (totalPages <= 1) return null;
+  const total = Math.max(0, Math.floor(Number(totalPages) || 0));
+  if (total <= 1) return null;
+
+  const current = Math.max(
+    1,
+    Math.min(total, Math.floor(Number(currentPage) || 1))
+  );
 
   const getPageNumbers = () => {
     const pages: (number | string)[] = [];
-    const showMax = 5; // Number of page buttons to show (excluding first, last, and ellipses)
 
-    if (totalPages <= showMax + 2) {
-      for (let i = 1; i <= totalPages; i++) {
+    if (total <= 7) {
+      for (let i = 1; i <= total; i++) {
         pages.push(i);
       }
     } else {
       // Always show first page
       pages.push(1);
 
-      if (currentPage > 3) {
+      if (current > 3) {
         pages.push('...');
       }
 
-      // Show pages around current
-      const start = Math.max(2, currentPage - 1);
-      const end = Math.min(totalPages - 1, currentPage + 1);
+      // Calculate range around current
+      let start = Math.max(2, current - 1);
+      let end = Math.min(total - 1, current + 1);
+
+      // Adjust to always show at least 3 middle pages if possible
+      if (current <= 3) {
+        end = 4;
+      } else if (current >= total - 2) {
+        start = total - 3;
+      }
 
       for (let i = start; i <= end; i++) {
         pages.push(i);
       }
 
-      if (currentPage < totalPages - 2) {
+      if (current < total - 2) {
         pages.push('...');
       }
 
       // Always show last page
-      pages.push(totalPages);
+      pages.push(total);
     }
 
     return pages;
@@ -50,11 +64,12 @@ export const Pagination: React.FC<PaginationProps> = ({
 
   return (
     <div className="flex justify-center items-center flex-wrap gap-2 mt-8">
+      {/* Previous Button */}
       <button
         type="button"
-        onClick={() => onPageChange(currentPage - 1)}
-        disabled={currentPage === 1}
-        className="flex items-center justify-center w-10 h-10 rounded-lg font-medium transition-all bg-background-primary text-text-gray hover:bg-primary/10 hover:text-primary disabled:opacity-50 disabled:cursor-not-allowed"
+        onClick={() => onPageChange(current - 1)}
+        disabled={current === 1}
+        className="flex items-center justify-center w-10 h-10 rounded-lg font-medium transition-all bg-background-primary text-text-gray hover:bg-primary/10 hover:text-primary disabled:opacity-40 disabled:cursor-not-allowed active:scale-95"
         aria-label="Previous page"
       >
         <svg
@@ -64,7 +79,7 @@ export const Pagination: React.FC<PaginationProps> = ({
           viewBox="0 0 24 24"
           fill="none"
           stroke="currentColor"
-          strokeWidth="2"
+          strokeWidth="2.5"
           strokeLinecap="round"
           strokeLinejoin="round"
         >
@@ -72,29 +87,37 @@ export const Pagination: React.FC<PaginationProps> = ({
         </svg>
       </button>
 
-      {pages.map((page, index) => (
-        <button
-          key={index}
-          type="button"
-          onClick={() => typeof page === 'number' && onPageChange(page)}
-          disabled={page === '...'}
-          className={`flex items-center justify-center min-w-[2.5rem] h-10 px-2 rounded-lg font-bold transition-all shadow-sm ${
-            page === currentPage
-              ? 'bg-primary text-white shadow-primary/20 scale-105 z-10'
-              : page === '...'
-                ? 'bg-transparent text-text-gray cursor-default pointer-events-none'
-                : 'bg-background-primary text-text-gray hover:bg-primary/10 hover:text-primary active:scale-95'
-          }`}
-        >
-          {page}
-        </button>
-      ))}
+      {/* Page Numbers */}
+      {pages.map((page, index) => {
+        const isEllipsis = page === '...';
+        const isNumeric = typeof page === 'number';
+        const isActive = isNumeric && page === current;
 
+        return (
+          <button
+            key={`${page}-${index}`}
+            type="button"
+            onClick={() => isNumeric && onPageChange(page as number)}
+            disabled={isEllipsis}
+            className={`flex items-center justify-center min-w-[2.5rem] h-10 px-3 rounded-lg font-bold transition-all ${
+              isActive
+                ? 'bg-primary text-white shadow-lg shadow-primary/20 scale-105 z-10'
+                : isEllipsis
+                  ? 'bg-transparent text-text-gray cursor-default pointer-events-none'
+                  : 'bg-background-primary text-text-gray hover:bg-primary/10 hover:text-primary active:scale-95'
+            }`}
+          >
+            {page}
+          </button>
+        );
+      })}
+
+      {/* Next Button */}
       <button
         type="button"
-        onClick={() => onPageChange(currentPage + 1)}
-        disabled={currentPage === totalPages}
-        className="flex items-center justify-center w-10 h-10 rounded-lg font-medium transition-all bg-background-primary text-text-gray hover:bg-primary/10 hover:text-primary disabled:opacity-50 disabled:cursor-not-allowed"
+        onClick={() => onPageChange(current + 1)}
+        disabled={current === total}
+        className="flex items-center justify-center w-10 h-10 rounded-lg font-medium transition-all bg-background-primary text-text-gray hover:bg-primary/10 hover:text-primary disabled:opacity-40 disabled:cursor-not-allowed active:scale-95"
         aria-label="Next page"
       >
         <svg
@@ -104,7 +127,7 @@ export const Pagination: React.FC<PaginationProps> = ({
           viewBox="0 0 24 24"
           fill="none"
           stroke="currentColor"
-          strokeWidth="2"
+          strokeWidth="2.5"
           strokeLinecap="round"
           strokeLinejoin="round"
         >

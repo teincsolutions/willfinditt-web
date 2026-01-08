@@ -267,9 +267,11 @@ function CategoryContent() {
                 <div className="space-y-6 pb-6 border-b border-border-custom">
                   {categoryFields.map((field) => (
                     <div key={field.id}>
-                      <label className="block text-sm font-bold text-text-gray mb-3 uppercase tracking-wider">
-                        {field.label}
-                      </label>
+                      {field.type !== 'TEXT' && (
+                        <label className="block text-sm font-bold text-text-gray mb-3 uppercase tracking-wider">
+                          {field.label}
+                        </label>
+                      )}
 
                       {/* SELECT field - dropdown */}
                       {field.type === 'SELECT' && field.options && (

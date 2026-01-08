@@ -96,13 +96,13 @@ export const CategorySidebar = ({
   };
 
   // Handle simple field value changes (TEXT, SELECT, RADIO, BOOLEAN)
-  const handleFieldChange = (fieldName: string, value: string) => {
+  const handleFieldChange = (fieldId: string, value: string) => {
     setFieldValues((prev) => {
       const newMap = new Map(prev);
       if (value === '') {
-        newMap.delete(fieldName);
+        newMap.delete(fieldId);
       } else {
-        newMap.set(fieldName, value);
+        newMap.set(fieldId, value);
       }
       return newMap;
     });
@@ -110,13 +110,13 @@ export const CategorySidebar = ({
 
   // Handle NUMBER field range changes
   const handleNumberRangeChange = (
-    fieldName: string,
+    fieldId: string,
     type: 'min' | 'max',
     value: string
   ) => {
     setFieldValues((prev) => {
       const newMap = new Map(prev);
-      const current = prev.get(fieldName);
+      const current = prev.get(fieldId);
       const rangeValue =
         typeof current === 'object' && !Array.isArray(current)
           ? { ...current }
@@ -126,9 +126,9 @@ export const CategorySidebar = ({
 
       // Remove if both min and max are empty
       if (!rangeValue.min && !rangeValue.max) {
-        newMap.delete(fieldName);
+        newMap.delete(fieldId);
       } else {
-        newMap.set(fieldName, rangeValue);
+        newMap.set(fieldId, rangeValue);
       }
       return newMap;
     });
@@ -136,13 +136,13 @@ export const CategorySidebar = ({
 
   // Handle CHECKBOX multi-select changes
   const handleCheckboxChange = (
-    fieldName: string,
+    fieldId: string,
     optionValue: string,
     checked: boolean
   ) => {
     setFieldValues((prev) => {
       const newMap = new Map(prev);
-      const current = prev.get(fieldName);
+      const current = prev.get(fieldId);
       let values: string[] = Array.isArray(current) ? [...current] : [];
 
       if (checked) {
@@ -154,30 +154,30 @@ export const CategorySidebar = ({
       }
 
       if (values.length === 0) {
-        newMap.delete(fieldName);
+        newMap.delete(fieldId);
       } else {
-        newMap.set(fieldName, values);
+        newMap.set(fieldId, values);
       }
       return newMap;
     });
   };
 
   // Get value helpers
-  const getStringValue = (fieldName: string): string => {
-    const value = fieldValues.get(fieldName);
+  const getStringValue = (fieldId: string): string => {
+    const value = fieldValues.get(fieldId);
     return typeof value === 'string' ? value : '';
   };
 
-  const getRangeValue = (fieldName: string): { min: string; max: string } => {
-    const value = fieldValues.get(fieldName);
+  const getRangeValue = (fieldId: string): { min: string; max: string } => {
+    const value = fieldValues.get(fieldId);
     if (typeof value === 'object' && !Array.isArray(value)) {
       return { min: value.min || '', max: value.max || '' };
     }
     return { min: '', max: '' };
   };
 
-  const getArrayValue = (fieldName: string): string[] => {
-    const value = fieldValues.get(fieldName);
+  const getArrayValue = (fieldId: string): string[] => {
+    const value = fieldValues.get(fieldId);
     return Array.isArray(value) ? value : [];
   };
 

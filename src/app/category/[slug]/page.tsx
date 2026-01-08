@@ -105,18 +105,21 @@ function CategoryContent() {
     setIsFilterDrawerOpen(false);
   };
 
-  const handleCategoryFieldChange = (fieldName: string, value: string) => {
+  const handleCategoryFieldChange = (
+    categoryFieldId: string,
+    value: string
+  ) => {
     setCategoryFieldFilters((prev) => {
-      const existing = prev.find((f) => f.fieldName === fieldName);
+      const existing = prev.find((f) => f.categoryFieldId === categoryFieldId);
       if (value === '') {
-        return prev.filter((f) => f.fieldName !== fieldName);
+        return prev.filter((f) => f.categoryFieldId !== categoryFieldId);
       }
       if (existing) {
         return prev.map((f) =>
-          f.fieldName === fieldName ? { ...f, value } : f
+          f.categoryFieldId === categoryFieldId ? { ...f, value } : f
         );
       } else {
-        return [...prev, { fieldName, value }];
+        return [...prev, { categoryFieldId, value }];
       }
     });
     // Don't reset page here, wait for apply
@@ -124,12 +127,12 @@ function CategoryContent() {
 
   // Handle NUMBER field range changes (min/max)
   const handleNumberRangeChange = (
-    fieldName: string,
+    categoryFieldId: string,
     type: 'min' | 'max',
     value: string
   ) => {
     setCategoryFieldFilters((prev) => {
-      const existing = prev.find((f) => f.fieldName === fieldName);
+      const existing = prev.find((f) => f.categoryFieldId === categoryFieldId);
       const currentVal = existing?.value;
       const rangeValue =
         typeof currentVal === 'object' && !Array.isArray(currentVal)
@@ -144,15 +147,17 @@ function CategoryContent() {
 
       // Remove if both min and max are empty
       if (rangeValue.min === undefined && rangeValue.max === undefined) {
-        return prev.filter((f) => f.fieldName !== fieldName);
+        return prev.filter((f) => f.categoryFieldId !== categoryFieldId);
       }
 
       if (existing) {
         return prev.map((f) =>
-          f.fieldName === fieldName ? { ...f, value: rangeValue } : f
+          f.categoryFieldId === categoryFieldId
+            ? { ...f, value: rangeValue }
+            : f
         );
       } else {
-        return [...prev, { fieldName, value: rangeValue }];
+        return [...prev, { categoryFieldId, value: rangeValue }];
       }
     });
     // Don't reset page here, wait for apply
@@ -160,12 +165,12 @@ function CategoryContent() {
 
   // Handle CHECKBOX multi-select changes
   const handleCheckboxMultiSelect = (
-    fieldName: string,
+    categoryFieldId: string,
     optionValue: string,
     checked: boolean
   ) => {
     setCategoryFieldFilters((prev) => {
-      const existing = prev.find((f) => f.fieldName === fieldName);
+      const existing = prev.find((f) => f.categoryFieldId === categoryFieldId);
       const currentVal = existing?.value;
       let values: string[] = Array.isArray(currentVal) ? [...currentVal] : [];
 
@@ -178,29 +183,35 @@ function CategoryContent() {
       }
 
       if (values.length === 0) {
-        return prev.filter((f) => f.fieldName !== fieldName);
+        return prev.filter((f) => f.categoryFieldId !== categoryFieldId);
       }
 
       if (existing) {
         return prev.map((f) =>
-          f.fieldName === fieldName ? { ...f, value: values } : f
+          f.categoryFieldId === categoryFieldId ? { ...f, value: values } : f
         );
       } else {
-        return [...prev, { fieldName, value: values }];
+        return [...prev, { categoryFieldId, value: values }];
       }
     });
     // Don't reset page here, wait for apply
   };
 
   // Helper to get string value
-  const getStringValue = (fieldName: string): string => {
-    const filter = categoryFieldFilters.find((f) => f.fieldName === fieldName);
+  const getStringValue = (categoryFieldId: string): string => {
+    const filter = categoryFieldFilters.find(
+      (f) => f.categoryFieldId === categoryFieldId
+    );
     return typeof filter?.value === 'string' ? filter.value : '';
   };
 
   // Helper to get range value
-  const getRangeValue = (fieldName: string): { min?: number; max?: number } => {
-    const filter = categoryFieldFilters.find((f) => f.fieldName === fieldName);
+  const getRangeValue = (
+    categoryFieldId: string
+  ): { min?: number; max?: number } => {
+    const filter = categoryFieldFilters.find(
+      (f) => f.categoryFieldId === categoryFieldId
+    );
     const val = filter?.value;
     if (typeof val === 'object' && !Array.isArray(val)) {
       return val as { min?: number; max?: number };
@@ -209,8 +220,10 @@ function CategoryContent() {
   };
 
   // Helper to get array value for CHECKBOX multi-select
-  const getArrayValue = (fieldName: string): string[] => {
-    const filter = categoryFieldFilters.find((f) => f.fieldName === fieldName);
+  const getArrayValue = (categoryFieldId: string): string[] => {
+    const filter = categoryFieldFilters.find(
+      (f) => f.categoryFieldId === categoryFieldId
+    );
     return Array.isArray(filter?.value) ? (filter.value as string[]) : [];
   };
 
@@ -314,12 +327,9 @@ function CategoryContent() {
                       {/* SELECT field - dropdown */}
                       {field.type === 'SELECT' && field.options && (
                         <select
-                          value={getStringValue(field.name)}
+                          value={getStringValue(field.id)}
                           onChange={(e) =>
-                            handleCategoryFieldChange(
-                              field.name,
-                              e.target.value
-                            )
+                            handleCategoryFieldChange(field.id, e.target.value)
                           }
                           className="w-full bg-background-primary/30 border border-border-custom rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none font-bold"
                         >
@@ -337,13 +347,13 @@ function CategoryContent() {
                         <div className="grid grid-cols-1 gap-2 max-h-40 overflow-y-auto custom-scrollbar pr-2">
                           {field.options.map((option) => {
                             const isActive =
-                              getStringValue(field.name) === option.value;
+                              getStringValue(field.id) === option.value;
                             return (
                               <button
                                 key={option.value}
                                 onClick={() =>
                                   handleCategoryFieldChange(
-                                    field.name,
+                                    field.id,
                                     isActive ? '' : option.value
                                   )
                                 }
@@ -364,10 +374,10 @@ function CategoryContent() {
                         <div className="grid grid-cols-2 gap-3">
                           <input
                             type="number"
-                            value={getRangeValue(field.name).min ?? ''}
+                            value={getRangeValue(field.id).min ?? ''}
                             onChange={(e) =>
                               handleNumberRangeChange(
-                                field.name,
+                                field.id,
                                 'min',
                                 e.target.value
                               )
@@ -377,10 +387,10 @@ function CategoryContent() {
                           />
                           <input
                             type="number"
-                            value={getRangeValue(field.name).max ?? ''}
+                            value={getRangeValue(field.id).max ?? ''}
                             onChange={(e) =>
                               handleNumberRangeChange(
-                                field.name,
+                                field.id,
                                 'max',
                                 e.target.value
                               )
@@ -401,12 +411,12 @@ function CategoryContent() {
                             >
                               <input
                                 type="checkbox"
-                                checked={getArrayValue(field.name).includes(
+                                checked={getArrayValue(field.id).includes(
                                   option.value
                                 )}
                                 onChange={(e) =>
                                   handleCheckboxMultiSelect(
-                                    field.name,
+                                    field.id,
                                     option.value,
                                     e.target.checked
                                   )
@@ -426,10 +436,10 @@ function CategoryContent() {
                         <label className="flex items-center group cursor-pointer">
                           <input
                             type="checkbox"
-                            checked={getStringValue(field.name) === 'true'}
+                            checked={getStringValue(field.id) === 'true'}
                             onChange={(e) =>
                               handleCategoryFieldChange(
-                                field.name,
+                                field.id,
                                 e.target.checked ? 'true' : ''
                               )
                             }
@@ -650,10 +660,10 @@ function CategoryContent() {
                             <div className="grid grid-cols-2 gap-4">
                               <input
                                 type="number"
-                                value={getRangeValue(field.name).min ?? ''}
+                                value={getRangeValue(field.id).min ?? ''}
                                 onChange={(e) =>
                                   handleNumberRangeChange(
-                                    field.name,
+                                    field.id,
                                     'min',
                                     e.target.value
                                   )
@@ -663,10 +673,10 @@ function CategoryContent() {
                               />
                               <input
                                 type="number"
-                                value={getRangeValue(field.name).max ?? ''}
+                                value={getRangeValue(field.id).max ?? ''}
                                 onChange={(e) =>
                                   handleNumberRangeChange(
-                                    field.name,
+                                    field.id,
                                     'max',
                                     e.target.value
                                   )
@@ -687,12 +697,12 @@ function CategoryContent() {
                                 >
                                   <input
                                     type="checkbox"
-                                    checked={getArrayValue(field.name).includes(
+                                    checked={getArrayValue(field.id).includes(
                                       option.value
                                     )}
                                     onChange={(e) =>
                                       handleCheckboxMultiSelect(
-                                        field.name,
+                                        field.id,
                                         option.value,
                                         e.target.checked
                                       )

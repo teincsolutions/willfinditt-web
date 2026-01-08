@@ -319,23 +319,6 @@ function CategoryContent() {
                           })}
                         </div>
                       )}
-
-                      {/* TEXT field - simple input */}
-                      {field.type === 'TEXT' && (
-                        <input
-                          type="text"
-                          value={getStringValue(field.name)}
-                          onChange={(e) =>
-                            handleCategoryFieldChange(
-                              field.name,
-                              e.target.value
-                            )
-                          }
-                          placeholder={`Enter ${field.label.toLowerCase()}`}
-                          className="w-full bg-background-primary/30 border border-border-custom rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none font-medium"
-                        />
-                      )}
-
                       {/* NUMBER field - range inputs (min/max) */}
                       {field.type === 'NUMBER' && (
                         <div className="grid grid-cols-2 gap-3">

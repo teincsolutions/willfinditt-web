@@ -294,7 +294,7 @@ function CategoryContent() {
 
                       {/* RADIO field - single selection */}
                       {field.type === 'RADIO' && field.options && (
-                        <div className="grid grid-cols-1 gap-2">
+                        <div className="grid grid-cols-1 gap-2 max-h-40 overflow-y-auto custom-scrollbar pr-2">
                           {field.options.map((option) => {
                             const isActive =
                               getStringValue(field.name) === option.value;
@@ -370,7 +370,7 @@ function CategoryContent() {
 
                       {/* CHECKBOX field - multi-select from options */}
                       {field.type === 'CHECKBOX' && field.options && (
-                        <div className="space-y-2">
+                        <div className="space-y-2 max-h-40 overflow-y-auto custom-scrollbar pr-2">
                           {field.options.map((option) => (
                             <label
                               key={option.value}

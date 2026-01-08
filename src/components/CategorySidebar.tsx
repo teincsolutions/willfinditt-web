@@ -338,18 +338,7 @@ export const CategorySidebar = ({
                 </select>
               )}
 
-              {/* TEXT field - simple input */}
-              {field.type === 'TEXT' && (
-                <input
-                  type="text"
-                  value={getStringValue(field.name)}
-                  onChange={(e) =>
-                    handleFieldChange(field.name, e.target.value)
-                  }
-                  placeholder={`Enter ${field.label.toLowerCase()}`}
-                  className="w-full border border-border-custom rounded-lg px-3 py-2 text-sm focus:border-primary focus:outline-none"
-                />
-              )}
+              {/* TEXT field - not needed */}
 
               {/* NUMBER field - range inputs (min/max) */}
               {field.type === 'NUMBER' && (
@@ -377,7 +366,7 @@ export const CategorySidebar = ({
 
               {/* RADIO field - single selection from options */}
               {field.type === 'RADIO' && field.options && (
-                <div className="space-y-2">
+                <div className="space-y-2 max-h-40 overflow-y-auto custom-scrollbar pr-2">
                   <label className="flex items-center group cursor-pointer">
                     <input
                       type="radio"
@@ -416,7 +405,7 @@ export const CategorySidebar = ({
 
               {/* CHECKBOX field - multi-select from options */}
               {field.type === 'CHECKBOX' && field.options && (
-                <div className="space-y-2">
+                <div className="space-y-2 max-h-40 overflow-y-auto custom-scrollbar pr-2">
                   {field.options.map((option) => (
                     <label
                       key={option.value}

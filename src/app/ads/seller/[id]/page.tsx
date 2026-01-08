@@ -7,6 +7,7 @@ import { ListingCard } from '@/components/ListingCard';
 import { OptimizedImage } from '@/components/OptimizedImage';
 import { format } from 'date-fns';
 import { Button } from '@/components/Button';
+import { Pagination } from '@/components/Pagination';
 import { useState } from 'react';
 
 export default function SellerPage() {
@@ -191,26 +192,12 @@ export default function SellerPage() {
 
             {/* Pagination Controls */}
             {totalPages > 1 && (
-              <div className="flex justify-center items-center gap-4 mt-8">
-                <Button
-                  variant="outline"
-                  onClick={() => handlePageChange(page - 1)}
-                  disabled={page === 1 || isAdsLoading}
-                  className="w-24"
-                >
-                  Previous
-                </Button>
-                <span className="text-text-gray font-medium">
-                  Page {page} of {totalPages}
-                </span>
-                <Button
-                  variant="outline"
-                  onClick={() => handlePageChange(page + 1)}
-                  disabled={page === totalPages || isAdsLoading}
-                  className="w-24"
-                >
-                  Next
-                </Button>
+              <div className="mt-8">
+                <Pagination
+                  currentPage={page}
+                  totalPages={totalPages}
+                  onPageChange={handlePageChange}
+                />
               </div>
             )}
           </>

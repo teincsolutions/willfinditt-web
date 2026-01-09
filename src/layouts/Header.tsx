@@ -27,6 +27,8 @@ export const Header = () => {
 
   const handleMouseEnter = () => {
     if (closeTimeoutRef.current) clearTimeout(closeTimeoutRef.current);
+    if (locationCloseTimeoutRef.current) clearTimeout(locationCloseTimeoutRef.current);
+    setIsLocationMenuOpen(false);
     setIsMegaMenuOpen(true);
   };
 
@@ -37,8 +39,9 @@ export const Header = () => {
   };
 
   const handleLocationMouseEnter = () => {
-    if (locationCloseTimeoutRef.current)
-      clearTimeout(locationCloseTimeoutRef.current);
+    if (locationCloseTimeoutRef.current) clearTimeout(locationCloseTimeoutRef.current);
+    if (closeTimeoutRef.current) clearTimeout(closeTimeoutRef.current);
+    setIsMegaMenuOpen(false);
     setIsLocationMenuOpen(true);
   };
 

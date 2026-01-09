@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import Link from 'next/link';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Category } from '@/types/category';
 import { OptimizedImage } from './OptimizedImage';
 
@@ -15,6 +15,17 @@ export const MegaMenu = ({ categories, isOpen, onClose }: MegaMenuProps) => {
   const [activeCategory, setActiveCategory] = useState<string | null>(
     categories.length > 0 ? categories[0].id : null
   );
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
+  const handleCategorySelect = (categoryId: string, slug?: string) => {
+    const params = new URLSearchParams(searchParams.toString());
+    params.set('categoryId', categoryId);
+    params.delete('page'); // Reset to page 1
+    
+    router.push(`/search?${params.toString()}`);
+    onClose();
+  };
 
   if (!isOpen) return null;
 
@@ -99,10 +110,9 @@ export const MegaMenu = ({ categories, isOpen, onClose }: MegaMenuProps) => {
                         Explore the best of {activeCategoryData.name}
                       </p>
                     </div>
-                    <Link
-                      href={`/category/${activeCategoryData.slug || activeCategoryData.id}?categoryId=${activeCategoryData.id}`}
-                      className="group flex items-center gap-3 px-8 py-3 bg-primary text-white hover:opacity-90 rounded-full text-sm font-bold transition-all shadow-lg shadow-primary/25"
-                      onClick={onClose}
+                    <button
+                      onClick={() => handleCategorySelect(activeCategoryData.id, activeCategoryData.slug)}
+                      className="group flex items-center gap-3 px-8 py-3 bg-primary text-white hover:opacity-90 rounded-full text-sm font-bold transition-all shadow-lg shadow-primary/25 cursor-pointer"
                     >
                       View All Listings
                       <svg
@@ -118,18 +128,17 @@ export const MegaMenu = ({ categories, isOpen, onClose }: MegaMenuProps) => {
                           d="M13 7l5 5m0 0l-5 5m5-5H6"
                         />
                       </svg>
-                    </Link>
+                    </button>
                   </div>
 
                   {activeCategoryData.children &&
                   activeCategoryData.children.length > 0 ? (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 2xl:grid-cols-4 gap-8">
                       {activeCategoryData.children.map((subcat) => (
-                        <Link
+                        <button
                           key={subcat.id}
-                          href={`/category/${subcat.slug || subcat.id}?categoryId=${subcat.id}`}
-                          className="group flex items-center gap-5 p-5 rounded-2xl hover:bg-background-primary transition-all duration-300 border border-border-custom/50 hover:border-primary/20 hover:shadow-xl hover:shadow-primary/5 bg-background-primary/5"
-                          onClick={onClose}
+                          onClick={() => handleCategorySelect(subcat.id, subcat.slug)}
+                          className="group flex items-center gap-5 p-5 rounded-2xl hover:bg-background-primary transition-all duration-300 border border-border-custom/50 hover:border-primary/20 hover:shadow-xl hover:shadow-primary/5 bg-background-primary/5 text-left cursor-pointer"
                         >
                           <div className="w-16 h-16 rounded-2xl bg-background-primary flex-shrink-0 overflow-hidden flex items-center justify-center group-hover:scale-110 transition-transform shadow-sm border border-border-custom/50 group-hover:border-primary/20">
                             {subcat.icon ? (
@@ -157,7 +166,7 @@ export const MegaMenu = ({ categories, isOpen, onClose }: MegaMenuProps) => {
                               </div>
                             )}
                           </div>
-                        </Link>
+                        </button>
                       ))}
                     </div>
                   ) : (

@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import {
   listCategories,
   getCategory,
+  getCategoryBySlug,
   getCategoryFields,
   getCategoriesTree,
   getParentCategories,
@@ -22,6 +23,15 @@ export const useCategory = (id: string, options?: { enabled?: boolean }) => {
     queryKey: ['category', id],
     queryFn: () => getCategory(id),
     enabled: options?.enabled ?? !!id,
+  });
+};
+
+// Get single category by slug
+export const useCategoryBySlug = (slug: string) => {
+  return useQuery({
+    queryKey: ['category', 'slug', slug],
+    queryFn: () => getCategoryBySlug(slug),
+    enabled: !!slug,
   });
 };
 

@@ -3,7 +3,7 @@
 import { useParams, useSearchParams, useRouter } from 'next/navigation';
 import { useState, Suspense } from 'react';
 import { useSearchAds } from '@/hooks/useAds';
-import { useCategory, useCategoryFields } from '@/hooks/useCategories';
+import { useCategoryBySlug, useCategoryFields } from '@/hooks/useCategories';
 
 import { ListingCard } from '@/components/ListingCard';
 import { Pagination } from '@/components/Pagination';
@@ -16,13 +16,10 @@ function CategoryContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const slug = params.slug as string;
-  const categoryIdFromQuery = searchParams.get('categoryId');
   const pageFromUrl = Number(searchParams.get('page')) || 1;
 
-  // Fetch current category directly by ID from query
-  const { data: activeCategory, isLoading: categoryLoading } = useCategory(
-    categoryIdFromQuery || ''
-  );
+  // Fetch current category by slug
+  const { data: activeCategory, isLoading: categoryLoading } = useCategoryBySlug(slug);
 
   // Fetch dynamic fields for this category
   const { data: categoryFields } = useCategoryFields(activeCategory?.id || '');

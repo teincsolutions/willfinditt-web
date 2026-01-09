@@ -24,6 +24,12 @@ export const getCategory = async (id: string): Promise<Category> => {
   return response.data;
 };
 
+// Get category by slug
+export const getCategoryBySlug = async (slug: string): Promise<Category> => {
+  const response = await api.get(`/categories/slug/${slug}`);
+  return response.data;
+};
+
 // Get categories as tree structure (for mega menu)
 export const getCategoriesTree = async (): Promise<Category[]> => {
   const response = await api.get('/categories/tree');

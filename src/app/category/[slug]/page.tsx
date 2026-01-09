@@ -460,7 +460,7 @@ function CategoryContent() {
                 <div className="grid grid-cols-2 gap-3">
                   <div className="relative">
                     <span className="absolute left-3 top-1/2 -translate-y-1/2 text-text-light-gray text-xs font-bold">
-                      $
+                      ₵
                     </span>
                     <input
                       type="number"
@@ -474,7 +474,7 @@ function CategoryContent() {
                   </div>
                   <div className="relative">
                     <span className="absolute left-3 top-1/2 -translate-y-1/2 text-text-light-gray text-xs font-bold">
-                      $
+                      ₵
                     </span>
                     <input
                       type="number"

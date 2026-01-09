@@ -6,7 +6,7 @@ import { ListingCard } from '@/components/ListingCard';
 import { OptimizedImage } from '@/components/OptimizedImage';
 import { format } from 'date-fns';
 import { Pagination } from '@/components/Pagination';
-import { useState } from 'react';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { SellerProfile } from '@/services/seller.service';
 
 interface SellerPageClientProps {
@@ -14,7 +14,9 @@ interface SellerPageClientProps {
 }
 
 export function SellerPageClient({ sellerProfile }: SellerPageClientProps) {
-  const [page, setPage] = useState(1);
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const page = Number(searchParams.get('page')) || 1;
   const LIMIT = 20;
 
   const { data: stats } = useSellerStats(sellerProfile.id);
@@ -41,7 +43,9 @@ export function SellerPageClient({ sellerProfile }: SellerPageClientProps) {
 
   const handlePageChange = (newPage: number) => {
     if (newPage >= 1 && newPage <= totalPages) {
-      setPage(newPage);
+      const params = new URLSearchParams(searchParams.toString());
+      params.set('page', newPage.toString());
+      router.push(`/ads/seller/${sellerProfile.id}?${params.toString()}`);
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   };

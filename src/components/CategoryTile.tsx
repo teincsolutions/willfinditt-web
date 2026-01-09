@@ -8,7 +8,7 @@ interface CategoryTileProps {
 export const CategoryTile: React.FC<CategoryTileProps> = ({ category }) => {
   return (
     <Link
-      href={`/category/${category.slug}`}
+      href={`/category/${category.slug}?categoryId=${category.id}`}
       className="group block bg-background rounded-xl shadow-sm border border-border-custom p-6 hover:shadow-xl hover:border-primary/30 transition-all duration-300 transform hover:-translate-y-1"
     >
       <div className="text-center">

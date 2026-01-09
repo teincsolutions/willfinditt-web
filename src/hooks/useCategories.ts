@@ -17,11 +17,11 @@ export const useCategories = () => {
 };
 
 // Get single category by ID
-export const useCategory = (id: string) => {
+export const useCategory = (id: string, options?: { enabled?: boolean }) => {
   return useQuery({
     queryKey: ['category', id],
     queryFn: () => getCategory(id),
-    enabled: !!id,
+    enabled: options?.enabled ?? !!id,
   });
 };
 

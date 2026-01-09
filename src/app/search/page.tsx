@@ -272,7 +272,10 @@ function SearchContent() {
             </div>
           ) : ads.length > 0 ? (
             <>
-              <div className="columns-2 gap-3 md:grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 md:gap-8 mb-12">
+              <div
+                key={`ads-page-${page}`}
+                className="columns-2 gap-3 md:grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 md:gap-8 mb-12"
+              >
                 {ads.map((ad) => (
                   <div key={ad.id} className="break-inside-avoid mb-3 md:mb-0">
                     <ListingCard ad={ad} />
@@ -283,7 +286,7 @@ function SearchContent() {
               {meta && meta.totalPages > 1 && (
                 <div className="bg-background p-6 rounded-2xl border border-border-custom shadow-sm">
                   <Pagination
-                    currentPage={meta.page}
+                    currentPage={page}
                     totalPages={meta.totalPages}
                     onPageChange={handlePageChange}
                   />

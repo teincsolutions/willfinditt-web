@@ -45,37 +45,40 @@ function CategoryContent() {
   const [isFilterDrawerOpen, setIsFilterDrawerOpen] = useState(false);
 
   // Use the advanced search endpoint
-  const { data: adsResponse, isLoading: adsLoading } = useSearchAds({
-    search: {
-      categoryIds: activeCategory?.id ? [activeCategory.id] : undefined,
-      page: pageFromUrl,
-      limit: activeFilters.limit,
-      priceMin: activeFilters.minPrice
-        ? Number(activeFilters.minPrice)
-        : undefined,
-      priceMax: activeFilters.maxPrice
-        ? Number(activeFilters.maxPrice)
-        : undefined,
-      conditions: activeFilters.condition
-        ? [activeFilters.condition as AdCondition]
-        : undefined,
-      sortBy: activeFilters.sortBy,
-      sortOrder: activeFilters.sortOrder as 'asc' | 'desc',
-      categoryFields:
-        activeCategoryFieldFilters.length > 0
-          ? activeCategoryFieldFilters
+  const { data: adsResponse, isLoading: adsLoading } = useSearchAds(
+    {
+      search: {
+        categoryIds: activeCategory?.id ? [activeCategory.id] : undefined,
+        page: pageFromUrl,
+        limit: activeFilters.limit,
+        priceMin: activeFilters.minPrice
+          ? Number(activeFilters.minPrice)
           : undefined,
-      cityIds: searchParams.get('cityId')
-        ? [searchParams.get('cityId') as string]
-        : undefined,
+        priceMax: activeFilters.maxPrice
+          ? Number(activeFilters.maxPrice)
+          : undefined,
+        conditions: activeFilters.condition
+          ? [activeFilters.condition as AdCondition]
+          : undefined,
+        sortBy: activeFilters.sortBy,
+        sortOrder: activeFilters.sortOrder as 'asc' | 'desc',
+        categoryFields:
+          activeCategoryFieldFilters.length > 0
+            ? activeCategoryFieldFilters
+            : undefined,
+        cityIds: searchParams.get('cityId')
+          ? [searchParams.get('cityId') as string]
+          : undefined,
+      },
+      facets: {
+        categories: true,
+        cities: true,
+        conditions: true,
+        priceRanges: true,
+      },
     },
-    facets: {
-      categories: true,
-      cities: true,
-      conditions: true,
-      priceRanges: true,
-    },
-  });
+    { enabled: !!activeCategory?.id }
+  );
 
   const isLoading = adsLoading || categoryLoading;
 
@@ -861,7 +864,10 @@ function CategoryContent() {
             </div>
           ) : ads.length > 0 ? (
             <>
-              <div className="columns-2 gap-3 md:grid md:grid-cols-2 lg:grid-cols-3 md:gap-8 mb-12">
+              <div
+                key={`ads-page-${pageFromUrl}`}
+                className="columns-2 gap-3 md:grid md:grid-cols-2 lg:grid-cols-3 md:gap-8 mb-12"
+              >
                 {ads.map((ad) => (
                   <div key={ad.id} className="break-inside-avoid mb-3 md:mb-0">
                     <ListingCard ad={ad} />

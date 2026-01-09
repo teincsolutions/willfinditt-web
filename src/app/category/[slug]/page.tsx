@@ -923,6 +923,14 @@ function CategoryContent() {
   );
 }
 
+function CategoryPageInner() {
+  const searchParams = useSearchParams();
+  const params = useParams();
+  const key = `${params.slug}-${searchParams.toString()}`;
+
+  return <CategoryContent key={key} />;
+}
+
 export default function CategoryPage() {
   return (
     <Suspense
@@ -932,7 +940,7 @@ export default function CategoryPage() {
         </div>
       }
     >
-      <CategoryContent />
+      <CategoryPageInner />
     </Suspense>
   );
 }

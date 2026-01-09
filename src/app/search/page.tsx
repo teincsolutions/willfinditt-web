@@ -325,6 +325,13 @@ function SearchContent() {
   );
 }
 
+function SearchInner() {
+  const searchParams = useSearchParams();
+  const key = searchParams.toString();
+
+  return <SearchContent key={key} />;
+}
+
 export default function Search() {
   return (
     <Suspense
@@ -334,7 +341,7 @@ export default function Search() {
         </div>
       }
     >
-      <SearchContent />
+      <SearchInner />
     </Suspense>
   );
 }

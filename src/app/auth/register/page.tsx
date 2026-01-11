@@ -86,7 +86,9 @@ export default function RegisterPage() {
   const onSubmit = async (data: RegisterFormData) => {
     try {
       setIsLoading(true);
-      await register(data);
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { confirmPassword, agreeToTerms, ...registerData } = data;
+      await register(registerData);
       toast.success('Registration successful!');
       router.push('/');
     } catch (error: any) {

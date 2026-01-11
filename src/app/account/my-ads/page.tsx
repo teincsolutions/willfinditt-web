@@ -8,7 +8,9 @@ import { Button } from '@/components/Button';
 import { OptimizedImage } from '@/components/OptimizedImage';
 import { formatCurrency } from '@/lib/utils';
 
-export default function MyAdsPage() {
+import { Suspense } from 'react';
+
+function MyAdsContent() {
   const [page, setPage] = useState(1);
   const { data: adsResponse, isLoading } = useUserAds({ page, limit: 10 });
   const deleteAdMutation = useDeleteAd();
@@ -146,5 +148,13 @@ export default function MyAdsPage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function MyAdsPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <MyAdsContent />
+    </Suspense>
   );
 }

@@ -27,7 +27,8 @@ export const Header = () => {
 
   const handleMouseEnter = () => {
     if (closeTimeoutRef.current) clearTimeout(closeTimeoutRef.current);
-    if (locationCloseTimeoutRef.current) clearTimeout(locationCloseTimeoutRef.current);
+    if (locationCloseTimeoutRef.current)
+      clearTimeout(locationCloseTimeoutRef.current);
     setIsLocationMenuOpen(false);
     setIsMegaMenuOpen(true);
   };
@@ -39,7 +40,8 @@ export const Header = () => {
   };
 
   const handleLocationMouseEnter = () => {
-    if (locationCloseTimeoutRef.current) clearTimeout(locationCloseTimeoutRef.current);
+    if (locationCloseTimeoutRef.current)
+      clearTimeout(locationCloseTimeoutRef.current);
     if (closeTimeoutRef.current) clearTimeout(closeTimeoutRef.current);
     setIsMegaMenuOpen(false);
     setIsLocationMenuOpen(true);
@@ -480,15 +482,17 @@ export const Header = () => {
                 </div>
 
                 {/* Mega Menu - anchored via absolute positioning in the component */}
-                <MegaMenu
-                  categories={categories}
-                  isOpen={isMegaMenuOpen}
-                  onClose={() => {
-                    setIsMegaMenuOpen(false);
-                    if (closeTimeoutRef.current)
-                      clearTimeout(closeTimeoutRef.current);
-                  }}
-                />
+                <Suspense fallback={null}>
+                  <MegaMenu
+                    categories={categories}
+                    isOpen={isMegaMenuOpen}
+                    onClose={() => {
+                      setIsMegaMenuOpen(false);
+                      if (closeTimeoutRef.current)
+                        clearTimeout(closeTimeoutRef.current);
+                    }}
+                  />
+                </Suspense>
               </div>
 
               {/* Location Selector Button with Mega Menu */}

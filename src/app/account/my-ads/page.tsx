@@ -7,6 +7,7 @@ import { useUserAds, useDeleteAd } from '@/hooks/useAds';
 import { Button } from '@/components/Button';
 import { OptimizedImage } from '@/components/OptimizedImage';
 import { formatCurrency } from '@/lib/utils';
+import { Pagination } from '@/components/Pagination';
 
 import { Suspense } from 'react';
 
@@ -145,6 +146,18 @@ function MyAdsContent() {
               </div>
             </div>
           ))}
+
+          {/* Pagination */}
+          {adsResponse?.meta && (
+            <Pagination
+              currentPage={page}
+              totalPages={adsResponse.meta.totalPages}
+              onPageChange={(newPage: number) => {
+                setPage(newPage);
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              }}
+            />
+          )}
         </div>
       )}
     </div>

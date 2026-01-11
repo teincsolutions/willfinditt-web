@@ -100,8 +100,20 @@ export default function RegisterPage() {
       }
 
       await register(registerData);
-      toast.success('Registration successful!');
-      router.push('/');
+
+      if (registerMethod === 'EMAIL') {
+        toast.success('Account created! Please verify your email.');
+        // Pass email simply as query param for UX if the verify page supports it
+        // If not, the user will just have to check their email
+        router.push(
+          `/auth/verify-email?email=${encodeURIComponent(data.email || '')}`
+        );
+      } else {
+        toast.success('Account created! Please verify your phone number.');
+        router.push(
+          `/auth/verify-otp?phone=${encodeURIComponent(data.phone || '')}`
+        );
+      }
     } catch (error: any) {
       toast.error(error.message || 'Registration failed');
     } finally {

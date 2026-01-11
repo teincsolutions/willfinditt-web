@@ -91,6 +91,14 @@ export default function RegisterPage() {
       setIsLoading(true);
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { confirmPassword, agreeToTerms, ...registerData } = data;
+
+      // Handle explicit undefined for unused contact method
+      if (registerMethod === 'EMAIL') {
+        registerData.phone = undefined;
+      } else {
+        registerData.email = undefined;
+      }
+
       await register(registerData);
       toast.success('Registration successful!');
       router.push('/');

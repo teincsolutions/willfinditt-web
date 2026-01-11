@@ -74,6 +74,9 @@ export default function RegisterPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [registerMethod, setRegisterMethod] = useState<'EMAIL' | 'PHONE'>(
+    'EMAIL'
+  );
 
   const {
     register: registerField,
@@ -245,39 +248,70 @@ export default function RegisterPage() {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-text mb-2">
-                  Email address
-                </label>
-                <input
-                  {...registerField('email')}
-                  type="email"
-                  placeholder="Enter your email"
-                  className="w-full px-4 py-3 border border-border-custom rounded-xl focus:ring-2 focus:ring-primary focus:border-primary transition-colors"
-                />
-                {errors.email && (
-                  <p className="mt-1 text-sm text-error">
-                    {errors.email.message}
-                  </p>
-                )}
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-text mb-2">
-                  Phone number
-                </label>
-                <input
-                  {...registerField('phone')}
-                  type="tel"
-                  placeholder="Enter your phone"
-                  className="w-full px-4 py-3 border border-border-custom rounded-xl focus:ring-2 focus:ring-primary focus:border-primary transition-colors"
-                />
-                {errors.phone && (
-                  <p className="mt-1 text-sm text-error">
-                    {errors.phone.message}
-                  </p>
-                )}
-              </div>
+            {/* Registration Method Toggle */}
+            <div className="flex bg-background-primary p-1 rounded-xl mb-6">
+              <button
+                type="button"
+                onClick={() => setRegisterMethod('EMAIL')}
+                className={`flex-1 py-2 text-sm font-semibold rounded-lg transition-all ${
+                  registerMethod === 'EMAIL'
+                    ? 'bg-white text-primary shadow-sm'
+                    : 'text-text-gray hover:text-text'
+                }`}
+              >
+                Email
+              </button>
+              <button
+                type="button"
+                onClick={() => setRegisterMethod('PHONE')}
+                className={`flex-1 py-2 text-sm font-semibold rounded-lg transition-all ${
+                  registerMethod === 'PHONE'
+                    ? 'bg-white text-primary shadow-sm'
+                    : 'text-text-gray hover:text-text'
+                }`}
+              >
+                Phone
+              </button>
+            </div>
+
+            <div className="grid grid-cols-1 gap-4">
+              {registerMethod === 'EMAIL' && (
+                <div>
+                  <label className="block text-sm font-medium text-text mb-2">
+                    Email address
+                  </label>
+                  <input
+                    {...registerField('email')}
+                    type="email"
+                    placeholder="Enter your email"
+                    className="w-full px-4 py-3 border border-border-custom rounded-xl focus:ring-2 focus:ring-primary focus:border-primary transition-colors"
+                  />
+                  {errors.email && (
+                    <p className="mt-1 text-sm text-error">
+                      {errors.email.message}
+                    </p>
+                  )}
+                </div>
+              )}
+
+              {registerMethod === 'PHONE' && (
+                <div>
+                  <label className="block text-sm font-medium text-text mb-2">
+                    Phone number
+                  </label>
+                  <input
+                    {...registerField('phone')}
+                    type="tel"
+                    placeholder="Enter your phone"
+                    className="w-full px-4 py-3 border border-border-custom rounded-xl focus:ring-2 focus:ring-primary focus:border-primary transition-colors"
+                  />
+                  {errors.phone && (
+                    <p className="mt-1 text-sm text-error">
+                      {errors.phone.message}
+                    </p>
+                  )}
+                </div>
+              )}
             </div>
 
             <div>

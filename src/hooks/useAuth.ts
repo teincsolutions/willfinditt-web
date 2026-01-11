@@ -6,6 +6,7 @@ import {
   me,
   socialAuth,
   verifyPhone,
+  forgotPassword,
 } from '@/services/auth.service';
 import { LoginData, RegisterData } from '@/types/user';
 
@@ -45,6 +46,12 @@ export const useSocialAuth = () => {
 export const useVerifyPhone = () => {
   return useMutation({
     mutationFn: verifyPhone,
+  });
+};
+
+export const useForgotPassword = () => {
+  return useMutation({
+    mutationFn: forgotPassword,
   });
 };
 

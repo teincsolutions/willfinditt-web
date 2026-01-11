@@ -1,8 +1,7 @@
 'use client';
 
 import { useForm } from 'react-hook-form';
-import { useMutation } from '@tanstack/react-query';
-import { forgotPassword } from '@/services/auth.service';
+import { useForgotPassword } from '@/hooks/useAuth';
 import { Button } from '@/components/Button';
 import { toast } from 'sonner';
 import Link from 'next/link';
@@ -22,29 +21,29 @@ export default function ForgotPasswordPage() {
     formState: { errors },
   } = useForm<FormData>();
 
-  const forgotPasswordMutation = useMutation({
-    mutationFn: forgotPassword,
-    onSuccess: (_, variables) => {
-      if (variables.phone) {
-        toast.success('OTP sent to your phone');
-        router.push(
-          `/auth/verify-otp?phone=${encodeURIComponent(variables.phone)}`
-        );
-      } else {
-        toast.success('Password reset instructions sent to your email');
-      }
-    },
-    onError: (error: any) => {
-      toast.error(
-        error.response?.data?.message || 'Failed to send reset instructions'
-      );
-    },
-  });
+  const forgotPasswordMutation = useForgotPassword();
 
   const onSubmit = (data: FormData) => {
     const isEmail = data.identifier.includes('@');
     forgotPasswordMutation.mutate(
-      isEmail ? { email: data.identifier } : { phone: data.identifier }
+      isEmail ? { email: data.identifier } : { phone: data.identifier },
+      {
+        onSuccess: (_, variables) => {
+          if (variables.phone) {
+            toast.success('OTP sent to your phone');
+            router.push(
+              `/auth/verify-otp?phone=${encodeURIComponent(variables.phone)}`
+            );
+          } else {
+            toast.success('Password reset instructions sent to your email');
+          }
+        },
+        onError: (error: any) => {
+          toast.error(
+            error.response?.data?.message || 'Failed to send reset instructions'
+          );
+        },
+      }
     );
   };
 
@@ -80,7 +79,7 @@ export default function ForgotPasswordPage() {
               <input
                 id="identifier"
                 type="text"
-                placeholder="Enter your email or phone"
+                placeholder="Enter your email or phone (e.g. +233...)"
                 {...register('identifier', {
                   required: 'Email or phone number is required',
                 })}

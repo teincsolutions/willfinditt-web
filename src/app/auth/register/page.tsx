@@ -33,7 +33,13 @@ const schema = yup.object().shape(
     phone: yup.string().when('email', {
       is: (val: string) => !val || val.length === 0,
       then: (schema) =>
-        schema.required('Phone is required when email is empty'),
+        schema
+          .required('Phone is required when email is empty')
+          .matches(
+            /^\+\d+$/,
+            'Phone must be in international format starting with + (e.g., +233...)'
+          )
+          .min(10, 'Phone number is too short'),
       otherwise: (schema) => schema.notRequired(),
     }),
     password: yup
@@ -80,6 +86,8 @@ export default function RegisterPage() {
   const {
     register: registerField,
     handleSubmit,
+    setValue,
+    getValues,
     formState: { errors },
   } = useForm<RegisterFormData>({
     resolver: yupResolver(schema) as any,
@@ -281,7 +289,13 @@ export default function RegisterPage() {
               </button>
               <button
                 type="button"
-                onClick={() => setRegisterMethod('PHONE')}
+                onClick={() => {
+                  setRegisterMethod('PHONE');
+                  const currentPhone = getValues('phone');
+                  if (!currentPhone) {
+                    setValue('phone', '+233');
+                  }
+                }}
                 className={`flex-1 py-2 text-sm font-semibold rounded-lg transition-all ${
                   registerMethod === 'PHONE'
                     ? 'bg-white text-primary shadow-sm'

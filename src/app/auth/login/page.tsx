@@ -177,7 +177,7 @@ export default function LoginPage() {
               <input
                 {...register('identifier')}
                 type="text"
-                placeholder="Enter your email or phone"
+                placeholder="Enter your email or phone (e.g. +233...)"
                 className="w-full px-4 py-3 border border-border-custom rounded-xl focus:ring-2 focus:ring-primary focus:border-primary transition-colors"
               />
               {errors.identifier && (

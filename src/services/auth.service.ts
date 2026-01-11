@@ -79,6 +79,13 @@ export const verifyEmail = async (token: string): Promise<void> => {
   await api.post('/auth/verify-email', { token });
 };
 
+export const verifyPhone = async (data: {
+  phone: string;
+  token: string;
+}): Promise<void> => {
+  await api.post('/auth/verify-phone', data);
+};
+
 export const resendVerification = async (data: {
   email?: string;
   phone?: string;

@@ -2,9 +2,8 @@
 
 import { Suspense, useState, useRef } from 'react';
 import { useForm } from 'react-hook-form';
-import { useMutation } from '@tanstack/react-query';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { resetPasswordWithPhone } from '@/services/auth.service';
+import { useVerifyPhone } from '@/hooks/useAuth';
 import { Button } from '@/components/Button';
 import { toast } from 'sonner';
 import Link from 'next/link';
@@ -18,18 +17,6 @@ const schema = yup.object({
     .required('OTP is required')
     .length(6, 'OTP must be 6 digits')
     .matches(/^\d+$/, 'OTP must be only digits'),
-  newPassword: yup
-    .string()
-    .required('New password is required')
-    .min(8, 'Password must be at least 8 characters')
-    .matches(
-      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/,
-      'Password must contain at least one uppercase letter, one lowercase letter, and one number'
-    ),
-  confirmPassword: yup
-    .string()
-    .required('Confirm password is required')
-    .oneOf([yup.ref('newPassword')], 'Passwords must match'),
 });
 
 type FormData = yup.InferType<typeof schema>;
@@ -38,8 +25,6 @@ function VerifyOtpForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const phone = searchParams.get('phone');
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [otpValue, setOtpValue] = useState(['', '', '', '', '', '']);
   const otpRefs = useRef<(HTMLInputElement | null)[]>([]);
 
@@ -52,19 +37,7 @@ function VerifyOtpForm() {
     resolver: yupResolver(schema),
   });
 
-  const resetMutation = useMutation({
-    mutationFn: resetPasswordWithPhone,
-    onSuccess: () => {
-      toast.success('Password has been reset successfully');
-      router.push('/auth/login');
-    },
-    onError: (error: any) => {
-      toast.error(
-        error.response?.data?.message ||
-          'Failed to reset password. Please check your OTP.'
-      );
-    },
-  });
+  const verifyMutation = useVerifyPhone();
 
   const handleOtpChange = (index: number, value: string) => {
     if (value.length > 1) {
@@ -100,11 +73,24 @@ function VerifyOtpForm() {
       toast.error('Phone number is missing');
       return;
     }
-    resetMutation.mutate({
-      phone,
-      otp: data.otp,
-      newPassword: data.newPassword,
-    });
+    verifyMutation.mutate(
+      {
+        phone,
+        token: data.otp,
+      },
+      {
+        onSuccess: () => {
+          toast.success('Phone verification successful! Please login.');
+          router.push('/auth/login');
+        },
+        onError: (error: any) => {
+          toast.error(
+            error.response?.data?.message ||
+              'Failed to verify OTP. Please try again.'
+          );
+        },
+      }
+    );
   };
 
   if (!phone) {
@@ -161,133 +147,13 @@ function VerifyOtpForm() {
         )}
       </div>
 
-      <div className="space-y-6 pt-4 border-t border-border-custom">
-        <div>
-          <label className="block text-sm font-medium text-text mb-2">
-            New Password
-          </label>
-          <div className="relative">
-            <input
-              type={showPassword ? 'text' : 'password'}
-              {...register('newPassword')}
-              className="w-full px-4 py-3 border border-border-custom rounded-xl focus:ring-2 focus:ring-primary focus:border-primary bg-background"
-              placeholder="Enter new password"
-            />
-            <button
-              type="button"
-              onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-text-light-gray hover:text-text-gray"
-            >
-              {showPassword ? (
-                <svg
-                  className="h-5 w-5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.878 9.878L3 3m6.878 6.878L21 21"
-                  />
-                </svg>
-              ) : (
-                <svg
-                  className="h-5 w-5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-                  />
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
-                  />
-                </svg>
-              )}
-            </button>
-          </div>
-          {errors.newPassword && (
-            <p className="text-error text-xs mt-1">
-              {errors.newPassword.message}
-            </p>
-          )}
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-text mb-2">
-            Confirm New Password
-          </label>
-          <div className="relative">
-            <input
-              type={showConfirmPassword ? 'text' : 'password'}
-              {...register('confirmPassword')}
-              className="w-full px-4 py-3 border border-border-custom rounded-xl focus:ring-2 focus:ring-primary focus:border-primary bg-background"
-              placeholder="Confirm your password"
-            />
-            <button
-              type="button"
-              onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-text-light-gray hover:text-text-gray"
-            >
-              {showConfirmPassword ? (
-                <svg
-                  className="h-5 w-5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.878 9.878L3 3m6.878 6.878L21 21"
-                  />
-                </svg>
-              ) : (
-                <svg
-                  className="h-5 w-5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-                  />
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
-                  />
-                </svg>
-              )}
-            </button>
-          </div>
-          {errors.confirmPassword && (
-            <p className="text-error text-xs mt-1">
-              {errors.confirmPassword.message}
-            </p>
-          )}
-        </div>
-
+      <div className="pt-4 border-t border-border-custom">
         <Button
           type="submit"
-          disabled={resetMutation.isPending}
+          disabled={verifyMutation.isPending}
           className="w-full py-4 border border-transparent rounded-2xl shadow-xl text-md font-bold text-white bg-gradient-to-r from-primary to-secondary hover:opacity-90 transition-all transform hover:scale-[1.01] active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          {resetMutation.isPending ? 'Resetting Password...' : 'Reset Password'}
+          {verifyMutation.isPending ? 'Verifying...' : 'Verify Phone'}
         </Button>
       </div>
     </form>
@@ -311,9 +177,7 @@ export default function VerifyOtpPage() {
           <h2 className="text-3xl font-extrabold text-text tracking-tight mb-2">
             Verify OTP
           </h2>
-          <p className="text-text-gray">
-            Set your new password to regain access
-          </p>
+          <p className="text-text-gray">Verify your phone number to continue</p>
         </div>
 
         <div className="bg-background py-10 px-6 sm:px-10 rounded-3xl shadow-2xl border border-border-custom/50">

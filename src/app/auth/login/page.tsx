@@ -8,7 +8,7 @@ import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/Button';
-import { socialAuth } from '@/services/auth.service';
+import { useSocialAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
 import { useGoogleLogin } from '@react-oauth/google';
 
@@ -22,6 +22,7 @@ import { OptimizedImage } from '@/components/OptimizedImage';
 export default function LoginPage() {
   const router = useRouter();
   const { login, isAuthenticated, isLoading: authLoading } = useAuth();
+  const socialAuthMutation = useSocialAuth();
   const [error, setError] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmittingForm, setIsSubmittingForm] = useState(false); // Local state for form submission
@@ -62,20 +63,19 @@ export default function LoginPage() {
 
   const loginWithGoogle = useGoogleLogin({
     onSuccess: async (tokenResponse) => {
-      setIsSubmittingForm(true); // Use the same submitting state for Google login
       try {
-        await socialAuth(tokenResponse.access_token, 'GOOGLE');
+        await socialAuthMutation.mutateAsync({
+          accessToken: tokenResponse.access_token,
+          provider: 'GOOGLE',
+        });
         toast.success('Login with Google successful!');
         router.push('/');
       } catch (error: any) {
         toast.error(error.message || 'Google login failed');
-      } finally {
-        setIsSubmittingForm(false);
       }
     },
     onError: () => {
       toast.error('Google login failed');
-      setIsSubmittingForm(false);
     },
   });
 
@@ -265,7 +265,7 @@ export default function LoginPage() {
 
             <Button
               type="submit"
-              disabled={isSubmittingForm}
+              disabled={isSubmittingForm || socialAuthMutation.isPending}
               className="w-full bg-gradient-to-r from-primary to-secondary hover:opacity-90 text-white font-semibold py-3 rounded-xl transition-all duration-200 transform hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
             >
               {isSubmittingForm ? (

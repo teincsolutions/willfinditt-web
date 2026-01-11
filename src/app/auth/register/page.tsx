@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
-import { register, socialAuth } from '@/services/auth.service';
+import { useRegister, useSocialAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
 import { useGoogleLogin } from '@react-oauth/google';
 import { Button } from '@/components/Button';
@@ -73,7 +73,6 @@ export default function RegisterPage() {
   const [error, setError] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
   const [registerMethod, setRegisterMethod] = useState<'EMAIL' | 'PHONE'>(
     'EMAIL'
   );
@@ -81,14 +80,18 @@ export default function RegisterPage() {
   const {
     register: registerField,
     handleSubmit,
-    formState: { errors, isSubmitting },
+    formState: { errors },
   } = useForm<RegisterFormData>({
     resolver: yupResolver(schema) as any,
   });
 
+  const registerMutation = useRegister();
+  const socialAuthMutation = useSocialAuth();
+
+  const isLoading = registerMutation.isPending || socialAuthMutation.isPending;
+
   const onSubmit = async (data: RegisterFormData) => {
     try {
-      setIsLoading(true);
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { confirmPassword, agreeToTerms, ...registerData } = data;
 
@@ -99,12 +102,10 @@ export default function RegisterPage() {
         registerData.email = undefined;
       }
 
-      await register(registerData);
+      await registerMutation.mutateAsync(registerData);
 
       if (registerMethod === 'EMAIL') {
         toast.success('Account created! Please verify your email.');
-        // Pass email simply as query param for UX if the verify page supports it
-        // If not, the user will just have to check their email
         router.push(
           `/auth/verify-email?email=${encodeURIComponent(data.email || '')}`
         );
@@ -116,27 +117,24 @@ export default function RegisterPage() {
       }
     } catch (error: any) {
       toast.error(error.message || 'Registration failed');
-    } finally {
-      setIsLoading(false);
     }
   };
 
   const registerWithGoogle = useGoogleLogin({
     onSuccess: async (tokenResponse) => {
       try {
-        setIsLoading(true);
-        await socialAuth(tokenResponse.access_token, 'GOOGLE');
+        await socialAuthMutation.mutateAsync({
+          accessToken: tokenResponse.access_token,
+          provider: 'GOOGLE',
+        });
         toast.success('Google registration successful!');
         router.push('/');
       } catch (error: any) {
         toast.error(error.message || 'Google registration failed');
-      } finally {
-        setIsLoading(false);
       }
     },
     onError: () => {
       toast.error('Google registration failed');
-      setIsLoading(false);
     },
   });
 
@@ -487,10 +485,10 @@ export default function RegisterPage() {
 
             <Button
               type="submit"
-              disabled={isSubmitting}
+              disabled={isLoading}
               className="w-full bg-gradient-to-r from-primary to-secondary hover:opacity-90 text-white font-semibold py-3 rounded-xl transition-all duration-200 transform hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
             >
-              {isSubmitting ? (
+              {isLoading ? (
                 <div className="flex items-center justify-center gap-2">
                   <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
                   Creating account...

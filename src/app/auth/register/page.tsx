@@ -129,6 +129,7 @@ export default function RegisterPage() {
   };
 
   const registerWithGoogle = useGoogleLogin({
+    scope: process.env.NEXT_PUBLIC_GOOGLE_SCOPES,
     onSuccess: async (tokenResponse) => {
       try {
         await socialAuthMutation.mutateAsync({

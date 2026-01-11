@@ -36,11 +36,6 @@ export const login = async (data: LoginData): Promise<AuthResponse> => {
 export const register = async (data: RegisterData): Promise<AuthResponse> => {
   try {
     const response = await api.post('/auth/register', data);
-    const { accessToken, refreshToken } = extractTokens(response.data);
-
-    if (accessToken) setAccessToken(accessToken);
-    if (refreshToken) setRefreshToken(refreshToken);
-
     return response.data;
   } catch (error: any) {
     if (error.response?.data?.message) {

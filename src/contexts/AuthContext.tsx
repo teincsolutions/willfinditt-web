@@ -22,7 +22,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // Use React Query as the single source of truth
   const { data: userData, isLoading, refetch } = useMe();
-  
+
   const loginMutation = useLogin();
   const registerMutation = useRegister();
   const logoutMutation = useLogout();
@@ -39,7 +39,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       await loginMutation.mutateAsync(data);
       await refetch();
-      
+
       // Support redirecting back to original page
       if (typeof window !== 'undefined') {
         const params = new URLSearchParams(window.location.search);
@@ -56,8 +56,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const register = async (data: RegisterData) => {
     try {
       await registerMutation.mutateAsync(data);
-      await refetch();
-      router.push('/');
     } catch (error) {
       throw error;
     }

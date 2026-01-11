@@ -21,12 +21,8 @@ export const useLogin = () => {
 };
 
 export const useRegister = () => {
-  const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (data: RegisterData) => register(data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['me'] });
-    },
   });
 };
 

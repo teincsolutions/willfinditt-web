@@ -11,6 +11,7 @@ import { Button } from '@/components/Button';
 import { ImageUploader } from '@/components/ImageUploader';
 import { DynamicCategoryFields } from '@/components/DynamicCategoryFields';
 import { useAuth } from '@/contexts/AuthContext';
+import { SearchableSelect } from './SearchableSelect';
 import dynamic from 'next/dynamic';
 import 'react-quill-new/dist/quill.snow.css';
 
@@ -121,7 +122,7 @@ export const AdForm = ({
   // Locations
   const { data: countries } = useCountries();
   const ghanaId = useMemo(
-    () => countries?.find((c) => c.code === 'GH')?.id,
+    () => countries?.find((c) => c.code === 'GHA' || c.code === 'GH')?.id,
     [countries]
   );
   const { data: states } = useStates(ghanaId);
@@ -190,39 +191,34 @@ export const AdForm = ({
             <label className="block text-sm font-medium mb-1 text-text">
               Category *
             </label>
-            <select
+            <SearchableSelect
+              options={parentCategories || []}
               value={selectedParentId}
-              onChange={(e) => {
-                setSelectedParentId(e.target.value);
+              onChange={(val) => {
+                setSelectedParentId(val);
                 setValue('categoryId', '');
               }}
-              className="w-full border border-border-custom rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-primary transition-all bg-background"
-            >
-              <option value="">Select Category</option>
-              {parentCategories?.map((cat) => (
-                <option key={cat.id} value={cat.id}>
-                  {cat.name}
-                </option>
-              ))}
-            </select>
+              placeholder="Select Category"
+            />
           </div>
 
           <div>
             <label className="block text-sm font-medium mb-1 text-text">
               Subcategory *
             </label>
-            <select
-              {...register('categoryId')}
-              className="w-full border border-border-custom rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-primary transition-all bg-background disabled:opacity-50"
-              disabled={!selectedParentId}
-            >
-              <option value="">Select Subcategory</option>
-              {subcategories?.map((cat) => (
-                <option key={cat.id} value={cat.id}>
-                  {cat.name}
-                </option>
-              ))}
-            </select>
+            <Controller
+              name="categoryId"
+              control={control}
+              render={({ field }) => (
+                <SearchableSelect
+                  options={subcategories || []}
+                  value={field.value}
+                  onChange={field.onChange}
+                  placeholder="Select Subcategory"
+                  disabled={!selectedParentId}
+                />
+              )}
+            />
             {errors.categoryId && (
               <p className="text-error text-sm mt-1">
                 {errors.categoryId.message}
@@ -425,17 +421,22 @@ export const AdForm = ({
             <label className="block text-sm font-medium mb-1 text-text">
               Region/State *
             </label>
-            <select
-              {...register('stateId')}
-              className="w-full border border-border-custom rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-primary transition-all bg-background"
-            >
-              <option value="">Select Region</option>
-              {states?.map((s) => (
-                <option key={s.id} value={s.id}>
-                  {s.name}
-                </option>
-              ))}
-            </select>
+            <Controller
+              name="stateId"
+              control={control}
+              render={({ field }) => (
+                <SearchableSelect
+                  options={states || []}
+                  value={field.value}
+                  onChange={(val) => {
+                    field.onChange(val);
+                    setValue('cityId', '');
+                  }}
+                  placeholder="Select Region"
+                  disabled={!ghanaId}
+                />
+              )}
+            />
             {errors.stateId && (
               <p className="text-error text-sm mt-1">
                 {errors.stateId.message}
@@ -447,18 +448,19 @@ export const AdForm = ({
             <label className="block text-sm font-medium mb-1 text-text">
               City *
             </label>
-            <select
-              {...register('cityId')}
-              className="w-full border border-border-custom rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-primary transition-all bg-background disabled:opacity-50"
-              disabled={!stateId}
-            >
-              <option value="">Select City</option>
-              {cities?.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.name}
-                </option>
-              ))}
-            </select>
+            <Controller
+              name="cityId"
+              control={control}
+              render={({ field }) => (
+                <SearchableSelect
+                  options={cities || []}
+                  value={field.value}
+                  onChange={field.onChange}
+                  placeholder="Select City"
+                  disabled={!stateId}
+                />
+              )}
+            />
             {errors.cityId && (
               <p className="text-error text-sm mt-1">{errors.cityId.message}</p>
             )}

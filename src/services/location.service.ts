@@ -27,7 +27,9 @@ export const getCountries = async (): Promise<Country[]> => {
 };
 
 export const getStates = async (countryId: string): Promise<State[]> => {
-  const response = await api.get<State[]>(`/location/countries/${countryId}/states`);
+  const response = await api.get<State[]>(
+    `/location/countries/${countryId}/states`
+  );
   return response.data;
 };
 

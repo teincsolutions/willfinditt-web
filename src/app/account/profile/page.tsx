@@ -51,7 +51,7 @@ export default function ProfilePage() {
     defaultValues: {
       firstName: user?.firstName || '',
       lastName: user?.lastName || '',
-      phoneNumber: user?.phoneNumber || user?.phone || '',
+      phoneNumber: user?.phone || '',
       avatar: user?.avatar || '',
     },
   });

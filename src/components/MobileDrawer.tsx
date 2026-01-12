@@ -78,11 +78,11 @@ export const MobileDrawer = ({
             <div className="px-5 py-4 bg-background-primary/30 border-b border-border-custom">
               <div className="flex items-center gap-3">
                 <div className="w-12 h-12 bg-primary rounded-full flex items-center justify-center text-white font-black text-lg shadow-sm">
-                  {user?.name?.charAt(0) || 'U'}
+                  {user?.firstName?.charAt(0) || 'U'}
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-text font-bold truncate">
-                    {user?.name || 'User'}
+                    {user?.firstName} {user?.lastName}
                   </p>
                   <p className="text-text-light-gray text-xs truncate">
                     {user?.email}

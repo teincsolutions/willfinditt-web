@@ -3,25 +3,28 @@ import { SellerProfile } from '@/services/seller.service';
 export interface User {
   id: string;
   email: string;
-  sellerProfile?: SellerProfile;
-  username?: string;
-  firstName?: string;
-  lastName?: string;
-  name?: string; // Display name
-  avatar?: string;
-  phoneNumber?: string; // Preferred
-  phone?: string; // Legacy/Alias
-  location?: string;
-  role?: 'USER' | 'ADMIN' | 'SELLER' | 'MODERATOR';
-  isVerified?: boolean;
-  emailVerified?: boolean;
-  phoneVerified?: boolean;
-  forcePasswordChange?: boolean;
-  twoFactorEnabled?: boolean;
-  isActive?: boolean;
-  lastLoginAt?: string;
-  createdAt?: string;
-  updatedAt?: string;
+  username: string;
+  firstName: string;
+  lastName: string;
+  phone: string;
+  avatar: string;
+  isActive: boolean;
+  isVerified: boolean;
+  emailVerified: boolean;
+  phoneVerified: boolean;
+  role: 'USER' | 'ADMIN' | 'MODERATOR';
+  provider: 'GOOGLE' | 'LOCAL';
+  providerId: string;
+  linkedProviders: string | null;
+  countryId: string | null;
+  accountLockedUntil: string | null;
+  lastLoginAt: string;
+  lastLoginIp: string;
+  passwordChangedAt: string | null;
+  forcePasswordChange: boolean;
+  twoFactorEnabled: boolean;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface LoginData {

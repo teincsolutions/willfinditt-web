@@ -195,11 +195,11 @@ export default function RegisterPage() {
               onSuccess={handleGoogleSuccess}
               onError={handleGoogleError}
               useOneTap
-              theme="outline"
+              theme="filled_blue"
               shape="pill"
               size="large"
               text="signup_with"
-              width="100%"
+              width="360"
             />
           </div>
 

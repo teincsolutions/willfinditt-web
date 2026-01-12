@@ -89,8 +89,7 @@ export const AdForm = ({
       stateId: initialData?.city?.state?.id || '',
       cityId: initialData?.city?.id || '',
       address: initialData?.address || '',
-      contactPhone:
-        initialData?.contactPhone || user?.phoneNumber || user?.phone || '',
+      contactPhone: initialData?.contactPhone || user?.phone || '',
       contactEmail: initialData?.contactEmail || user?.email || '',
       isNegotiable: initialData?.isNegotiable || false,
       dynamicFields:

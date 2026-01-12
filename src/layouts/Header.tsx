@@ -246,7 +246,9 @@ export const Header = () => {
                 >
                   <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center shadow-sm">
                     <span className="text-white font-medium text-sm">
-                      {user?.name ? user.name.charAt(0).toUpperCase() : '👤'}
+                      {user?.firstName
+                        ? user.firstName.charAt(0).toUpperCase()
+                        : '👤'}
                     </span>
                   </div>
                   <svg
@@ -272,7 +274,7 @@ export const Header = () => {
                       <>
                         <div className="px-4 py-3 border-b border-border-custom">
                           <p className="font-semibold text-text">
-                            {user?.name}
+                            {user?.firstName} {user?.lastName}
                           </p>
                           <p className="text-sm text-text-gray">
                             {user?.email}

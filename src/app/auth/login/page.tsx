@@ -127,11 +127,11 @@ export default function LoginPage() {
               onSuccess={handleGoogleSuccess}
               onError={handleGoogleError}
               useOneTap
-              theme="outline"
+              theme="filled_blue"
               shape="pill"
               size="large"
               text="continue_with"
-              width="100%"
+              width="360"
             />
           </div>
 

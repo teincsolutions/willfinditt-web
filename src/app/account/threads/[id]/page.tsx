@@ -4,7 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { format } from 'date-fns';
 import { useParams } from 'next/navigation';
-import { useThread, useThreadMessages, useAddThreadMessage, useUpdateThreadMutation } from '@/hooks/useThreads';
+import { useThread, useThreadMessages, useAddThreadMessage } from '@/hooks/useThreads';
 import { ThreadMessage, ThreadStatus } from '@/types/threads';
 import { Button } from '@/components/Button';
 
@@ -13,13 +13,11 @@ function ThreadDetailContent() {
   const params = useParams();
   const threadId = params.id as string;
   const [messageContent, setMessageContent] = useState('');
-  const [isStatusChangeOpen, setIsStatusChangeOpen] = useState(false);
 
   // API Hooks
   const { data: thread, isLoading: isThreadLoading } = useThread(threadId);
   const { data: messagesResponse = [], isLoading: isMessagesLoading, refetch: refetchMessages } = useThreadMessages(threadId);
   const addMessageMutation = useAddThreadMessage(threadId);
-  const updateThreadMutation = useUpdateThreadMutation(threadId);
 
   // Extract messages array
   const messages = Array.isArray(messagesResponse) ? messagesResponse : messagesResponse?.data || [];
@@ -59,17 +57,6 @@ function ThreadDetailContent() {
     );
   };
 
-  const handleStatusChange = (newStatus: ThreadStatus) => {
-    updateThreadMutation.mutate(
-      { status: newStatus },
-      {
-        onSuccess: () => {
-          setIsStatusChangeOpen(false);
-        },
-      }
-    );
-  };
-
   // Helper Functions
   const getStatusColor = (status: ThreadStatus): string => {
     const colorMap: Record<ThreadStatus, string> = {
@@ -98,9 +85,6 @@ function ThreadDetailContent() {
       {/* Thread Header */}
       <ThreadHeader
         thread={thread}
-        isStatusChangeOpen={isStatusChangeOpen}
-        onStatusChangeToggle={() => setIsStatusChangeOpen(!isStatusChangeOpen)}
-        onStatusChange={handleStatusChange}
         getStatusColor={getStatusColor}
       />
 
@@ -128,17 +112,11 @@ function ThreadDetailContent() {
 // Subcomponents for better organization
 interface ThreadHeaderProps {
   thread: any;
-  isStatusChangeOpen: boolean;
-  onStatusChangeToggle: () => void;
-  onStatusChange: (status: ThreadStatus) => void;
   getStatusColor: (status: ThreadStatus) => string;
 }
 
 function ThreadHeader({
   thread,
-  isStatusChangeOpen,
-  onStatusChangeToggle,
-  onStatusChange,
   getStatusColor,
 }: ThreadHeaderProps) {
   return (
@@ -152,29 +130,6 @@ function ThreadHeader({
             </span>
           </div>
         </div>
-
-        {thread.status !== 'CLOSED' && (
-          <div className="relative">
-            <Button size="sm" variant="outline" onClick={onStatusChangeToggle}>
-              Change Status
-            </Button>
-            {isStatusChangeOpen && (
-              <div className="absolute right-0 mt-2 bg-background rounded-lg shadow-lg border border-border-custom p-2 z-10 min-w-[150px]">
-                {(['OPEN', 'PENDING', 'CLOSED'] as ThreadStatus[]).map((status) => (
-                  <button
-                    key={status}
-                    onClick={() => onStatusChange(status)}
-                    className={`w-full text-left px-4 py-2 rounded hover:bg-background-primary transition-colors ${
-                      thread.status === status ? 'bg-background-primary' : ''
-                    }`}
-                  >
-                    {status}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
       </div>
       <p className="text-sm text-text-gray">
         Created {format(new Date(thread.createdAt), 'MMM dd, yyyy h:mm a')}

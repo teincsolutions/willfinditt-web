@@ -40,7 +40,6 @@ export interface CreateThreadRequest {
 
 export interface UpdateThreadRequest {
   title?: string;
-  status?: ThreadStatus;
   priority?: ThreadPriority;
   type?: ThreadType;
 }

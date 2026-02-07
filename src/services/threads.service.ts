@@ -1,7 +1,6 @@
 import api from './api';
 import {
   Thread,
-  ThreadDetail,
   ThreadMessage,
   ThreadsResponse,
   ThreadMessagesResponse,
@@ -19,7 +18,7 @@ export const getUserThreads = async (
 };
 
 // 2. Get Thread by ID
-export const getThread = async (threadId: string): Promise<ThreadDetail> => {
+export const getThread = async (threadId: string): Promise<Thread> => {
   const response = await api.get(`/threads/${threadId}`);
   return response.data;
 };

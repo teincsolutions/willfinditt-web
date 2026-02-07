@@ -17,6 +17,7 @@ export interface Thread {
   priority: ThreadPriority;
   createdAt: string;
   updatedAt: string;
+  messages: ThreadMessage[];
   user?: ThreadUser;
 }
 
@@ -30,9 +31,6 @@ export interface ThreadMessage {
   user?: ThreadUser;
 }
 
-export interface ThreadDetail extends Thread {
-  messages?: ThreadMessage[];
-}
 
 export interface CreateThreadRequest {
   title: string;
@@ -52,19 +50,11 @@ export interface CreateThreadMessageRequest {
   isSystem?: boolean;
 }
 
-export interface ThreadsResponse {
-  data: Thread[];
-  pagination?: {
-    page: number;
-    limit: number;
-    total: number;
-    totalPages: number;
-  };
-}
+export type ThreadsResponse = Thread[];
 
 export interface ThreadMessagesResponse {
   data: ThreadMessage[];
-  pagination?: {
+  meta?: {
     page: number;
     limit: number;
     total: number;

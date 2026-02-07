@@ -6,7 +6,6 @@ import { format } from 'date-fns';
 import { Button } from '@/components/Button';
 import { Dialog } from '@/components/Dialog';
 import { useThreads, useCreateThread } from '@/hooks/useThreads';
-import { Pagination } from '@/components/Pagination';
 import { ThreadStatus } from '@/types/threads';
 
 interface Thread {
@@ -18,17 +17,13 @@ interface Thread {
 }
 
 function ThreadsContent() {
-  const [page, setPage] = useState(1);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [formData, setFormData] = useState({
     title: '',
   });
 
-  const { data: threadsResponse, isLoading, refetch } = useThreads({ page, limit: 10 });
+  const { data: threads = [], isLoading, refetch } = useThreads();
   const createThreadMutation = useCreateThread();
-
-  const threads = threadsResponse?.data || [];
-  const totalPages = threadsResponse?.pagination?.totalPages || 1;
 
   const handleCreateThread = async () => {
     if (!formData.title.trim()) {
@@ -140,15 +135,6 @@ function ThreadsContent() {
             </Link>
           ))}
         </div>
-      )}
-
-      {/* Pagination */}
-      {totalPages > 1 && (
-        <Pagination
-          currentPage={page}
-          totalPages={totalPages}
-          onPageChange={setPage}
-        />
       )}
 
       {/* Create Thread Dialog */}

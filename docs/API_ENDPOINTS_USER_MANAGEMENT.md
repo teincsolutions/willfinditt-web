@@ -850,7 +850,7 @@ GET /users?page=1&limit=20&role=ADMIN&isActive=true&search=john
       "createdAt": "2024-12-07T10:00:00.000Z"
     }
   ],
-  "pagination": {
+  "meta": {
     "total": 50,
     "page": 1,
     "limit": 20,

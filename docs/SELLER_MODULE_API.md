@@ -140,7 +140,7 @@ GET /api/v1/sellers?page=1&limit=20&search=tech&sortBy=rating&sortOrder=desc
       }
     }
   ],
-  "pagination": {
+  "meta": {
     "total": 45,
     "page": 1,
     "limit": 20,
@@ -502,7 +502,7 @@ GET /api/v1/seller-reviews?page=1&limit=20&sellerId=cm1seller123
       }
     }
   ],
-  "pagination": {
+  "meta": {
     "total": 150,
     "page": 1,
     "limit": 20,
@@ -553,7 +553,7 @@ Retrieves all reviews for a specific seller.
       }
     }
   ],
-  "pagination": {
+  "meta": {
     "total": 150,
     "page": 1,
     "limit": 20,
@@ -879,7 +879,7 @@ GET /api/v1/seller-verification?page=1&limit=20&status=PENDING
       }
     }
   ],
-  "pagination": {
+  "meta": {
     "total": 45,
     "page": 1,
     "limit": 20,
@@ -1288,7 +1288,7 @@ For paginated endpoints:
   "data": [
     /* array of items */
   ],
-  "pagination": {
+  "meta": {
     "total": 100,
     "page": 1,
     "limit": 20,

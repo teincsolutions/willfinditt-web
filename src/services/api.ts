@@ -38,12 +38,10 @@ const processQueue = (error: any, token: string | null = null) => {
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
-    // Exclude public auth endpoints and refresh endpoint from triggering interceptor logic
+    // Exclude public auth endpoints from triggering interceptor logic
     const isAuthUrl = error.config.url?.includes('/auth/');
     // We want to allow /auth/profile and /auth/change-password to trigger refresh as they are protected
     // accessible only with access token.
-    // The user requested "exclude uri under the auth", but likely meant the authentication flow endpoints.
-    // To be safe and compliant while preserving functionality:
     const isProtectedAuth = error.config.url?.includes('/auth/profile') || error.config.url?.includes('/auth/change-password') || error.config.url?.includes('/auth/logout');
     
     // So we skip interceptor if it is an auth url BUT NOT a protected one (like profile)
@@ -63,14 +61,18 @@ api.interceptors.response.use(
     const errorCode = error.response?.data?.code;
     const statusCode = error.response?.status;
 
-     const refreshToken = getRefreshToken();
-        if (!refreshToken) {
-             return Promise.reject(error);
-        }
+    const refreshToken = getRefreshToken();
 
-    // Handle Token Expiration
-    if (statusCode === 401 && errorCode === 'TOKEN_EXPIRED' && !originalRequest._retry && !isAuthRequest) {
-      
+    // Handle Token Expiration - try refresh for any 401 on protected endpoints
+    if (statusCode === 401 && !originalRequest._retry && !isAuthRequest) {
+      if (!refreshToken) {
+        clearTokens();
+        if (typeof window !== 'undefined') {
+          window.location.href = '/auth/login';
+        }
+        return Promise.reject(error);
+      }
+
       if (isRefreshing) {
         return new Promise(function(resolve, reject) {
           failedQueue.push({resolve, reject});
@@ -122,10 +124,11 @@ api.interceptors.response.use(
       }
     }
 
-    // Handle Terminal Auth Errors
+    // Only clear tokens on explicit auth failure, not on token expiration during refresh
     if (
         statusCode === 401 && 
-        (errorCode === 'INVALID_TOKEN' || errorCode === 'INVALID_USER' || errorCode === 'UNAUTHORIZED')
+        (errorCode === 'INVALID_USER') &&
+        !isAuthRequest
     ) {
         clearTokens();
         if (typeof window !== 'undefined') {

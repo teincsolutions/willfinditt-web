@@ -65,7 +65,10 @@ export const useMe = () => {
   return useQuery({
     queryKey: ['me'],
     queryFn: me,
-    retry: false,
-    staleTime: 1000 * 60 * 5, // 5 minutes
+    retry: 1,
+    staleTime: 1000 * 60 * 15, // 15 minutes - increased from 5
+    gcTime: 1000 * 60 * 30, // 30 minutes cache retention
+    refetchOnWindowFocus: false, // Don't refetch on window focus to prevent logouts
+    refetchInterval: false, // Disable periodic refetching
   });
 };

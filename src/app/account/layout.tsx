@@ -9,6 +9,7 @@ const menuItems = [
   { label: 'Profile Information', href: '/account/profile', icon: '👤' },
   { label: 'My Ads', href: '/account/my-ads', icon: '📦' },
   { label: 'Security', href: '/account/security', icon: '🔒' },
+  { label: 'Help & Support', href: '/account/threads', icon: '🆘' },
   { label: 'Saved Items', href: '/favorites', icon: '❤️' }, // External to /account, but managed here in menu
 ];
 

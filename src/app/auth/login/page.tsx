@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useForm } from 'react-hook-form';
@@ -21,19 +21,12 @@ import { OptimizedImage } from '@/components/OptimizedImage';
 
 export default function LoginPage() {
   const router = useRouter();
-  const { login, isAuthenticated, isLoading: authLoading } = useAuth();
+  const { login } = useAuth();
   const socialAuthMutation = useSocialAuth();
   const [error, setError] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmittingForm, setIsSubmittingForm] = useState(false);
   const hasNavigatedRef = useRef(false);
-
-  useEffect(() => {
-    if (!authLoading && isAuthenticated && !hasNavigatedRef.current) {
-      hasNavigatedRef.current = true;
-      router.replace('/');
-    }
-  }, [isAuthenticated, router, authLoading]);
 
   const {
     register,
@@ -54,13 +47,6 @@ export default function LoginPage() {
         [isEmail ? 'email' : 'phone']: data.identifier,
       };
       await login(loginParams);
-      if (!hasNavigatedRef.current) {
-        hasNavigatedRef.current = true;
-        toast.success('Login successful!');
-        setTimeout(() => {
-          router.push('/');
-        }, 300);
-      }
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Login failed');
       toast.error(err instanceof Error ? err.message : 'Login failed');

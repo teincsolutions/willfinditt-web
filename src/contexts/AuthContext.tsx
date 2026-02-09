@@ -1,9 +1,10 @@
 'use client';
 
-import React, { createContext, useContext, useMemo } from 'react';
-import { useRouter } from 'next/navigation';
+import React, { createContext, useContext, useMemo, useState, useEffect } from 'react';
+import { useRouter, usePathname } from 'next/navigation';
 import { useMe, useLogin, useRegister, useLogout } from '@/hooks/useAuth';
 import { User, LoginData, RegisterData } from '@/types/user';
+import { getAccessToken } from '@/lib/auth';
 
 interface AuthContextType {
   user: User | null;
@@ -19,9 +20,16 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const router = useRouter();
+  const pathname = usePathname();
+  const [hasToken, setHasToken] = useState(false);
 
-  // Use React Query as the single source of truth
-  const { data: userData, isLoading, refetch } = useMe();
+  // Check for token on mount and when pathname changes
+  useEffect(() => {
+    setHasToken(!!getAccessToken());
+  }, [pathname]);
+
+  // Use React Query as the single source of truth - only fetch if we have a token
+  const { data: userData, isLoading, refetch } = useMe(hasToken);
 
   const loginMutation = useLogin();
   const registerMutation = useRegister();
@@ -38,6 +46,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const login = async (data: LoginData) => {
     try {
       await loginMutation.mutateAsync(data);
+      // Update token state to trigger profile fetch
+      setHasToken(true);
       await refetch();
 
       // Support redirecting back to original page
@@ -64,9 +74,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const logout = async () => {
     try {
       await logoutMutation.mutateAsync();
+      setHasToken(false);
       router.push('/');
     } catch (error) {
       console.error('Logout failed', error);
+      setHasToken(false);
       router.push('/');
     }
   };

@@ -61,10 +61,11 @@ export const useLogout = () => {
   });
 };
 
-export const useMe = () => {
+export const useMe = (enabled: boolean = true) => {
   return useQuery({
     queryKey: ['me'],
     queryFn: me,
+    enabled, // Only run query when explicitly enabled
     retry: 1,
     staleTime: 1000 * 60 * 15, // 15 minutes - increased from 5
     gcTime: 1000 * 60 * 30, // 30 minutes cache retention

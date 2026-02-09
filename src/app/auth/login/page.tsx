@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useForm } from 'react-hook-form';
@@ -25,10 +25,12 @@ export default function LoginPage() {
   const socialAuthMutation = useSocialAuth();
   const [error, setError] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [isSubmittingForm, setIsSubmittingForm] = useState(false); // Local state for form submission
+  const [isSubmittingForm, setIsSubmittingForm] = useState(false);
+  const hasNavigatedRef = useRef(false);
 
   useEffect(() => {
-    if (!authLoading && isAuthenticated) {
+    if (!authLoading && isAuthenticated && !hasNavigatedRef.current) {
+      hasNavigatedRef.current = true;
       router.replace('/');
     }
   }, [isAuthenticated, router, authLoading]);
@@ -42,6 +44,7 @@ export default function LoginPage() {
   });
 
   const onSubmit = async (data: { identifier: string; password: string }) => {
+    if (isSubmittingForm || hasNavigatedRef.current) return;
     setIsSubmittingForm(true);
     try {
       setError('');
@@ -51,8 +54,13 @@ export default function LoginPage() {
         [isEmail ? 'email' : 'phone']: data.identifier,
       };
       await login(loginParams);
-      toast.success('Login successful!');
-      router.push('/');
+      if (!hasNavigatedRef.current) {
+        hasNavigatedRef.current = true;
+        toast.success('Login successful!');
+        setTimeout(() => {
+          router.push('/');
+        }, 300);
+      }
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Login failed');
       toast.error(err instanceof Error ? err.message : 'Login failed');
@@ -62,14 +70,20 @@ export default function LoginPage() {
   };
 
   const handleGoogleSuccess = async (response: any) => {
+    if (hasNavigatedRef.current) return;
     try {
       if (response.credential) {
         await socialAuthMutation.mutateAsync({
           accessToken: response.credential, // Sending ID token as accessToken
           provider: 'GOOGLE',
         });
-        toast.success('Login with Google successful!');
-        router.push('/');
+        if (!hasNavigatedRef.current) {
+          hasNavigatedRef.current = true;
+          toast.success('Login with Google successful!');
+          setTimeout(() => {
+            router.push('/');
+          }, 300);
+        }
       }
     } catch (error: any) {
       toast.error(error.message || 'Google login failed');

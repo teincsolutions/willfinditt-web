@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useForm } from 'react-hook-form';
@@ -82,6 +82,7 @@ export default function RegisterPage() {
   const [registerMethod, setRegisterMethod] = useState<'EMAIL' | 'PHONE'>(
     'EMAIL'
   );
+  const hasNavigatedRef = useRef(false);
 
   const {
     register: registerField,
@@ -99,6 +100,7 @@ export default function RegisterPage() {
   const isLoading = registerMutation.isPending || socialAuthMutation.isPending;
 
   const onSubmit = async (data: RegisterFormData) => {
+    if (registerMutation.isPending || hasNavigatedRef.current) return;
     try {
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { confirmPassword, agreeToTerms, ...registerData } = data;
@@ -112,16 +114,23 @@ export default function RegisterPage() {
 
       await registerMutation.mutateAsync(registerData);
 
-      if (registerMethod === 'EMAIL') {
-        toast.success('Account created! Please verify your email.');
-        router.push(
-          `/auth/verify-email?email=${encodeURIComponent(data.email || '')}`
-        );
-      } else {
-        toast.success('Account created! Please verify your phone number.');
-        router.push(
-          `/auth/verify-otp?phone=${encodeURIComponent(data.phone || '')}`
-        );
+      if (!hasNavigatedRef.current) {
+        hasNavigatedRef.current = true;
+        if (registerMethod === 'EMAIL') {
+          toast.success('Account created! Please verify your email.');
+          setTimeout(() => {
+            router.push(
+              `/auth/verify-email?email=${encodeURIComponent(data.email || '')}`
+            );
+          }, 300);
+        } else {
+          toast.success('Account created! Please verify your phone number.');
+          setTimeout(() => {
+            router.push(
+              `/auth/verify-otp?phone=${encodeURIComponent(data.phone || '')}`
+            );
+          }, 300);
+        }
       }
     } catch (error: any) {
       toast.error(error.message || 'Registration failed');
@@ -129,14 +138,20 @@ export default function RegisterPage() {
   };
 
   const handleGoogleSuccess = async (response: any) => {
+    if (hasNavigatedRef.current) return;
     try {
       if (response.credential) {
         await socialAuthMutation.mutateAsync({
           accessToken: response.credential, // Sending ID token as accessToken
           provider: 'GOOGLE',
         });
-        toast.success('Google registration successful!');
-        router.push('/');
+        if (!hasNavigatedRef.current) {
+          hasNavigatedRef.current = true;
+          toast.success('Google registration successful!');
+          setTimeout(() => {
+            router.push('/');
+          }, 300);
+        }
       }
     } catch (error: any) {
       toast.error(error.message || 'Google registration failed');

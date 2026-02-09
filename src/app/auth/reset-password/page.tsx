@@ -1,6 +1,6 @@
 'use client';
 
-import { Suspense, useState, useMemo, useRef } from 'react';
+import { Suspense, useState, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { useMutation } from '@tanstack/react-query';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -31,10 +31,11 @@ type FormData = yup.InferType<typeof schema>;
 function ResetPasswordForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const token = useMemo(() => searchParams.get('token'), [searchParams]);
+  const tokenRef = useRef(searchParams.get('token'));
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const isSubmittingRef = useRef(false);
+  const hasNavigatedRef = useRef(false);
 
   const {
     register,
@@ -47,12 +48,13 @@ function ResetPasswordForm() {
   const resetPasswordMutation = useMutation({
     mutationFn: resetPassword,
     onSuccess: () => {
-      if (isSubmittingRef.current) {
+      if (!hasNavigatedRef.current) {
+        hasNavigatedRef.current = true;
         isSubmittingRef.current = false;
         toast.success('Password has been reset successfully');
         setTimeout(() => {
           router.push('/auth/login');
-        }, 100);
+        }, 500);
       }
     },
     onError: (error: any) => {
@@ -62,18 +64,18 @@ function ResetPasswordForm() {
   });
 
   const onSubmit = (data: FormData) => {
-    if (!token) {
+    if (!tokenRef.current) {
         toast.error('Missing reset token');
         return;
     }
-    if (isSubmittingRef.current || resetPasswordMutation.isPending) {
+    if (isSubmittingRef.current || resetPasswordMutation.isPending || hasNavigatedRef.current) {
         return;
     }
     isSubmittingRef.current = true;
-    resetPasswordMutation.mutate({ token, newPassword: data.newPassword });
+    resetPasswordMutation.mutate({ token: tokenRef.current, newPassword: data.newPassword });
   };
 
-  if (!token) {
+  if (tokenRef.current === null && searchParams.get('token') === null) {
       return (
           <div className="text-center">
               <h3 className="text-lg font-bold text-error">Invalid Link</h3>

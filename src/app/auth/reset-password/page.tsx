@@ -1,6 +1,6 @@
 'use client';
 
-import { Suspense, useState } from 'react';
+import { Suspense, useState, useMemo, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { useMutation } from '@tanstack/react-query';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -31,9 +31,10 @@ type FormData = yup.InferType<typeof schema>;
 function ResetPasswordForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const token = searchParams.get('token');
+  const token = useMemo(() => searchParams.get('token'), [searchParams]);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const isSubmittingRef = useRef(false);
 
   const {
     register,
@@ -46,10 +47,16 @@ function ResetPasswordForm() {
   const resetPasswordMutation = useMutation({
     mutationFn: resetPassword,
     onSuccess: () => {
-      toast.success('Password has been reset successfully');
-      router.push('/auth/login');
+      if (isSubmittingRef.current) {
+        isSubmittingRef.current = false;
+        toast.success('Password has been reset successfully');
+        setTimeout(() => {
+          router.push('/auth/login');
+        }, 100);
+      }
     },
     onError: (error: any) => {
+      isSubmittingRef.current = false;
       toast.error(error.response?.data?.message || 'Failed to reset password');
     },
   });
@@ -59,6 +66,10 @@ function ResetPasswordForm() {
         toast.error('Missing reset token');
         return;
     }
+    if (isSubmittingRef.current || resetPasswordMutation.isPending) {
+        return;
+    }
+    isSubmittingRef.current = true;
     resetPasswordMutation.mutate({ token, newPassword: data.newPassword });
   };
 

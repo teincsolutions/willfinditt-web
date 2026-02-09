@@ -22,6 +22,7 @@ api.interceptors.request.use((config) => {
 
 let isRefreshing = false;
 let failedQueue: any[] = [];
+let isRedirecting = false;
 
 const processQueue = (error: any, token: string | null = null) => {
   failedQueue.forEach((prom) => {
@@ -35,18 +36,52 @@ const processQueue = (error: any, token: string | null = null) => {
   failedQueue = [];
 };
 
+const redirectToLogin = () => {
+  if (isRedirecting) return;
+  isRedirecting = true;
+  clearTokens();
+  
+  // Use setTimeout to avoid interrupting current execution
+  setTimeout(() => {
+    if (typeof window !== 'undefined') {
+      window.location.href = '/auth/login';
+    }
+  }, 100);
+};
+
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
-    // Exclude public auth endpoints from triggering interceptor logic
-    const isAuthUrl = error.config.url?.includes('/auth/');
-    // We want to allow /auth/profile and /auth/change-password to trigger refresh as they are protected
-    // accessible only with access token.
-    const isProtectedAuth = error.config.url?.includes('/auth/profile') || error.config.url?.includes('/auth/change-password') || error.config.url?.includes('/auth/logout');
+    // Define public auth endpoints that should never trigger token refresh or redirects
+    const publicAuthEndpoints = [
+      '/auth/login',
+      '/auth/register',
+      '/auth/forgot-password',
+      '/auth/reset-password',
+      '/auth/verify-email',
+      '/auth/verify-otp',
+      '/auth/refresh',
+      '/auth/social',
+    ];
     
-    // So we skip interceptor if it is an auth url BUT NOT a protected one (like profile)
-    // effectively excluding login, register, refresh, forgot-password, etc.
-    const isAuthRequest = isAuthUrl && !isProtectedAuth;
+    // Define protected auth endpoints that should trigger refresh
+    const protectedAuthEndpoints = [
+      '/auth/profile',
+      '/auth/change-password',
+      '/auth/logout',
+    ];
+    
+    const requestUrl = error.config.url || '';
+    
+    // Check if this is a public auth request (should NOT trigger refresh/redirect)
+    const isPublicAuthRequest = publicAuthEndpoints.some(endpoint => 
+      requestUrl.includes(endpoint)
+    );
+    
+    // Check if this is a protected auth request (should trigger refresh)
+    const isProtectedAuthRequest = protectedAuthEndpoints.some(endpoint => 
+      requestUrl.includes(endpoint)
+    );
     
     if (error.code === 'ERR_NETWORK') {
       console.error('Network Error Details:', {
@@ -63,13 +98,15 @@ api.interceptors.response.use(
 
     const refreshToken = getRefreshToken();
 
-    // Handle Token Expiration - try refresh for any 401 on protected endpoints
-    if (statusCode === 401 && !originalRequest._retry && !isAuthRequest) {
+    // Skip token refresh/redirect logic for public auth endpoints
+    if (isPublicAuthRequest && statusCode === 401) {
+      return Promise.reject(error);
+    }
+
+    // Handle Token Expiration - try refresh for protected endpoints and regular API calls
+    if (statusCode === 401 && !originalRequest._retry && !isPublicAuthRequest) {
       if (!refreshToken) {
-        clearTokens();
-        if (typeof window !== 'undefined') {
-          window.location.href = '/auth/login';
-        }
+        redirectToLogin();
         return Promise.reject(error);
       }
 
@@ -114,26 +151,20 @@ api.interceptors.response.use(
         }
       } catch (refreshError) {
         processQueue(refreshError, null);
-        clearTokens();
-        if (typeof window !== 'undefined') {
-          window.location.href = '/auth/login';
-        }
+        redirectToLogin();
         return Promise.reject(refreshError);
       } finally {
         isRefreshing = false;
       }
     }
 
-    // Only clear tokens on explicit auth failure, not on token expiration during refresh
+    // Only clear tokens on explicit auth failure for non-public endpoints
     if (
         statusCode === 401 && 
         (errorCode === 'INVALID_USER') &&
-        !isAuthRequest
+        !isPublicAuthRequest
     ) {
-        clearTokens();
-        if (typeof window !== 'undefined') {
-          window.location.href = '/auth/login';
-        }
+        redirectToLogin();
         return Promise.reject(error);
     }
 

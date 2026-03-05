@@ -129,16 +129,29 @@ export const AdForm = ({
   const { data: cities } = useCities(stateId);
 
   const handleFormSubmit = (data: AdFormData) => {
-    // Transform dynamic fields
+    // Transform dynamic fields into fieldValues for the API
     const fieldValues = data.dynamicFields
-      ? Object.entries(data.dynamicFields).map(([key, value]) => ({
-          categoryFieldId: key,
-          value: String(value),
-        }))
+      ? Object.entries(data.dynamicFields)
+          .filter(([, value]) => value !== undefined && value !== '')
+          .map(([key, value]) => ({
+            categoryFieldId: key,
+            value: String(value),
+          }))
       : [];
 
+    // Only send fields the API accepts — exclude stateId, dynamicFields, etc.
     const adData = {
-      ...data,
+      title: data.title,
+      description: data.description,
+      price: data.price,
+      currency: data.currency,
+      condition: data.condition || undefined,
+      categoryId: data.categoryId,
+      cityId: data.cityId,
+      address: data.address,
+      contactPhone: data.contactPhone,
+      contactEmail: data.contactEmail,
+      isNegotiable: data.isNegotiable,
       images,
       fieldValues,
     };

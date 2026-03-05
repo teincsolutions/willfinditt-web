@@ -15,12 +15,26 @@ export const uploadAdImages = async (files: File[]): Promise<string[]> => {
     formData.append('images', file);
   });
 
-  const response = await api.post<string[]>('/upload/ad-images', formData, {
-    headers: {
-      'Content-Type': 'multipart/form-data',
-    },
-  });
-  return response.data;
+  const response = await api.post<string[] | MultiUploadResponse>(
+    '/upload/ad-images',
+    formData,
+    {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    }
+  );
+
+  // Handle both response shapes: direct string[] or { urls: string[] }
+  const data = response.data;
+  if (Array.isArray(data)) {
+    return data;
+  }
+  if (data && typeof data === 'object' && 'urls' in data) {
+    return (data as MultiUploadResponse).urls;
+  }
+  console.error('Unexpected upload response format:', data);
+  throw new Error('Unexpected upload response format');
 };
 
 export const uploadAvatar = async (file: File): Promise<string> => {

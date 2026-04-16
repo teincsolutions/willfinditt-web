@@ -32,6 +32,7 @@ export function AdDetailClient({ ad }: AdDetailClientProps) {
     'contact' | 'favorite' | 'profile' | null
   >(null);
   const [isSaved, setIsSaved] = useState(ad.isSaved ?? false);
+  const [isContactRevealed, setIsContactRevealed] = useState(false);
 
   const handleLoginRedirect = () => {
     const redirectPath = `/ads/${ad.id}`;
@@ -63,8 +64,10 @@ export function AdDetailClient({ ad }: AdDetailClientProps) {
       return;
     }
 
-    if (ad.contactPhone) {
+    if (isContactRevealed && ad.contactPhone) {
       window.location.href = `tel:${ad.contactPhone}`;
+    } else if (ad.contactPhone) {
+      setIsContactRevealed(true);
     } else {
       alert("This seller hasn't provided a phone number.");
     }
@@ -164,7 +167,7 @@ export function AdDetailClient({ ad }: AdDetailClientProps) {
                   d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"
                 />
               </svg>
-              Contact Seller
+              {isContactRevealed ? ad.contactPhone : 'Contact Seller'}
             </Button>
           </div>
 
@@ -192,37 +195,39 @@ export function AdDetailClient({ ad }: AdDetailClientProps) {
                 );
                 let displayValue: React.ReactNode = field.value;
 
-                if (fieldDef?.options) {
-                  if (
-                    fieldDef.type === 'CHECKBOX' &&
-                    field.value.includes(',')
-                  ) {
-                    // Handle multi-select checkbox with Pills
-                    const values = field.value.split(',');
-                    const labels = values.map(
-                      (v) =>
-                        fieldDef.options?.find((opt) => opt.value === v)
-                          ?.label || v
-                    );
-                    displayValue = (
-                      <div className="flex flex-wrap gap-1.5 mt-1">
-                        {labels.map((label, idx) => (
-                          <span
-                            key={idx}
-                            className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-primary/10 text-primary border border-primary/20"
-                          >
-                            {label}
-                          </span>
-                        ))}
-                      </div>
-                    );
-                  } else {
-                    // Handle single select/radio/checkbox
-                    const option = fieldDef.options.find(
-                      (opt) => opt.value === field.value
-                    );
-                    if (option) displayValue = option.label;
+                if (fieldDef?.type === 'CHECKBOX') {
+                  // Value is stored as stringified JSON array, e.g. "[\"pool\",\"gym\"]"
+                  try {
+                    const values = JSON.parse(field.value);
+                    if (Array.isArray(values)) {
+                      const labels = values.map(
+                        (v: string) =>
+                          fieldDef.options?.find((opt) => opt.value === v)
+                            ?.label || v
+                      );
+                      displayValue = (
+                        <div className="flex flex-wrap gap-1.5 mt-1">
+                          {labels.map((label: string, idx: number) => (
+                            <span
+                              key={idx}
+                              className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-primary/10 text-primary border border-primary/20"
+                            >
+                              {label}
+                            </span>
+                          ))}
+                        </div>
+                      );
+                    }
+                  } catch {
+                    // If parsing fails, show raw value
+                    displayValue = field.value;
                   }
+                } else if (fieldDef?.options) {
+                  // Handle single select/radio
+                  const option = fieldDef.options.find(
+                    (opt) => opt.value === field.value
+                  );
+                  if (option) displayValue = option.label;
                 }
 
                 return (

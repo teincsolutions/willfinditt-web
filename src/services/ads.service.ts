@@ -71,6 +71,11 @@ export const getUserAds = async (
   return response.data;
 };
 
+export const getUserAd = async (id: string): Promise<Ad> => {
+  const response = await api.get(`/ads/${id}`);
+  return response.data;
+};
+
 export const getSavedAds = async (
   params: AdsListParams = {}
 ): Promise<AdsResponse> => {

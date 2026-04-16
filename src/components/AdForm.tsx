@@ -95,7 +95,17 @@ export const AdForm = ({
       isNegotiable: initialData?.isNegotiable || false,
       dynamicFields:
         initialData?.fieldValues?.reduce((acc: any, f) => {
-          acc[f.categoryFieldId] = f.value;
+          // For CHECKBOX fields, the value is stored as a stringified JSON array
+          // Parse it to get the actual array for form editing
+          if (f.categoryField?.type === 'CHECKBOX') {
+            try {
+              acc[f.categoryFieldId] = JSON.parse(f.value);
+            } catch {
+              acc[f.categoryFieldId] = [];
+            }
+          } else {
+            acc[f.categoryFieldId] = f.value;
+          }
           return acc;
         }, {}) || {},
     },
@@ -133,10 +143,14 @@ export const AdForm = ({
     const fieldValues = data.dynamicFields
       ? Object.entries(data.dynamicFields)
           .filter(([, value]) => value !== undefined && value !== '')
-          .map(([key, value]) => ({
-            categoryFieldId: key,
-            value: String(value),
-          }))
+          .map(([key, value]) => {
+            // For arrays (CHECKBOX fields), send as-is; otherwise convert to string
+            const finalValue = Array.isArray(value) ? value : String(value);
+            return {
+              categoryFieldId: key,
+              value: finalValue,
+            };
+          })
       : [];
 
     // Only send fields the API accepts — exclude stateId, dynamicFields, etc.
@@ -281,6 +295,8 @@ export const AdForm = ({
           categoryId={categoryId}
           register={register}
           errors={errors}
+          setValue={setValue}
+          watch={watch}
         />
       )}
 

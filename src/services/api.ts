@@ -41,18 +41,46 @@ const redirectToLogin = () => {
   isRedirecting = true;
   clearTokens();
   
-  // Use setTimeout to avoid interrupting current execution
-  setTimeout(() => {
-    if (typeof window !== 'undefined') {
-      window.location.href = '/auth/login';
+  if (typeof window !== 'undefined') {
+    window.location.href = '/auth/login';
+  }
+};
+
+const refreshAccessToken = async (): Promise<string | null> => {
+  const refreshToken = getRefreshToken();
+  if (!refreshToken) {
+    return null;
+  }
+
+  try {
+    const refreshResponse = await axios.post(
+      `${process.env.NEXT_PUBLIC_API_URL}/auth/refresh`,
+      {},
+      {
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${refreshToken}`,
+        }
+      }
+    );
+    
+    const newAccessToken = refreshResponse.data.access_token || refreshResponse.data.accessToken;
+    const newRefreshToken = refreshResponse.data.refresh_token || refreshResponse.data.refreshToken;
+ 
+    if (newAccessToken) {
+      setAccessToken(newAccessToken);
+      if (newRefreshToken) setRefreshToken(newRefreshToken);
+      return newAccessToken;
     }
-  }, 100);
+    return null;
+  } catch (error) {
+    return null;
+  }
 };
 
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
-    // Define public auth endpoints that should never trigger token refresh or redirects
     const publicAuthEndpoints = [
       '/auth/login',
       '/auth/register',
@@ -64,47 +92,23 @@ api.interceptors.response.use(
       '/auth/social',
     ];
     
-    // Define protected auth endpoints that should trigger refresh
-    const protectedAuthEndpoints = [
-      '/auth/profile',
-      '/auth/change-password',
-      '/auth/logout',
-    ];
+    const requestUrl = error.config?.url || '';
     
-    const requestUrl = error.config.url || '';
-    
-    // Check if this is a public auth request (should NOT trigger refresh/redirect)
     const isPublicAuthRequest = publicAuthEndpoints.some(endpoint => 
       requestUrl.includes(endpoint)
     );
     
-    // Check if this is a protected auth request (should trigger refresh)
-    const isProtectedAuthRequest = protectedAuthEndpoints.some(endpoint => 
-      requestUrl.includes(endpoint)
-    );
-    
-    if (error.code === 'ERR_NETWORK') {
-      console.error('Network Error Details:', {
-        message: error.message,
-        baseURL: error.config?.baseURL,
-        url: error.config?.url,
-        method: error.config?.method,
-      });
-    }
-
     const originalRequest = error.config;
-    const errorCode = error.response?.data?.code;
     const statusCode = error.response?.status;
-
-    const refreshToken = getRefreshToken();
 
     // Skip token refresh/redirect logic for public auth endpoints
     if (isPublicAuthRequest && statusCode === 401) {
       return Promise.reject(error);
     }
 
-    // Handle Token Expiration - try refresh for protected endpoints and regular API calls
     if (statusCode === 401 && !originalRequest._retry && !isPublicAuthRequest) {
+      const refreshToken = getRefreshToken();
+      
       if (!refreshToken) {
         redirectToLogin();
         return Promise.reject(error);
@@ -117,6 +121,7 @@ api.interceptors.response.use(
           originalRequest.headers['Authorization'] = 'Bearer ' + token;
           return api(originalRequest);
         }).catch((err) => {
+          redirectToLogin();
           return Promise.reject(err);
         });
       }
@@ -125,29 +130,15 @@ api.interceptors.response.use(
       isRefreshing = true;
 
       try {
-        const refreshResponse = await axios.post(
-          `${process.env.NEXT_PUBLIC_API_URL}/auth/refresh`,
-          { refreshToken },
-          {
-            headers: {
-              'Content-Type': 'application/json',
-            }
-          }
-        );
+        const newAccessToken = await refreshAccessToken();
         
-        const newAccessToken = refreshResponse.data.access_token || refreshResponse.data.accessToken || refreshResponse.data.tokens?.accessToken;
-        const newRefreshToken = refreshResponse.data.refresh_token || refreshResponse.data.refreshToken || refreshResponse.data.tokens?.refreshToken;
- 
         if (newAccessToken) {
-          setAccessToken(newAccessToken);
-          if (newRefreshToken) setRefreshToken(newRefreshToken);
- 
           api.defaults.headers.common['Authorization'] = 'Bearer ' + newAccessToken;
-          
           processQueue(null, newAccessToken);
-          
           originalRequest.headers['Authorization'] = 'Bearer ' + newAccessToken;
           return api(originalRequest);
+        } else {
+          throw new Error('Failed to refresh token');
         }
       } catch (refreshError) {
         processQueue(refreshError, null);
@@ -156,16 +147,6 @@ api.interceptors.response.use(
       } finally {
         isRefreshing = false;
       }
-    }
-
-    // Only clear tokens on explicit auth failure for non-public endpoints
-    if (
-        statusCode === 401 && 
-        (errorCode === 'INVALID_USER') &&
-        !isPublicAuthRequest
-    ) {
-        redirectToLogin();
-        return Promise.reject(error);
     }
 
     return Promise.reject(error);

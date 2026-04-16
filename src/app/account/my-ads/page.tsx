@@ -73,7 +73,7 @@ function MyAdsContent() {
                 <div className="flex justify-between items-start">
                   <div>
                     <h3 className="font-semibold text-text truncate">
-                      <Link href={`/ads/${ad.id}`} className="hover:underline">
+                      <Link href={`/account/my-ads/${ad.id}`} className="hover:underline">
                         {ad.title}
                       </Link>
                     </h3>

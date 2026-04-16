@@ -1,21 +1,22 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
-  getFavorites,
-  addFavorite,
-  removeFavorite,
-} from '@/services/users.service';
+  getSavedAds,
+  saveAd,
+  unsaveAd,
+} from '@/services/ads.service';
+import { AdsListParams, AdsResponse } from '@/types/ad';
 
-export const useFavorites = () => {
-  return useQuery({
-    queryKey: ['favorites'],
-    queryFn: getFavorites,
+export const useFavorites = (params: AdsListParams = {}) => {
+  return useQuery<AdsResponse>({
+    queryKey: ['favorites', params],
+    queryFn: () => getSavedAds(params),
   });
 };
 
 export const useAddFavorite = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (adId: string) => addFavorite(adId),
+    mutationFn: (adId: string) => saveAd(adId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['favorites'] });
     },
@@ -25,7 +26,7 @@ export const useAddFavorite = () => {
 export const useRemoveFavorite = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (adId: string) => removeFavorite(adId),
+    mutationFn: (adId: string) => unsaveAd(adId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['favorites'] });
     },

@@ -19,6 +19,10 @@ export const useAddFavorite = () => {
     mutationFn: (adId: string) => saveAd(adId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['favorites'] });
+      queryClient.invalidateQueries({ queryKey: ['ads'] });
+      queryClient.invalidateQueries({ queryKey: ['ad'] });
+      queryClient.invalidateQueries({ queryKey: ['my-ads'] });
+      queryClient.invalidateQueries({ queryKey: ['search'] });
     },
   });
 };
@@ -29,6 +33,10 @@ export const useRemoveFavorite = () => {
     mutationFn: (adId: string) => unsaveAd(adId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['favorites'] });
+      queryClient.invalidateQueries({ queryKey: ['ads'] });
+      queryClient.invalidateQueries({ queryKey: ['ad'] });
+      queryClient.invalidateQueries({ queryKey: ['my-ads'] });
+      queryClient.invalidateQueries({ queryKey: ['search'] });
     },
   });
 };

@@ -21,13 +21,14 @@ export const ListingCard: React.FC<ListingCardProps> = ({ ad }) => {
   const addFavorite = useAddFavorite();
   const removeFavorite = useRemoveFavorite();
   const [showLoginDialog, setShowLoginDialog] = useState(false);
+  const [isSavedLocal, setIsSavedLocal] = useState(ad.isSaved ?? false);
 
   const priceDisplay =
     ad.price && ad.price > 0
       ? formatCurrency(ad.price, 'en-GH', ad.currency || 'GHS')
       : 'Contact for price';
 
-  const isSaved = ad.isSaved ?? false;
+  const isSaved = isSavedLocal;
   const isFavoriteLoading = addFavorite.isPending || removeFavorite.isPending;
 
   const handleFavoriteClick = (e: React.MouseEvent) => {
@@ -40,9 +41,13 @@ export const ListingCard: React.FC<ListingCardProps> = ({ ad }) => {
     }
 
     if (isSaved) {
-      removeFavorite.mutate(ad.id);
+      removeFavorite.mutate(ad.id, {
+        onSuccess: () => setIsSavedLocal(false),
+      });
     } else {
-      addFavorite.mutate(ad.id);
+      addFavorite.mutate(ad.id, {
+        onSuccess: () => setIsSavedLocal(true),
+      });
     }
   };
 

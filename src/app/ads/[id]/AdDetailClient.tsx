@@ -34,6 +34,8 @@ export function AdDetailClient({ ad }: AdDetailClientProps) {
   const [isSaved, setIsSaved] = useState(ad.isSaved ?? false);
   const [isContactRevealed, setIsContactRevealed] = useState(false);
 
+  const isFavoriteLoading = addFavorite.isPending || removeFavorite.isPending;
+
   const handleLoginRedirect = () => {
     const redirectPath = `/ads/${ad.id}`;
     router.push(`/auth/login?redirect=${encodeURIComponent(redirectPath)}`);
@@ -134,21 +136,26 @@ export function AdDetailClient({ ad }: AdDetailClientProps) {
             <Button
               onClick={handleFavorite}
               variant="outline"
+              disabled={isFavoriteLoading}
               className={`flex items-center gap-2 ${isSaved ? 'text-primary border-primary' : ''}`}
             >
-              <svg
-                className={`w-5 h-5 ${isSaved ? 'fill-current' : 'fill-none'}`}
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
-                />
-              </svg>
-              {isSaved ? 'Saved' : 'Add to Favorites'}
+              {isFavoriteLoading ? (
+                <div className="w-5 h-5 border-2 border-current border-t-transparent rounded-full animate-spin" />
+              ) : (
+                <svg
+                  className={`w-5 h-5 ${isSaved ? 'fill-current' : 'fill-none'}`}
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
+                  />
+                </svg>
+              )}
+              {isFavoriteLoading ? 'Loading...' : isSaved ? 'Saved' : 'Add to Favorites'}
             </Button>
             <Button
               onClick={handleContactSeller}

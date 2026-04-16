@@ -28,6 +28,7 @@ export const ListingCard: React.FC<ListingCardProps> = ({ ad }) => {
       : 'Contact for price';
 
   const isSaved = ad.isSaved ?? false;
+  const isFavoriteLoading = addFavorite.isPending || removeFavorite.isPending;
 
   const handleFavoriteClick = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -79,25 +80,30 @@ export const ListingCard: React.FC<ListingCardProps> = ({ ad }) => {
           {isAuthenticated && (
             <button
               onClick={handleFavoriteClick}
+              disabled={isFavoriteLoading}
               className={`absolute bottom-3 right-3 z-20 p-2 rounded-full transition-all ${
                 isSaved
                   ? 'bg-primary text-white hover:bg-primary/80'
                   : 'bg-background/90 text-text hover:bg-background hover:text-primary'
-              }`}
+              } ${isFavoriteLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
               title={isSaved ? 'Remove from favorites' : 'Add to favorites'}
             >
-              <svg
-                className={`w-5 h-5 ${isSaved ? 'fill-current' : 'fill-none'}`}
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
-                />
-              </svg>
+              {isFavoriteLoading ? (
+                <div className="w-5 h-5 border-2 border-current border-t-transparent rounded-full animate-spin" />
+              ) : (
+                <svg
+                  className={`w-5 h-5 ${isSaved ? 'fill-current' : 'fill-none'}`}
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
+                  />
+                </svg>
+              )}
             </button>
           )}
         </div>

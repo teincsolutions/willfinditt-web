@@ -1,0 +1,15 @@
+[
+  {
+    "relation": [
+      "delegate_permission/common.handle_all_urls",
+      "delegate_permission/common.get_login_creds"
+    ],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.willfinditt.willfinditt",
+      "sha256_cert_fingerprints": [
+        "28:BD:B2:BA:DC:ED:13:9A:E2:E3:9F:33:F7:8E:CD:39:97:5D:8D:49:4A:FC:A9:56:2C:B6:82:3E:0A:80:24:E4"
+      ]
+    }
+  }
+]

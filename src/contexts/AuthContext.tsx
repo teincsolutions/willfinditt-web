@@ -1,6 +1,12 @@
 'use client';
 
-import React, { createContext, useContext, useMemo, useState, useEffect } from 'react';
+import React, {
+  createContext,
+  useContext,
+  useMemo,
+  useState,
+  useEffect,
+} from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { useMe, useLogin, useRegister, useLogout } from '@/hooks/useAuth';
 import { User, LoginData, RegisterData } from '@/types/user';
@@ -66,6 +72,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const register = async (data: RegisterData) => {
     try {
       await registerMutation.mutateAsync(data);
+      setHasToken(true);
+      await refetch();
+      router.push('/');
     } catch (error) {
       throw error;
     }

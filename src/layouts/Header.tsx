@@ -567,15 +567,6 @@ export const Header = () => {
                   </Link>
                 ))}
               </div>
-
-              {/* Trending/Deals link */}
-              <Link
-                href="/deals"
-                className="flex items-center gap-1 px-4 py-2 text-primary font-bold hover:bg-background-primary rounded-lg transition-colors"
-              >
-                <span>🔥</span>
-                <span>Hot Deals</span>
-              </Link>
             </nav>
           </div>
         </div>

@@ -94,17 +94,29 @@ export const AdForm = ({
       contactEmail: initialData?.contactEmail || user?.email || '',
       isNegotiable: initialData?.isNegotiable || false,
       dynamicFields:
-        initialData?.fieldValues?.reduce((acc: any, f) => {
-          // For CHECKBOX fields, the value is stored as a stringified JSON array
-          // Parse it to get the actual array for form editing
-          if (f.categoryField?.type === 'CHECKBOX') {
-            try {
-              acc[f.categoryFieldId] = JSON.parse(f.value);
-            } catch {
-              acc[f.categoryFieldId] = [];
+        (
+          initialData?.namedFieldValues ||
+          initialData?.fieldValues ||
+          []
+        ).reduce((acc: any, f: any) => {
+          const fieldName =
+            f.fieldName || f.categoryField?.name || f.categoryFieldId;
+          const fieldType = f.categoryField?.type;
+          if (fieldType === 'CHECKBOX' || f.fieldName) {
+            const val = f.value;
+            if (typeof val === 'string' && val.includes(',')) {
+              acc[fieldName] = val.split(',');
+            } else if (typeof val === 'string') {
+              try {
+                acc[fieldName] = JSON.parse(val);
+              } catch {
+                acc[fieldName] = [];
+              }
+            } else {
+              acc[fieldName] = val;
             }
           } else {
-            acc[f.categoryFieldId] = f.value;
+            acc[fieldName] = f.value;
           }
           return acc;
         }, {}) || {},
@@ -139,21 +151,33 @@ export const AdForm = ({
   const { data: cities } = useCities(stateId);
 
   const handleFormSubmit = (data: AdFormData) => {
-    // Transform dynamic fields into fieldValues for the API
-    const fieldValues = data.dynamicFields
-      ? Object.entries(data.dynamicFields)
-          .filter(([, value]) => value !== undefined && value !== '')
-          .map(([key, value]) => {
-            // For arrays (CHECKBOX fields), send as-is; otherwise convert to string
-            const finalValue = Array.isArray(value) ? value : String(value);
-            return {
-              categoryFieldId: key,
-              value: finalValue,
-            };
-          })
-      : [];
+    const dynamicFieldsData = data.dynamicFields || {};
+    const categoryId = data.categoryId;
 
-    // Only send fields the API accepts — exclude stateId, dynamicFields, etc.
+    const namedFieldValues = Object.entries(dynamicFieldsData)
+      .filter(
+        ([, value]) => value !== undefined && value !== '' && value !== null
+      )
+      .map(([fieldName, value]) => {
+        let finalValue: string;
+
+        if (Array.isArray(value)) {
+          finalValue = value.join(',');
+        } else if (typeof value === 'boolean') {
+          finalValue = String(value);
+        } else if (typeof value === 'number') {
+          finalValue = String(value);
+        } else {
+          finalValue = String(value);
+        }
+
+        return {
+          fieldName,
+          value: finalValue,
+          categoryId,
+        };
+      });
+
     const adData = {
       title: data.title,
       description: data.description,
@@ -167,7 +191,7 @@ export const AdForm = ({
       contactEmail: data.contactEmail,
       isNegotiable: data.isNegotiable,
       images,
-      fieldValues,
+      namedFieldValues,
     };
 
     onSubmit(adData);
@@ -297,6 +321,23 @@ export const AdForm = ({
           errors={errors}
           setValue={setValue}
           watch={watch}
+          initialValues={
+            initialData?.namedFieldValues
+              ? initialData.namedFieldValues.reduce((acc: any, f: any) => {
+                  const fieldName = f.fieldName;
+                  if (
+                    f.value &&
+                    typeof f.value === 'string' &&
+                    f.value.includes(',')
+                  ) {
+                    acc[fieldName] = f.value.split(',');
+                  } else {
+                    acc[fieldName] = f.value;
+                  }
+                  return acc;
+                }, {})
+              : {}
+          }
         />
       )}
 

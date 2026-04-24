@@ -68,7 +68,7 @@ export const DynamicCategoryFields = ({
   useEffect(() => {
     if (fields && initialValues) {
       fields.forEach((field) => {
-        const key = field.name;
+        const key = field.id;
         if (initialValues[key] !== undefined) {
           setValue(`dynamicFields.${key}`, initialValues[key], {
             shouldValidate: false,
@@ -158,13 +158,13 @@ export const DynamicCategoryFields = ({
                 options={field.options}
                 value={
                   field.options?.filter((opt) => {
-                    const currentValue = watch(`dynamicFields.${field.name}`);
+                    const currentValue = watch(`dynamicFields.${field.id}`);
                     return currentValue?.includes(opt.value);
                   }) || []
                 }
                 onChange={(selected) =>
                   handleCheckboxChange(
-                    field.name,
+                    field.id,
                     selected as { value: string; label: string }[]
                   )
                 }
@@ -173,7 +173,7 @@ export const DynamicCategoryFields = ({
               />
             ) : field.type === 'TEXTAREA' ? (
               <textarea
-                {...register(`dynamicFields.${field.name}`, {
+                {...register(`dynamicFields.${field.id}`, {
                   required: field.isRequired
                     ? `${field.label} is required`
                     : false,
@@ -187,13 +187,13 @@ export const DynamicCategoryFields = ({
                 <label className="flex items-center gap-2 cursor-pointer">
                   <input
                     type="checkbox"
-                    {...register(`dynamicFields.${field.name}`, {
+                    {...register(`dynamicFields.${field.id}`, {
                       required: field.isRequired
                         ? `${field.label} is required`
                         : false,
                     })}
                     onChange={(e) =>
-                      handleBooleanChange(field.name, e.target.checked)
+                      handleBooleanChange(field.id, e.target.checked)
                     }
                     className="w-5 h-5 text-primary rounded focus:ring-primary border-border-custom"
                   />
@@ -203,7 +203,7 @@ export const DynamicCategoryFields = ({
             ) : field.type === 'DATE' ? (
               <input
                 type="date"
-                {...register(`dynamicFields.${field.name}`, {
+                {...register(`dynamicFields.${field.id}`, {
                   required: field.isRequired
                     ? `${field.label} is required`
                     : false,
@@ -213,7 +213,7 @@ export const DynamicCategoryFields = ({
             ) : field.type === 'NUMBER' ? (
               <input
                 type="number"
-                {...register(`dynamicFields.${field.name}`, {
+                {...register(`dynamicFields.${field.id}`, {
                   required: field.isRequired
                     ? `${field.label} is required`
                     : false,
@@ -224,7 +224,7 @@ export const DynamicCategoryFields = ({
             ) : (
               <input
                 type="text"
-                {...register(`dynamicFields.${field.name}`, {
+                {...register(`dynamicFields.${field.id}`, {
                   required: field.isRequired
                     ? `${field.label} is required`
                     : false,
@@ -234,9 +234,9 @@ export const DynamicCategoryFields = ({
               />
             )}
 
-            {(errors.dynamicFields as any)?.[field.name] && (
+            {(errors.dynamicFields as any)?.[field.id] && (
               <span className="text-error text-xs mt-1">
-                {((errors.dynamicFields as any)?.[field.name] as any)?.message}
+                {((errors.dynamicFields as any)?.[field.id] as any)?.message}
               </span>
             )}
           </div>

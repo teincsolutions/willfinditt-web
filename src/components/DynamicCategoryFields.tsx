@@ -22,11 +22,12 @@ interface DynamicCategoryFieldsProps {
 const selectStyles = {
   control: (base: any) => ({
     ...base,
-    borderColor: 'var(--color-border-custom)',
+    borderColor: '#e5e5e5',
     borderRadius: '0.5rem',
     padding: '2px',
+    minHeight: '42px',
     '&:hover': {
-      borderColor: 'var(--color-primary)',
+      borderColor: '#ef702a',
     },
   }),
   menu: (base: any) => ({
@@ -41,17 +42,23 @@ const selectStyles = {
   option: (base: any, state: any) => ({
     ...base,
     backgroundColor: state.isSelected
-      ? 'var(--color-primary)'
+      ? '#ef702a'
       : state.isFocused
-        ? 'var(--color-background-primary)'
+        ? '#fefaec'
         : 'white',
-    color: state.isSelected ? 'white' : 'var(--color-text)',
+    color: state.isSelected ? 'white' : '#1a1a1a',
     cursor: 'pointer',
     '&:hover': {
-      backgroundColor: state.isSelected
-        ? 'var(--color-primary)'
-        : 'var(--color-background-primary)',
+      backgroundColor: state.isSelected ? '#ef702a' : '#fefaec',
     },
+  }),
+  valueContainer: (base: any) => ({
+    ...base,
+    padding: '0 8px',
+  }),
+  indicatorsContainer: (base: any) => ({
+    ...base,
+    padding: '0 4px',
   }),
 };
 

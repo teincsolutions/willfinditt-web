@@ -131,6 +131,7 @@ export interface Ad {
   category: CategorySummaryDto;
   city?: LocationDto;
   fieldValues: AdFieldValueResponseDto[];
+  namedFieldValues?: NamedAdFieldValueDto[];
   _count: {
     savedBy: number;
     comments: number;

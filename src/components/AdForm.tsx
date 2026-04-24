@@ -94,15 +94,10 @@ export const AdForm = ({
       contactEmail: initialData?.contactEmail || user?.email || '',
       isNegotiable: initialData?.isNegotiable || false,
       dynamicFields:
-        (
-          initialData?.namedFieldValues ||
-          initialData?.fieldValues ||
-          []
-        ).reduce((acc: any, f: any) => {
-          const fieldName =
-            f.fieldName || f.categoryField?.name || f.categoryFieldId;
+        (initialData?.fieldValues || []).reduce((acc: any, f: any) => {
+          const fieldName = f.categoryField?.name || f.categoryFieldId;
           const fieldType = f.categoryField?.type;
-          if (fieldType === 'CHECKBOX' || f.fieldName) {
+          if (fieldType === 'CHECKBOX') {
             const val = f.value;
             if (typeof val === 'string' && val.includes(',')) {
               acc[fieldName] = val.split(',');
@@ -154,7 +149,7 @@ export const AdForm = ({
     const dynamicFieldsData = data.dynamicFields || {};
     const categoryId = data.categoryId;
 
-    const namedFieldValues = Object.entries(dynamicFieldsData)
+    const fieldValues = Object.entries(dynamicFieldsData)
       .filter(
         ([, value]) => value !== undefined && value !== '' && value !== null
       )
@@ -172,9 +167,8 @@ export const AdForm = ({
         }
 
         return {
-          fieldName,
+          categoryFieldId: fieldName,
           value: finalValue,
-          categoryId,
         };
       });
 
@@ -191,7 +185,7 @@ export const AdForm = ({
       contactEmail: data.contactEmail,
       isNegotiable: data.isNegotiable,
       images,
-      namedFieldValues,
+      fieldValues,
     };
 
     onSubmit(adData);
@@ -322,9 +316,9 @@ export const AdForm = ({
           setValue={setValue}
           watch={watch}
           initialValues={
-            initialData?.namedFieldValues
-              ? initialData.namedFieldValues.reduce((acc: any, f: any) => {
-                  const fieldName = f.fieldName;
+            initialData?.fieldValues
+              ? initialData.fieldValues.reduce((acc: any, f: any) => {
+                  const fieldName = f.categoryField?.name || f.categoryFieldId;
                   if (
                     f.value &&
                     typeof f.value === 'string' &&

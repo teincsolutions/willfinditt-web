@@ -113,7 +113,7 @@ export const DynamicCategoryFields = ({
 
             {field.type === 'SELECT' ? (
               <select
-                {...register(`dynamicFields.${field.name}`, {
+                {...register(`dynamicFields.${field.id}`, {
                   required: field.isRequired
                     ? `${field.label} is required`
                     : false,
@@ -137,7 +137,7 @@ export const DynamicCategoryFields = ({
                     <input
                       type="radio"
                       value={opt.value}
-                      {...register(`dynamicFields.${field.name}`, {
+                      {...register(`dynamicFields.${field.id}`, {
                         required: field.isRequired
                           ? `${field.label} is required`
                           : false,

@@ -19,47 +19,102 @@ interface DynamicCategoryFieldsProps {
   initialValues?: Record<string, any>;
 }
 
-const selectStyles = {
-  control: (base: any) => ({
-    ...base,
-    borderColor: '#e5e5e5',
-    borderRadius: '0.5rem',
-    padding: '2px',
-    minHeight: '42px',
-    '&:hover': {
-      borderColor: '#ef702a',
-    },
-  }),
-  menu: (base: any) => ({
-    ...base,
-    borderRadius: '0.5rem',
-    overflow: 'hidden',
-  }),
-  menuList: (base: any) => ({
-    ...base,
-    padding: '4px',
-  }),
-  option: (base: any, state: any) => ({
-    ...base,
-    backgroundColor: state.isSelected
-      ? '#ef702a'
-      : state.isFocused
-        ? '#fefaec'
-        : 'white',
-    color: state.isSelected ? 'white' : '#1a1a1a',
-    cursor: 'pointer',
-    '&:hover': {
-      backgroundColor: state.isSelected ? '#ef702a' : '#fefaec',
-    },
-  }),
-  valueContainer: (base: any) => ({
-    ...base,
-    padding: '0 8px',
-  }),
-  indicatorsContainer: (base: any) => ({
-    ...base,
-    padding: '0 4px',
-  }),
+const theme = {
+  light: {
+    primary: '#ef702a',
+    background: '#fefaec',
+    border: '#e5e5e5',
+    text: '#1a1a1a',
+    white: '#ffffff',
+    placeholder: '#737373',
+    surface: '#fafafa',
+  },
+  dark: {
+    primary: '#ef702a',
+    background: '#2a2a2a',
+    border: '#404040',
+    text: '#fafafa',
+    white: '#1a1a1a',
+    placeholder: '#a3a3a3',
+    surface: '#262626',
+  },
+};
+
+const getSelectStyles = (isDark: boolean) => {
+  const t = isDark ? theme.dark : theme.light;
+
+  return {
+    control: (base: any) => ({
+      ...base,
+      borderColor: t.border,
+      borderRadius: '0.5rem',
+      minHeight: '42px',
+      backgroundColor: t.white,
+    }),
+    menu: (base: any) => ({
+      ...base,
+      borderRadius: '0.5rem',
+      overflow: 'hidden',
+      boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)',
+      backgroundColor: t.white,
+    }),
+    menuList: (base: any) => ({
+      ...base,
+      padding: '4px',
+    }),
+    option: (base: any, state: any) => ({
+      ...base,
+      backgroundColor: state.isSelected
+        ? t.primary
+        : state.isFocused
+          ? t.background
+          : t.white,
+      color: state.isSelected ? t.white : t.text,
+      cursor: 'pointer',
+      borderRadius: '0.25rem',
+      margin: '2px 4px',
+      padding: '8px 12px',
+    }),
+    valueContainer: (base: any) => ({
+      ...base,
+      padding: '0 8px',
+      backgroundColor: 'transparent',
+    }),
+    indicatorsContainer: (base: any) => ({
+      ...base,
+      padding: '0 4px',
+    }),
+    multiValue: (base: any) => ({
+      ...base,
+      backgroundColor: t.background,
+      borderRadius: '0.25rem',
+    }),
+    multiValueLabel: (base: any) => ({
+      ...base,
+      color: t.text,
+      fontSize: '0.875rem',
+    }),
+    multiValueRemove: (base: any) => ({
+      ...base,
+      borderRadius: '0 0.25rem 0.25rem 0',
+      '&:hover': {
+        backgroundColor: t.primary,
+        color: t.white,
+      },
+    }),
+    placeholder: (base: any) => ({
+      ...base,
+      color: t.placeholder,
+    }),
+    singleValue: (base: any) => ({
+      ...base,
+      color: t.text,
+    }),
+    input: (base: any) => ({
+      ...base,
+      color: t.text,
+    }),
+  };
 };
 
 export const DynamicCategoryFields = ({
@@ -71,6 +126,15 @@ export const DynamicCategoryFields = ({
   initialValues,
 }: DynamicCategoryFieldsProps) => {
   const { data: fields, isLoading } = useCategoryFields(categoryId);
+
+  const isDark = useMemo(() => {
+    if (typeof window !== 'undefined') {
+      return document.documentElement.classList.contains('dark');
+    }
+    return false;
+  }, []);
+
+  const selectStyles = useMemo(() => getSelectStyles(isDark), [isDark]);
 
   useEffect(() => {
     if (fields && initialValues) {

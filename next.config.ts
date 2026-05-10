@@ -15,6 +15,11 @@ const nextConfig: NextConfig = {
         hostname: 'cdn.willfind8.com',
         pathname: '/**',
       },
+      {
+        protocol: 'https',
+        hostname: '*.s3.*.amazonaws.com',
+        pathname: '/**',
+      },
     ],
   },
   async redirects() {

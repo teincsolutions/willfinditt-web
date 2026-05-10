@@ -1,4 +1,5 @@
 import api from './api';
+import { convertS3UrlToSignedRequest } from '@/lib/s3Utils';
 
 export interface UploadResponse {
   url: string;
@@ -61,6 +62,14 @@ export const uploadSingle = async (
     headers: {
       'Content-Type': 'multipart/form-data',
     },
+  });
+  return response.data.url;
+};
+
+export const getSignedUrl = async (s3Url: string): Promise<string> => {
+  const requestPath = convertS3UrlToSignedRequest(s3Url);
+  const response = await api.get<{ url: string }>(requestPath, {
+    params: { expiresIn: 259200 },
   });
   return response.data.url;
 };

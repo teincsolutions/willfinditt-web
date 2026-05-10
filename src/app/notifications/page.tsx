@@ -5,16 +5,26 @@ import { useNotifications, useMarkAllAsRead, useMarkAsRead } from '@/hooks/useNo
 import { Button } from '@/components/Button';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
+
+interface Notification {
+  id: string;
+  type: string;
+  title: string;
+  message: string;
+  isRead: boolean;
+  createdAt: string;
+}
 
 export default function NotificationsPage() {
   const router = useRouter();
   const { isAuthenticated, isLoading: authLoading } = useAuth();
-  const { data: notificationsData, isLoading: notificationsLoading } = useNotifications();
+  const { data: notificationsData, isLoading: notificationsLoading, refetch: refetchNotifications } = useNotifications();
   const markAsRead = useMarkAsRead();
   const markAllAsRead = useMarkAllAsRead();
+  const hasAutoMarkedRef = useRef(false);
 
-  const notifications = notificationsData?.data || [];
+  const notifications: Notification[] = notificationsData?.data || [];
 
   useEffect(() => {
     if (!authLoading && !isAuthenticated) {
@@ -22,14 +32,36 @@ export default function NotificationsPage() {
     }
   }, [authLoading, isAuthenticated, router]);
 
-  const handleMarkAsRead = (id: string, isRead: boolean) => {
-    if (!isRead) {
-      markAsRead.mutate(id);
-    }
-  };
+  // Auto-mark all as read when page loads
+  useEffect(() => {
+    const autoMarkAll = async () => {
+      const hasUnread = notifications.some(n => !n.isRead);
+      if (hasUnread && !hasAutoMarkedRef.current && !markAllAsRead.isPending) {
+        hasAutoMarkedRef.current = true;
+        try {
+          await markAllAsRead.mutateAsync();
+          await refetchNotifications();
+        } catch (error) {
+          console.error('Failed to mark all as read:', error);
+          hasAutoMarkedRef.current = false;
+        }
+      }
+    };
 
-  const handleMarkAllRead = () => {
-    markAllAsRead.mutate();
+    if (!notificationsLoading && notifications.length > 0) {
+      autoMarkAll();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Run once on mount only - intentionally excluded reactive deps
+
+  const handleMarkAsRead = async (id: string, isRead: boolean) => {
+    if (!isRead) {
+      try {
+        await markAsRead.mutateAsync(id);
+      } catch (error) {
+        console.error('Failed to mark notification as read:', error);
+      }
+    }
   };
 
   if (authLoading || notificationsLoading) {
@@ -44,7 +76,7 @@ export default function NotificationsPage() {
           <Button 
             variant="outline" 
             size="sm" 
-            onClick={handleMarkAllRead}
+            onClick={() => markAllAsRead.mutate()}
             disabled={markAllAsRead.isPending}
           >
             Mark all as read
@@ -59,7 +91,7 @@ export default function NotificationsPage() {
              <p>You have no notifications.</p>
           </div>
         ) : (
-          notifications.map((notification: any) => (
+          notifications.map((notification) => (
             <div 
               key={notification.id} 
               className={`p-4 rounded-xl border transition-all cursor-pointer shadow-sm hover:shadow-md ${

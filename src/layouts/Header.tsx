@@ -11,6 +11,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useLocation } from '@/contexts/LocationContext';
 import { useParentCategories } from '@/hooks/useCategories';
 import { useUnreadCount } from '@/hooks/useNotifications';
+import { useChatUnreadCount } from '@/hooks/useChat';
 import { OptimizedImage } from '@/components/OptimizedImage';
 
 export const Header = () => {
@@ -58,6 +59,8 @@ export const Header = () => {
 
   // Fetch unread notifications count
   const { data: unreadCount = 0 } = useUnreadCount();
+  // Fetch unread chat messages count
+  const unreadChatCount = useChatUnreadCount();
 
   return (
     <>
@@ -210,9 +213,9 @@ export const Header = () => {
                     d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
                   />
                 </svg>
-                {unreadCount > 0 && (
+                {unreadChatCount > 0 && (
                   <span className="absolute -top-1 -right-1 w-5 h-5 bg-error text-white text-xs font-bold rounded-full flex items-center justify-center">
-                    {unreadCount > 9 ? '9+' : unreadCount}
+                    {unreadChatCount > 9 ? '9+' : unreadChatCount}
                   </span>
                 )}
               </Link>
@@ -236,6 +239,11 @@ export const Header = () => {
                     d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
                   />
                 </svg>
+                {unreadCount > 0 && (
+                  <span className="absolute -top-1 -right-1 w-5 h-5 bg-error text-white text-xs font-bold rounded-full flex items-center justify-center">
+                    {unreadCount > 9 ? '9+' : unreadCount}
+                  </span>
+                )}
               </Link>
 
               {/* User Dropdown */}
@@ -432,9 +440,9 @@ export const Header = () => {
                     d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
                   />
                 </svg>
-                {unreadCount > 0 && (
+                {unreadChatCount > 0 && (
                   <span className="absolute -top-1 -right-1 w-4 h-4 bg-error text-white text-[10px] font-bold rounded-full flex items-center justify-center">
-                    {unreadCount > 9 ? '9+' : unreadCount}
+                    {unreadChatCount > 9 ? '9+' : unreadChatCount}
                   </span>
                 )}
               </Link>

@@ -39,6 +39,11 @@ export const useChatStats = () => {
   });
 };
 
+export const useChatUnreadCount = () => {
+  const { data } = useChatStats();
+  return data?.unreadMessages ?? 0;
+};
+
 export const useCreateChat = () => {
   const queryClient = useQueryClient();
   return useMutation({

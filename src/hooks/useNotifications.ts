@@ -51,8 +51,9 @@ export const useMarkAsRead = () => {
 
   return useMutation({
     mutationFn: markNotificationAsRead,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['notifications'] });
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['notifications'] });
+      await queryClient.invalidateQueries({ queryKey: ['notifications', 'unread-count'] });
     },
   });
 };
@@ -63,8 +64,9 @@ export const useMarkAllAsRead = () => {
 
   return useMutation({
     mutationFn: markAllAsRead,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['notifications'] });
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['notifications'] });
+      await queryClient.invalidateQueries({ queryKey: ['notifications', 'unread-count'] });
     },
   });
 };

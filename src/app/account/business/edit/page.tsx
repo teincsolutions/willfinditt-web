@@ -13,18 +13,6 @@ import {
 } from '@/hooks/useSeller';
 import { Button } from '@/components/Button';
 
-interface BusinessProfileFormData {
-  businessName: string;
-  businessType: string;
-  description?: string;
-  website?: string;
-  facebook?: string;
-  instagram?: string;
-  twitter?: string;
-  linkedin?: string;
-  agreeToTerms: boolean;
-}
-
 const schema = yup.object({
   businessName: yup
     .string()
@@ -75,6 +63,8 @@ const schema = yup.object({
   agreeToTerms: yup.boolean().default(false),
 });
 
+type BusinessProfileFormData = yup.Asserts<typeof schema>;
+
 export default function EditBusinessProfilePage() {
   const router = useRouter();
   const { data: mySeller, isLoading } = useMySeller();
@@ -105,8 +95,8 @@ export default function EditBusinessProfilePage() {
     setError,
     formState: { errors },
   } = useForm<BusinessProfileFormData>({
-    resolver: yupResolver(schema),
-    values: defaults,
+    resolver: yupResolver(schema) as any,
+    values: defaults as any,
   });
 
   const onSubmit = async (values: BusinessProfileFormData) => {

@@ -16,16 +16,6 @@ import {
 import { uploadSingle } from '@/services/upload.service';
 import { Button } from '@/components/Button';
 
-interface VerificationFormData {
-  documentType: 'NATIONAL_ID' | 'DRIVERS_LICENSE' | 'PASSPORT';
-  documentNumber: string;
-  fullName?: string;
-  documentIssueDate?: string;
-  documentExpiryDate?: string;
-  address: string;
-  additionalNotes?: string;
-}
-
 const schema = yup.object({
   documentType: yup
     .mixed<'NATIONAL_ID' | 'DRIVERS_LICENSE' | 'PASSPORT'>()
@@ -38,6 +28,8 @@ const schema = yup.object({
   address: yup.string().trim().required('Address is required'),
   additionalNotes: yup.string().trim().optional(),
 });
+
+type VerificationFormData = yup.Asserts<typeof schema>;
 
 function getStatusBadge(status: string) {
   if (status === 'APPROVED') {
@@ -70,7 +62,7 @@ export default function VerificationPage() {
     handleSubmit,
     formState: { errors },
   } = useForm<VerificationFormData>({
-    resolver: yupResolver(schema),
+    resolver: yupResolver(schema) as any,
     defaultValues: {
       documentType: (myVerification?.documentType as VerificationFormData['documentType']) ||
         'NATIONAL_ID',
@@ -90,7 +82,7 @@ export default function VerificationPage() {
       documentExpiryDate: myVerification?.documentExpiryDate?.slice(0, 10) || '',
       address: myVerification?.address || '',
       additionalNotes: myVerification?.additionalNotes || '',
-    },
+    } as any,
   });
 
   const handleDocumentsChange = (event: React.ChangeEvent<HTMLInputElement>) => {

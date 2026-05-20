@@ -1,5 +1,10 @@
 import { useQuery } from '@tanstack/react-query';
-import { getSellerById, getSellerStats } from '@/services/seller.service';
+import {
+  getMySellerProfile,
+  getMySellerStats,
+  getSellerById,
+  getSellerStats,
+} from '@/services/seller.service';
 
 export const useSeller = (id: string) => {
   return useQuery({
@@ -15,6 +20,22 @@ export const useSellerStats = (id: string) => {
     queryKey: ['seller', 'stats', id],
     queryFn: () => getSellerStats(id),
     enabled: !!id,
+    retry: 1,
+  });
+};
+
+export const useMySeller = () => {
+  return useQuery({
+    queryKey: ['seller', 'my-profile'],
+    queryFn: getMySellerProfile,
+    retry: 1,
+  });
+};
+
+export const useMySellerStats = () => {
+  return useQuery({
+    queryKey: ['seller', 'my-stats'],
+    queryFn: getMySellerStats,
     retry: 1,
   });
 };

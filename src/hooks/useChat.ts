@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import * as chatService from '@/services/chat.service';
 import { CreateChatRequest, SendMessageRequest } from '@/types/message';
+import { useAuth } from '@/contexts/AuthContext';
 
 export const useChats = (params: { page?: number; limit?: number; search?: string; adId?: string } = {}) => {
   return useQuery({
@@ -32,9 +33,12 @@ export const useMessages = (
 };
 
 export const useChatStats = () => {
+  const { isAuthenticated } = useAuth();
+
   return useQuery({
     queryKey: ['chat-stats'],
     queryFn: chatService.getChatStats,
+    enabled: !!isAuthenticated,
     refetchInterval: 30000,
   });
 };

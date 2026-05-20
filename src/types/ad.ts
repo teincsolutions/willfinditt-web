@@ -176,7 +176,7 @@ export interface AdsListParams {
   search?: string;
   sortBy?: string;
   sortOrder?: 'asc' | 'desc';
-  status?: AdStatus;
+  status?: AdStatus | string;
   categoryFields?: CategoryFieldFilter[];
 }
 
@@ -193,7 +193,7 @@ export interface AdSearchParams {
   sortBy?: string;
   sortOrder?: 'asc' | 'desc';
   promotionFilter?: 'all' | 'promoted_only' | 'non_promoted_only';
-  statuses?: AdStatus[];
+  statuses?: Array<AdStatus | string>;
   categoryFields?: CategoryFieldFilter[];
   minimal?: boolean; // For lightweight responses
 }

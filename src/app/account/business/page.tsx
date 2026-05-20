@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { useMemo, useState } from 'react';
 import { format } from 'date-fns';
 import { useUserAds } from '@/hooks/useAds';
-import { useMySeller, useMySellerStats } from '@/hooks/useSeller';
+import { useMySeller, useMySellerStats, useMyVerification } from '@/hooks/useSeller';
 import { OptimizedImage } from '@/components/OptimizedImage';
 import { Pagination } from '@/components/Pagination';
 import { Button } from '@/components/Button';
@@ -56,6 +56,7 @@ export default function BusinessPage() {
 
   const { data: mySeller, isLoading: isSellerLoading, isError } = useMySeller();
   const { data: stats } = useMySellerStats();
+  const { data: verification } = useMyVerification();
 
   const { data: adsResponse, isLoading: isAdsLoading } = useUserAds({
     page,
@@ -97,8 +98,8 @@ export default function BusinessPage() {
         <p className="text-text-gray mb-6">
           Create your business profile to unlock seller tools and manage your listings by status.
         </p>
-        <Link href="/ads/new">
-          <Button>Create Your First Ad</Button>
+        <Link href="/account/business/edit">
+          <Button>Set Up Business</Button>
         </Link>
       </div>
     );
@@ -134,9 +135,19 @@ export default function BusinessPage() {
             </p>
           </div>
 
-          <Link href="/ads/new" className="md:self-center">
-            <Button size="sm">Create Ad</Button>
-          </Link>
+          <div className="flex gap-2 md:self-center">
+            <Link href="/account/business/edit">
+              <Button size="sm" variant="outline">Edit Profile</Button>
+            </Link>
+            <Link href="/account/verification">
+              <Button size="sm" variant="outline">
+                {verification?.status === 'APPROVED' ? 'Verified' : 'Verify Business'}
+              </Button>
+            </Link>
+            <Link href="/ads/new">
+              <Button size="sm">Create Ad</Button>
+            </Link>
+          </div>
         </div>
       </section>
 

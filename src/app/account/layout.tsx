@@ -8,6 +8,7 @@ import { useEffect } from 'react';
 const menuItems = [
   { label: 'Profile Information', href: '/account/profile', icon: '👤' },
   { label: 'Business Profile', href: '/account/business', icon: '🏪' },
+  { label: 'Verification', href: '/account/verification', icon: '✅' },
   { label: 'My Ads', href: '/account/my-ads', icon: '📦' },
   { label: 'Security', href: '/account/security', icon: '🔒' },
   { label: 'Help & Support', href: '/account/threads', icon: '🆘' },

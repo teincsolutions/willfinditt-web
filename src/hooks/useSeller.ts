@@ -1,9 +1,18 @@
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
+  createSellerProfile,
   getMySellerProfile,
   getMySellerStats,
+  getMyVerification,
   getSellerById,
   getSellerStats,
+  submitVerification,
+  updateMyVerification,
+  updateSellerProfile,
+  CreateSellerProfileRequest,
+  UpdateSellerProfileRequest,
+  SubmitSellerVerificationRequest,
+  UpdateSellerVerificationRequest,
 } from '@/services/seller.service';
 
 export const useSeller = (id: string) => {
@@ -37,5 +46,75 @@ export const useMySellerStats = () => {
     queryKey: ['seller', 'my-stats'],
     queryFn: getMySellerStats,
     retry: 1,
+  });
+};
+
+export const useCreateSellerProfile = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (data: CreateSellerProfileRequest) => createSellerProfile(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['seller', 'my-profile'] });
+      queryClient.invalidateQueries({ queryKey: ['seller', 'my-stats'] });
+      queryClient.invalidateQueries({ queryKey: ['me'] });
+    },
+  });
+};
+
+export const useUpdateSellerProfile = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      sellerId,
+      data,
+    }: {
+      sellerId: string;
+      data: UpdateSellerProfileRequest;
+    }) => updateSellerProfile(sellerId, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['seller', 'my-profile'] });
+      queryClient.invalidateQueries({ queryKey: ['seller', 'my-stats'] });
+      queryClient.invalidateQueries({ queryKey: ['me'] });
+    },
+  });
+};
+
+export const useMyVerification = () => {
+  return useQuery({
+    queryKey: ['seller', 'verification', 'mine'],
+    queryFn: getMyVerification,
+    retry: 1,
+  });
+};
+
+export const useSubmitVerification = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (data: SubmitSellerVerificationRequest) => submitVerification(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['seller', 'verification', 'mine'] });
+      queryClient.invalidateQueries({ queryKey: ['seller', 'my-profile'] });
+    },
+  });
+};
+
+export const useUpdateMyVerification = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      verificationId,
+      data,
+    }: {
+      verificationId: string;
+      data: UpdateSellerVerificationRequest;
+    }) => updateMyVerification(verificationId, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['seller', 'verification', 'mine'] });
+      queryClient.invalidateQueries({ queryKey: ['seller', 'my-profile'] });
+    },
   });
 };

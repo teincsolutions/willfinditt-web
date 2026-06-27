@@ -72,9 +72,14 @@ jobs:
         run: docker pull "${DOCKER_IMAGE_NAME}:${{ steps.tag.outputs.tag }}"
 
       - name: Stop existing containers
-        run: docker compose -f docker-compose.prod.yml down || true
+        run: |
+          docker compose -f docker-compose.prod.yml down --remove-orphans 2>/dev/null || true
+          docker rm -f willfinditt-web-prod 2>/dev/null || true
 
       - name: Deploy with docker-compose
+        env:
+          DOCKER_TAG: ${{ steps.tag.outputs.tag }}
+          DOCKER_IMAGE: ghcr.io/${{ github.repository_owner }}/willfind8-web
         run: |
           docker compose -f docker-compose.prod.yml pull
           docker compose -f docker-compose.prod.yml up -d

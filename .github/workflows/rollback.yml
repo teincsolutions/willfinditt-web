@@ -21,12 +21,7 @@ jobs:
     environment:
       name: production
     steps:
-      - name: Checkout repository
-        run: |
-          git init
-          git remote add origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }} 2>/dev/null || true
-          git fetch --depth=1 origin ${{ github.sha }}
-          git checkout ${{ github.sha }}
+      - uses: actions/checkout@v4
 
       - name: Login to GitHub Container Registry
         run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ${{ env.REGISTRY }} -u ${{ github.actor }} --password-stdin

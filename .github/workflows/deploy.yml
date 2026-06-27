@@ -24,12 +24,7 @@ jobs:
     outputs:
       docker_tag: ${{ steps.tag.outputs.tag }}
     steps:
-      - name: Checkout repository
-        run: |
-          git init
-          git remote add origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}
-          git fetch --depth=1 origin ${{ github.sha }}
-          git checkout ${{ github.sha }}
+      - uses: actions/checkout@v4
 
       - name: Generate Docker tag
         id: tag
@@ -111,12 +106,7 @@ jobs:
       DOCKER_TAG: ${{ needs.build.outputs.docker_tag }}
       DOCKER_IMAGE: ghcr.io/${{ github.repository_owner }}/willfind8-web
     steps:
-      - name: Checkout repository
-        run: |
-          git init
-          git remote add origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }} 2>/dev/null || true
-          git fetch --depth=1 origin ${{ github.sha }}
-          git checkout ${{ github.sha }}
+      - uses: actions/checkout@v4
 
       - name: Validate secrets
         run: |

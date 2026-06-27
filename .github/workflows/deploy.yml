@@ -15,7 +15,7 @@ env:
   REGISTRY: ghcr.io
   DOCKER_IMAGE_NAME: ghcr.io/${{ github.repository_owner }}/willfind8-web
   NEXT_PUBLIC_API_URL: https://api.willfind8.com/api/v1
-  NEXT_PUBLIC_SITE_URL: https://willfind8.com
+  NEXT_PUBLIC_SITE_URL: https://willfinditt.com
 
 jobs:
   build:
@@ -106,9 +106,10 @@ jobs:
     runs-on: [self-hosted, willfind8]
     environment:
       name: production
-      url: https://willfind8.com
+      url: https://willfinditt.com
     env:
       DOCKER_TAG: ${{ needs.build.outputs.docker_tag }}
+      DOCKER_IMAGE: ${{ env.DOCKER_IMAGE_NAME }}
     steps:
       - name: Checkout repository
         run: |

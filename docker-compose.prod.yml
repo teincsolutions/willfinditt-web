@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   willfinditt-web:
     image: ${DOCKER_IMAGE:-teincsolutions/willfind8-web}:${DOCKER_TAG:-latest}

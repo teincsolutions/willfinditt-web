@@ -1,0 +1,206 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [main, test]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+  packages: write
+  id-token: write
+
+env:
+  REGISTRY: ghcr.io
+  DOCKER_IMAGE_NAME: ghcr.io/${{ github.repository_owner }}/willfind8-web
+  NEXT_PUBLIC_API_URL: https://api.willfind8.com/api/v1
+  NEXT_PUBLIC_SITE_URL: https://willfind8.com
+
+jobs:
+  build:
+    name: Build and Push Docker Image
+    runs-on: ubuntu-latest
+    outputs:
+      docker_tag: ${{ steps.tag.outputs.tag }}
+    steps:
+      - name: Checkout repository
+        run: |
+          git init
+          git remote add origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}
+          git fetch --depth=1 origin ${{ github.sha }}
+          git checkout ${{ github.sha }}
+
+      - name: Generate Docker tag
+        id: tag
+        run: echo "tag=${{ github.run_number }}-$(echo ${GITHUB_SHA} | cut -c1-7)" >> $GITHUB_OUTPUT
+
+      - name: Login to GitHub Container Registry
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ${{ env.REGISTRY }} -u ${{ github.actor }} --password-stdin
+
+      - name: Build and push Docker image
+        run: |
+          docker build \
+            --build-arg NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL \
+            --build-arg NEXT_PUBLIC_SITE_URL=$NEXT_PUBLIC_SITE_URL \
+            --build-arg NEXT_PUBLIC_GOOGLE_CLIENT_ID=${{ secrets.NEXT_PUBLIC_GOOGLE_CLIENT_ID }} \
+            --tag ${{ env.DOCKER_IMAGE_NAME }}:${{ steps.tag.outputs.tag }} \
+            --tag ${{ env.DOCKER_IMAGE_NAME }}:latest \
+            .
+          docker push ${{ env.DOCKER_IMAGE_NAME }}:${{ steps.tag.outputs.tag }}
+          docker push ${{ env.DOCKER_IMAGE_NAME }}:latest
+
+  security-scan:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Login to GitHub Container Registry
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ${{ env.REGISTRY }} -u ${{ github.actor }} --password-stdin
+
+      - name: Pull Docker image
+        run: docker pull ${{ env.DOCKER_IMAGE_NAME }}:${{ needs.build.outputs.docker_tag }}
+
+      - name: Trivy security scan
+        continue-on-error: true
+        run: |
+          TRIVY_TEMP_DIR="/tmp/trivy-$(date +%s)"
+          mkdir -p "$TRIVY_TEMP_DIR"
+          if [ -f .trivyignore ]; then
+            cp .trivyignore "$TRIVY_TEMP_DIR/.trivyignore"
+          fi
+          docker run --rm -v /var/run/docker.sock:/var/run/docker.sock \
+            -v "$TRIVY_TEMP_DIR":/root/.trivyignore.d \
+            -v "$TRIVY_TEMP_DIR":/tmp/trivy aquasec/trivy:latest image \
+            --ignorefile /root/.trivyignore.d/.trivyignore \
+            --format json --output /tmp/trivy/trivy-report.json \
+            "${{ env.DOCKER_IMAGE_NAME }}:${{ needs.build.outputs.docker_tag }}" || true
+          if [ -f "$TRIVY_TEMP_DIR/trivy-report.json" ]; then
+            cp "$TRIVY_TEMP_DIR/trivy-report.json" ./trivy-report.json || true
+          fi
+          docker run --rm -v /var/run/docker.sock:/var/run/docker.sock \
+            -v "$TRIVY_TEMP_DIR":/root/.trivyignore.d \
+            aquasec/trivy:latest image --severity HIGH,CRITICAL \
+            --ignorefile /root/.trivyignore.d/.trivyignore \
+            "${{ env.DOCKER_IMAGE_NAME }}:${{ needs.build.outputs.docker_tag }}" || true
+          rm -rf "$TRIVY_TEMP_DIR" || true
+
+  verify-image:
+    name: Verify Docker Image
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Login to GitHub Container Registry
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ${{ env.REGISTRY }} -u ${{ github.actor }} --password-stdin
+
+      - name: Pull and verify Docker image
+        run: |
+          docker pull "${{ env.DOCKER_IMAGE_NAME }}:${{ needs.build.outputs.docker_tag }}"
+          docker inspect "${{ env.DOCKER_IMAGE_NAME }}:${{ needs.build.outputs.docker_tag }}" > /dev/null
+          echo "✅ Image verified: ${{ env.DOCKER_IMAGE_NAME }}:${{ needs.build.outputs.docker_tag }}"
+
+  deploy:
+    name: Deploy to Production
+    needs: [build, security-scan, verify-image]
+    if: github.ref_name == 'main' && github.event_name == 'push'
+    runs-on: [self-hosted, willfind8]
+    environment:
+      name: production
+      url: https://willfind8.com
+    env:
+      DOCKER_TAG: ${{ needs.build.outputs.docker_tag }}
+    steps:
+      - name: Checkout repository
+        run: |
+          git remote add origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }} 2>/dev/null || true
+          git fetch --depth=1 origin ${{ github.sha }}
+          git checkout ${{ github.sha }}
+
+      - name: Validate secrets
+        run: |
+          MISSING=()
+          [[ -z "$NEXT_PUBLIC_GOOGLE_CLIENT_ID" ]] && MISSING+=("NEXT_PUBLIC_GOOGLE_CLIENT_ID (secret)")
+          if [[ ${#MISSING[@]} -gt 0 ]]; then
+            echo "::error::Missing required secrets:"
+            for item in "${MISSING[@]}"; do echo "::error::  - $item"; done
+            exit 1
+          fi
+          echo "All required secrets are present."
+        env:
+          NEXT_PUBLIC_GOOGLE_CLIENT_ID: ${{ secrets.NEXT_PUBLIC_GOOGLE_CLIENT_ID }}
+
+      - name: Generate .env file
+        env:
+          NEXT_PUBLIC_API_URL: ${{ env.NEXT_PUBLIC_API_URL }}
+          NEXT_PUBLIC_SITE_URL: ${{ env.NEXT_PUBLIC_SITE_URL }}
+          NEXT_PUBLIC_GOOGLE_CLIENT_ID: ${{ secrets.NEXT_PUBLIC_GOOGLE_CLIENT_ID }}
+        run: envsubst < .env.template > .env
+
+      - name: Login to GitHub Container Registry
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ${{ env.REGISTRY }} -u ${{ github.actor }} --password-stdin
+
+      - name: Save previous image tag for rollback
+        run: |
+          PREV_TAG=$(docker inspect willfinditt-web-prod --format '{{index .Config.Image}}' 2>/dev/null | rev | cut -d: -f1 | rev || echo "")
+          if [ -n "$PREV_TAG" ] && [ "$PREV_TAG" != "$DOCKER_TAG" ]; then
+            echo "$PREV_TAG" > /tmp/willfinditt-web-previous-tag.txt
+            echo "Saved previous tag: $PREV_TAG"
+          else
+            echo "No previous tag to save (first deploy or same tag)"
+          fi
+
+      - name: Stop and remove existing containers
+        run: |
+          docker compose -f docker-compose.prod.yml down --remove-orphans 2>/dev/null || true
+          docker rm -f willfinditt-web-prod 2>/dev/null || true
+
+      - name: Deploy with docker-compose
+        run: |
+          docker compose -f docker-compose.prod.yml pull
+          docker compose -f docker-compose.prod.yml up -d
+
+      - name: Wait for container readiness
+        run: sleep 20
+
+      - name: Health check
+        run: |
+          echo "Running health check..."
+          for i in {1..5}; do
+            if docker exec willfinditt-web-prod curl -f http://localhost:3000 > /dev/null 2>&1; then
+              echo "✅ Health check passed"
+              break
+            fi
+            if [ $i -eq 5 ]; then
+              echo "❌ Health check failed after 5 attempts"
+              docker logs willfinditt-web-prod || true
+              exit 1
+            fi
+            echo "Waiting for application to be healthy... (attempt $i/5)"
+            sleep 10
+          done
+
+      - name: Cleanup docker images (keep last 3)
+        run: |
+          docker images "${{ env.DOCKER_IMAGE_NAME }}" --format "{{.Tag}}" | grep -E "^[0-9]+" | sort -n | head -n -3 | xargs -r -I {} docker rmi "${{ env.DOCKER_IMAGE_NAME}}:{}" || true
+          docker image prune -f || true
+
+      - name: Cleanup env file
+        run: rm -f .env
+
+      - name: Send Slack success notification
+        if: success()
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        run: |
+          curl -X POST -H "Content-type: application/json" \
+            --data '{"text":"✅ WillFindIT Web production deployment successful\nCommit: ${{ github.sha }}\nTag: ${{ env.DOCKER_TAG }}"}' \
+            "$SLACK_WEBHOOK_URL" || true
+
+      - name: Send Slack failure notification
+        if: failure()
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        run: |
+          curl -X POST -H "Content-type: application/json" \
+            --data '{"text":"❌ WillFindIT Web production deployment failed\nCommit: ${{ github.sha }}\nBuild: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"}' \
+            "$SLACK_WEBHOOK_URL" || true

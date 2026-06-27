@@ -1,0 +1,99 @@
+name: Rollback
+
+on:
+  workflow_dispatch:
+    inputs:
+      image_tag:
+        description: Image tag to rollback to (leave empty for previous tag)
+        required: false
+        type: string
+
+env:
+  REGISTRY: ghcr.io
+  DOCKER_IMAGE_NAME: ghcr.io/${{ github.repository_owner }}/willfind8-web
+  NEXT_PUBLIC_API_URL: https://api.willfind8.com/api/v1
+  NEXT_PUBLIC_SITE_URL: https://willfind8.com
+
+jobs:
+  rollback:
+    name: Rollback to Previous Version
+    runs-on: [self-hosted, willfind8]
+    environment:
+      name: production
+    steps:
+      - name: Checkout repository
+        run: |
+          git remote add origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }} 2>/dev/null || true
+          git fetch --depth=1 origin ${{ github.sha }}
+          git checkout ${{ github.sha }}
+
+      - name: Login to GitHub Container Registry
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ${{ env.REGISTRY }} -u ${{ github.actor }} --password-stdin
+
+      - name: Determine rollback tag
+        id: tag
+        run: |
+          if [ -n "${{ github.event.inputs.image_tag }}" ]; then
+            echo "tag=${{ github.event.inputs.image_tag }}" >> $GITHUB_OUTPUT
+          else
+            FILE="/tmp/willfinditt-web-previous-tag.txt"
+            if [ -f "$FILE" ]; then
+              TAG=$(cat "$FILE")
+              echo "tag=$TAG" >> $GITHUB_OUTPUT
+            else
+              echo "::error::No previous tag file found at $FILE"
+              echo "::error::Provide image_tag input or deploy once first."
+              exit 1
+            fi
+          fi
+
+      - name: Validate secrets
+        run: |
+          MISSING=()
+          [[ -z "$NEXT_PUBLIC_GOOGLE_CLIENT_ID" ]] && MISSING+=("NEXT_PUBLIC_GOOGLE_CLIENT_ID (secret)")
+          if [[ ${#MISSING[@]} -gt 0 ]]; then
+            echo "::error::Missing required secrets:"
+            for item in "${MISSING[@]}"; do echo "::error::  - $item"; done
+            exit 1
+          fi
+          echo "All required secrets are present."
+        env:
+          NEXT_PUBLIC_GOOGLE_CLIENT_ID: ${{ secrets.NEXT_PUBLIC_GOOGLE_CLIENT_ID }}
+
+      - name: Generate .env file
+        env:
+          NEXT_PUBLIC_API_URL: ${{ env.NEXT_PUBLIC_API_URL }}
+          NEXT_PUBLIC_SITE_URL: ${{ env.NEXT_PUBLIC_SITE_URL }}
+          NEXT_PUBLIC_GOOGLE_CLIENT_ID: ${{ secrets.NEXT_PUBLIC_GOOGLE_CLIENT_ID }}
+        run: envsubst < .env.template > .env
+
+      - name: Pull rollback image
+        run: docker pull "${DOCKER_IMAGE_NAME}:${{ steps.tag.outputs.tag }}"
+
+      - name: Stop existing containers
+        run: docker compose -f docker-compose.prod.yml down || true
+
+      - name: Deploy with docker-compose
+        run: |
+          docker compose -f docker-compose.prod.yml pull
+          docker compose -f docker-compose.prod.yml up -d
+
+      - name: Wait for container readiness
+        run: sleep 20
+
+      - name: Health check
+        run: |
+          echo "Running health check..."
+          for i in {1..5}; do
+            if docker exec willfinditt-web-prod curl -f http://localhost:3000 > /dev/null 2>&1; then
+              echo "✅ Rollback health check passed"
+              break
+            fi
+            if [ $i -eq 5 ]; then
+              echo "❌ Health check failed after 5 attempts"
+              docker logs willfinditt-web-prod || true
+              exit 1
+            fi
+            echo "Waiting for application to be healthy... (attempt $i/5)"
+            sleep 10
+          done

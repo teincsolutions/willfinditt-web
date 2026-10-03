@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useSearchAds } from '@/hooks/useAds';
-import { useParentCategories } from '@/hooks/useCategories';
+import { useCategories, useParentCategories } from '@/hooks/useCategories';
 import { AdStatus } from '@/types/ad';
 import { ListingCard } from '@/components/ListingCard';
 import { CategoryTiles } from '@/components/CategoryTiles';
@@ -17,6 +17,13 @@ export default function Home() {
   // Fetch categories for tiles
   const { data: categories = [], isLoading: categoriesLoading } =
     useParentCategories(true);
+
+  // Total across ALL categories (flat list endpoint) — parents alone
+  // undercount since ads live on leaf subcategories.
+  const { data: allCategories } = useCategories();
+  const totalCategories = Array.isArray(allCategories)
+    ? allCategories.length
+    : allCategories?.data?.length || categories.length;
 
   // Map frontend sort options to API parameters
   const getSortParams = (sortOption: string) => {

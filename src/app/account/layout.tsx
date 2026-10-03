@@ -4,15 +4,25 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { useEffect } from 'react';
+import {
+  HeartIcon,
+  LockIcon,
+  LogoutIcon,
+  PackageIcon,
+  ShieldCheckIcon,
+  StoreIcon,
+  SupportIcon,
+  UserIcon,
+} from '@/components/icons';
 
 const menuItems = [
-  { label: 'Profile Information', href: '/account/profile', icon: '👤' },
-  { label: 'Business Profile', href: '/account/business', icon: '🏪' },
-  { label: 'Verification', href: '/account/verification', icon: '✅' },
-  { label: 'My Ads', href: '/account/my-ads', icon: '📦' },
-  { label: 'Security', href: '/account/security', icon: '🔒' },
-  { label: 'Help & Support', href: '/account/threads', icon: '🆘' },
-  { label: 'Saved Items', href: '/favorites', icon: '❤️' }, // External to /account, but managed here in menu
+  { label: 'Profile Information', href: '/account/profile', Icon: UserIcon },
+  { label: 'Business Profile', href: '/account/business', Icon: StoreIcon },
+  { label: 'Verification', href: '/account/verification', Icon: ShieldCheckIcon },
+  { label: 'My Ads', href: '/account/my-ads', Icon: PackageIcon },
+  { label: 'Security', href: '/account/security', Icon: LockIcon },
+  { label: 'Help & Support', href: '/account/threads', Icon: SupportIcon },
+  { label: 'Saved Items', href: '/favorites', Icon: HeartIcon }, // External to /account, but managed here in menu
 ];
 
 export default function AccountLayout({
@@ -50,6 +60,7 @@ export default function AccountLayout({
               <nav className="flex flex-col p-2">
                 {menuItems.map((item) => {
                   const isActive = pathname.startsWith(item.href);
+                  const ItemIcon = item.Icon;
                   return (
                     <Link
                       key={item.href}
@@ -60,7 +71,7 @@ export default function AccountLayout({
                           : 'text-text hover:bg-background-primary/50'
                       }`}
                     >
-                      <span className="text-lg">{item.icon}</span>
+                      <ItemIcon className="w-5 h-5 flex-shrink-0" />
                       {item.label}
                     </Link>
                   );
@@ -72,7 +83,7 @@ export default function AccountLayout({
                   onClick={handleLogout}
                   className="flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-error hover:bg-errorLight transition-colors text-left w-full"
                 >
-                  <span className="text-lg">🚪</span>
+                  <LogoutIcon className="w-5 h-5 flex-shrink-0" />
                   Sign Out
                 </button>
               </nav>

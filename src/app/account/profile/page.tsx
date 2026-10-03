@@ -77,10 +77,14 @@ export default function ProfilePage() {
   };
 
   const onSubmit = (data: ProfileFormData) => {
+    // Backend UpdateUserDto allows `phone` only — strip the form-local
+    // `phoneNumber` key or whitelist validation rejects the request with
+    // "property phoneNumber should not exist".
+    const { phoneNumber, ...rest } = data;
     updateMutation.mutate(
       {
-        ...data,
-        phone: data.phoneNumber,
+        ...rest,
+        phone: phoneNumber || null,
       } as any,
       {
         onSuccess: () => {

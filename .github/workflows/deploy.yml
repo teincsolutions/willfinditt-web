@@ -26,6 +26,24 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Validate secrets
+        # Fails the build early if the public client ID is not visible to THIS
+        # job. NOTE: environment-scoped secrets (e.g. under the `production`
+        # environment) are NOT visible here — keep NEXT_PUBLIC_GOOGLE_CLIENT_ID
+        # as a repository secret, or the image builds without it and Google
+        # Sign-In silently disappears (Error 400: invalid_request).
+        run: |
+          MISSING=()
+          [[ -z "$NEXT_PUBLIC_GOOGLE_CLIENT_ID" ]] && MISSING+=("NEXT_PUBLIC_GOOGLE_CLIENT_ID (repository secret)")
+          if [[ ${#MISSING[@]} -gt 0 ]]; then
+            echo "::error::Missing required secrets for build:"
+            for item in "${MISSING[@]}"; do echo "::error::  - $item"; done
+            exit 1
+          fi
+          echo "All required build secrets are present."
+        env:
+          NEXT_PUBLIC_GOOGLE_CLIENT_ID: ${{ secrets.NEXT_PUBLIC_GOOGLE_CLIENT_ID }}
+
       - name: Generate Docker tag
         id: tag
         run: echo "tag=${{ github.run_number }}-$(echo ${GITHUB_SHA} | cut -c1-7)" >> $GITHUB_OUTPUT

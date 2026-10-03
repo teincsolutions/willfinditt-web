@@ -40,7 +40,9 @@ export const uploadAdImages = async (files: File[]): Promise<string[]> => {
 
 export const uploadAvatar = async (file: File): Promise<string> => {
   const formData = new FormData();
-  formData.append('file', file);
+  // Backend expects the multipart field to be named `avatar`
+  // (FileInterceptor('avatar') on POST /upload/avatar).
+  formData.append('avatar', file);
 
   const response = await api.post<{ url: string }>('/upload/avatar', formData, {
     headers: {

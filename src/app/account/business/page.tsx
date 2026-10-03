@@ -32,6 +32,13 @@ const STATUS_TABS: Array<{ key: SellerAdStatus; label: string }> = [
   { key: 'SUSPENDED', label: 'Suspended' },
 ];
 
+function formatApprovalTime(hours?: number | null) {
+  if (hours === undefined || hours === null || hours <= 0) return '—';
+  if (hours < 1) return `${Math.round(hours * 60)}m`;
+  if (hours < 48) return `${Math.round(hours)}h`;
+  return `${(hours / 24).toFixed(1)}d`;
+}
+
 function getStatusBadge(status: string) {
   switch (status) {
     case 'ACTIVE':
@@ -151,7 +158,7 @@ export default function BusinessPage() {
         </div>
       </section>
 
-      <section className="grid grid-cols-2 md:grid-cols-4 gap-3">
+      <section className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
         <div className="rounded-xl border border-border-custom bg-background p-4">
           <p className="text-xs text-text-light-gray">Total Ads</p>
           <p className="text-2xl font-bold text-text mt-1">{stats?.totalAds || 0}</p>
@@ -165,9 +172,19 @@ export default function BusinessPage() {
           <p className="text-2xl font-bold text-brown mt-1">{stats?.pendingAds || 0}</p>
         </div>
         <div className="rounded-xl border border-border-custom bg-background p-4">
+          <p className="text-xs text-text-light-gray">Rejected</p>
+          <p className="text-2xl font-bold text-error mt-1">{stats?.rejectedAds || 0}</p>
+        </div>
+        <div className="rounded-xl border border-border-custom bg-background p-4">
           <p className="text-xs text-text-light-gray">Approval Rate</p>
           <p className="text-2xl font-bold text-primary mt-1">
             {Math.round(stats?.approvalRate || 0)}%
+          </p>
+        </div>
+        <div className="rounded-xl border border-border-custom bg-background p-4">
+          <p className="text-xs text-text-light-gray">Avg. Approval</p>
+          <p className="text-2xl font-bold text-text mt-1">
+            {formatApprovalTime(stats?.averageApprovalTime)}
           </p>
         </div>
       </section>

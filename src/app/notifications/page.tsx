@@ -1,11 +1,11 @@
 'use client';
 
 import { formatDistanceToNow } from 'date-fns';
-import { useNotifications, useMarkAllAsRead, useMarkAsRead } from '@/hooks/useNotifications';
+import { useInfiniteNotifications, useMarkAllAsRead, useMarkAsRead } from '@/hooks/useNotifications';
 import { Button } from '@/components/Button';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
-import { useEffect, useRef } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 
 interface Notification {
   id: string;
@@ -19,12 +19,23 @@ interface Notification {
 export default function NotificationsPage() {
   const router = useRouter();
   const { isAuthenticated, isLoading: authLoading } = useAuth();
-  const { data: notificationsData, isLoading: notificationsLoading, refetch: refetchNotifications } = useNotifications();
+  const {
+    data,
+    isLoading: notificationsLoading,
+    isFetchingNextPage,
+    hasNextPage,
+    fetchNextPage,
+    refetch: refetchNotifications,
+  } = useInfiniteNotifications();
   const markAsRead = useMarkAsRead();
   const markAllAsRead = useMarkAllAsRead();
   const hasAutoMarkedRef = useRef(false);
+  const sentinelRef = useRef<HTMLDivElement | null>(null);
 
-  const notifications: Notification[] = notificationsData?.data || [];
+  const notifications: Notification[] = useMemo(
+    () => data?.pages.flatMap((page) => page.data) ?? [],
+    [data]
+  );
 
   useEffect(() => {
     if (!authLoading && !isAuthenticated) {
@@ -32,7 +43,9 @@ export default function NotificationsPage() {
     }
   }, [authLoading, isAuthenticated, router]);
 
-  // Auto-mark all as read when page loads
+  // Auto-mark all as read once the first page has loaded with unread items.
+  // Deps included so it retries when data arrives (previously `[]` meant it
+  // often ran before data loaded and never fired again).
   useEffect(() => {
     const autoMarkAll = async () => {
       const hasUnread = notifications.some(n => !n.isRead);
@@ -52,7 +65,25 @@ export default function NotificationsPage() {
       autoMarkAll();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // Run once on mount only - intentionally excluded reactive deps
+  }, [notificationsLoading, notifications]);
+
+  // Infinite scroll: fetch the next page when the sentinel scrolls into view.
+  useEffect(() => {
+    const sentinel = sentinelRef.current;
+    if (!sentinel || !hasNextPage) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && !isFetchingNextPage) {
+          fetchNextPage();
+        }
+      },
+      { rootMargin: '400px' }
+    );
+
+    observer.observe(sentinel);
+    return () => observer.disconnect();
+  }, [hasNextPage, isFetchingNextPage, fetchNextPage, notifications.length]);
 
   const handleMarkAsRead = async (id: string, isRead: boolean) => {
     if (!isRead) {
@@ -73,9 +104,9 @@ export default function NotificationsPage() {
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">Notifications</h1>
         {notifications.length > 0 && (
-          <Button 
-            variant="outline" 
-            size="sm" 
+          <Button
+            variant="outline"
+            size="sm"
             onClick={() => markAllAsRead.mutate()}
             disabled={markAllAsRead.isPending}
           >
@@ -92,11 +123,11 @@ export default function NotificationsPage() {
           </div>
         ) : (
           notifications.map((notification) => (
-            <div 
-              key={notification.id} 
+            <div
+              key={notification.id}
               className={`p-4 rounded-xl border transition-all cursor-pointer shadow-sm hover:shadow-md ${
-                notification.isRead 
-                  ? 'bg-background border-border-custom' 
+                notification.isRead
+                  ? 'bg-background border-border-custom'
                   : 'bg-background-primary/50 border-primary/20 hover:bg-background-primary'
               }`}
               onClick={() => handleMarkAsRead(notification.id, notification.isRead)}
@@ -117,6 +148,28 @@ export default function NotificationsPage() {
           ))
         )}
       </div>
+
+      {/* Infinite-scroll sentinel + fallback controls */}
+      {notifications.length > 0 && (
+        <div className="mt-6 flex flex-col items-center gap-3">
+          <div ref={sentinelRef} aria-hidden className="h-1 w-full" />
+          {isFetchingNextPage && (
+            <p className="text-sm text-text-gray">Loading more...</p>
+          )}
+          {!isFetchingNextPage && hasNextPage && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => fetchNextPage()}
+            >
+              Load more
+            </Button>
+          )}
+          {!hasNextPage && (
+            <p className="text-xs text-text-light-gray">You&apos;re all caught up.</p>
+          )}
+        </div>
+      )}
     </div>
   );
 }

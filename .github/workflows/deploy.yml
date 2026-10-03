@@ -21,6 +21,12 @@ jobs:
   build:
     name: Build and Push Docker Image
     runs-on: ubuntu-latest
+    # Needs the `production` environment so environment-scoped secrets
+    # (NEXT_PUBLIC_GOOGLE_CLIENT_ID, etc.) are visible at build time.
+    # NEXT_PUBLIC_* values are baked into the JS bundle by `next build`.
+    environment:
+      name: production
+      url: https://willfinditt.com
     outputs:
       docker_tag: ${{ steps.tag.outputs.tag }}
     steps:

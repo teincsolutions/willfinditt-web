@@ -11,6 +11,7 @@ import { Button } from '@/components/Button';
 import { useSocialAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
 import { GoogleLogin } from '@react-oauth/google';
+import { isGoogleSignInConfigured } from '@/lib/google-auth';
 
 const schema = yup.object({
   identifier: yup.string().required('Email or phone number is required'),
@@ -120,20 +121,22 @@ export default function LoginPage() {
             Back to Home
           </Link>
 
-          {/* Google Sign In */}
+          {/* Google Sign In (hidden when the build has no client ID) */}
 
-          <div className="flex justify-center mb-6">
-            <GoogleLogin
-              onSuccess={handleGoogleSuccess}
-              onError={handleGoogleError}
-              useOneTap
-              theme="filled_blue"
-              shape="pill"
-              size="large"
-              text="continue_with"
-              width="360"
-            />
-          </div>
+          {isGoogleSignInConfigured && (
+            <div className="flex justify-center mb-6">
+              <GoogleLogin
+                onSuccess={handleGoogleSuccess}
+                onError={handleGoogleError}
+                useOneTap
+                theme="filled_blue"
+                shape="pill"
+                size="large"
+                text="continue_with"
+                width="360"
+              />
+            </div>
+          )}
 
           {/* Divider */}
           <div className="relative mb-6">

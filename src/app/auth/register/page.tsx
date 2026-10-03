@@ -9,6 +9,7 @@ import * as yup from 'yup';
 import { useRegister, useSocialAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
 import { GoogleLogin } from '@react-oauth/google';
+import { isGoogleSignInConfigured } from '@/lib/google-auth';
 import { Button } from '@/components/Button';
 
 const schema = yup.object().shape(
@@ -205,18 +206,20 @@ export default function RegisterPage() {
             </svg>
             Back to Home
           </Link>
-          <div className="flex justify-center mb-6">
-            <GoogleLogin
-              onSuccess={handleGoogleSuccess}
-              onError={handleGoogleError}
-              useOneTap
-              theme="filled_blue"
-              shape="pill"
-              size="large"
-              text="signup_with"
-              width="360"
-            />
-          </div>
+          {isGoogleSignInConfigured && (
+            <div className="flex justify-center mb-6">
+              <GoogleLogin
+                onSuccess={handleGoogleSuccess}
+                onError={handleGoogleError}
+                useOneTap
+                theme="filled_blue"
+                shape="pill"
+                size="large"
+                text="signup_with"
+                width="360"
+              />
+            </div>
+          )}
 
           {/* Divider */}
           <div className="relative mb-6">

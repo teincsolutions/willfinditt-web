@@ -3,6 +3,13 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+      # NEXT_PUBLIC_* vars are baked into the bundle at `next build` time,
+      # so they must be passed as build args (runtime `environment:` cannot
+      # change them). Values come from your `.env` file.
+      args:
+        - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-}
+        - NEXT_PUBLIC_GOOGLE_CLIENT_ID=${NEXT_PUBLIC_GOOGLE_CLIENT_ID:-}
+        - NEXT_PUBLIC_SITE_URL=${NEXT_PUBLIC_SITE_URL:-}
     image: ${DOCKER_IMAGE:-teincsolutions/willfind8-web}:${DOCKER_TAG:-latest}
     container_name: willfinditt-web-prod
     restart: unless-stopped

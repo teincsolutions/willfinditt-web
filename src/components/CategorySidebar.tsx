@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useParentCategories, useCategoryFields } from '@/hooks/useCategories';
+import { useParentCategories, useCategoryFields, useLocatedCategoryCounts } from '@/hooks/useCategories';
 import { OptimizedImage } from './OptimizedImage';
 import { Button } from './Button';
 
@@ -21,9 +21,18 @@ export const CategorySidebar = ({
 
   const [filters, setFilters] = useState({
     categoryId: '',
+    cityId: '',
     minPrice: '',
     maxPrice: '',
     condition: '',
+  });
+
+  // Filter-aware counts for the nav list, scoped to the same filters.
+  const { data: counts } = useLocatedCategoryCounts({
+    cityId: filters.cityId || undefined,
+    priceMin: filters.minPrice ? Number(filters.minPrice) : undefined,
+    priceMax: filters.maxPrice ? Number(filters.maxPrice) : undefined,
+    conditions: filters.condition || undefined,
   });
 
   // Field values now use categoryFieldId (matches API) and support different value types
@@ -238,6 +247,7 @@ export const CategorySidebar = ({
   const clearFilters = () => {
     setFilters({
       categoryId: '',
+      cityId: '',
       minPrice: '',
       maxPrice: '',
       condition: '',
@@ -524,6 +534,17 @@ export const CategorySidebar = ({
                         )}
                       </div>
                       <span className="flex-1 truncate">{category.name}</span>
+                      {(() => {
+                        const count = counts?.[category.id];
+                        return (
+                          count !== undefined &&
+                          count > 0 && (
+                            <span className="text-xs text-text-light-gray font-semibold flex-shrink-0">
+                              {count.toLocaleString()}
+                            </span>
+                          )
+                        );
+                      })()}
                       {category.children && category.children.length > 0 && (
                         <svg
                           className="w-4 h-4 opacity-50"

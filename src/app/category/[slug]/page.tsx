@@ -4,6 +4,7 @@ import { useParams, useSearchParams, useRouter } from 'next/navigation';
 import { useState, Suspense } from 'react';
 import { useSearchAds } from '@/hooks/useAds';
 import { useCategoryBySlug, useCategoryFields } from '@/hooks/useCategories';
+import { useLocation } from '@/contexts/LocationContext';
 
 import { ListingCard } from '@/components/ListingCard';
 import { Pagination } from '@/components/Pagination';
@@ -44,6 +45,11 @@ function CategoryContent() {
     useState(categoryFieldFilters);
   const [isFilterDrawerOpen, setIsFilterDrawerOpen] = useState(false);
 
+  // Global location selection applies when the URL carries no explicit city.
+  const { selectedCity } = useLocation();
+  const urlCityId = searchParams.get('cityId');
+  const effectiveCityId = urlCityId || selectedCity?.id || undefined;
+
   // Use the advanced search endpoint
   const { data: adsResponse, isLoading: adsLoading } = useSearchAds(
     {
@@ -66,9 +72,7 @@ function CategoryContent() {
           activeCategoryFieldFilters.length > 0
             ? activeCategoryFieldFilters
             : undefined,
-        cityIds: searchParams.get('cityId')
-          ? [searchParams.get('cityId') as string]
-          : undefined,
+        cityIds: effectiveCityId ? [effectiveCityId] : undefined,
       },
       facets: {
         categories: true,

@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { useSearchAds } from '@/hooks/useAds';
 import { ListingCard } from '@/components/ListingCard';
 import { Pagination } from '@/components/Pagination';
+import { useLocation } from '@/contexts/LocationContext';
 import { AdCondition, AdSearchSortBy, AdSearchSortOrder } from '@/types/ad';
 
 function SearchContent() {
@@ -22,6 +23,9 @@ function SearchContent() {
   const maxPrice = searchParams.get('maxPrice') || '';
   const cityId = searchParams.get('cityId') || '';
   const condition = searchParams.get('condition') || '';
+  // Global location selection applies when the URL carries no explicit city.
+  const { selectedCity } = useLocation();
+  const effectiveCityId = cityId || selectedCity?.id || '';
   const sortBy =
     (searchParams.get('sortBy') as AdSearchSortBy) || AdSearchSortBy.CREATED_AT;
   const sortOrder =
@@ -73,7 +77,7 @@ function SearchContent() {
       page,
       limit,
       categoryIds: categoryId ? [categoryId] : undefined,
-      cityIds: cityId ? [cityId] : undefined,
+      cityIds: effectiveCityId ? [effectiveCityId] : undefined,
       priceMin: minPrice ? Number(minPrice) : undefined,
       priceMax: maxPrice ? Number(maxPrice) : undefined,
       conditions: condition ? [condition as AdCondition] : undefined,
@@ -97,6 +101,19 @@ function SearchContent() {
     params.set('page', newPage.toString());
     router.push(`/search?${params.toString()}`);
   };
+
+  const handleCategoryFacetSelect = (facetCategoryId: string) => {
+    const params = new URLSearchParams(searchParams.toString());
+    if (facetCategoryId === categoryId) {
+      params.delete('categoryId');
+    } else {
+      params.set('categoryId', facetCategoryId);
+    }
+    params.set('page', '1');
+    router.push(`/search?${params.toString()}`);
+  };
+
+  const categoryFacets = adsResponse?.facets?.categories || [];
 
   const handleSortChange = (newSortBy: AdSearchSortBy) => {
     const params = new URLSearchParams(searchParams.toString());
@@ -159,6 +176,39 @@ function SearchContent() {
                   {categoryFields.length} Custom Filters
                 </span>
               )}
+            </div>
+          )}
+
+          {/* Category facets: filter-aware counts for these results */}
+          {categoryFacets.length > 0 && (
+            <div className="mb-8 p-6 bg-background rounded-2xl border border-border-custom shadow-sm">
+              <span className="text-sm font-bold text-text-gray uppercase tracking-widest mr-2">
+                Categories in these results:
+              </span>
+              <div className="flex flex-wrap items-center gap-2 mt-3">
+                {categoryFacets.map((facet) => (
+                  <button
+                    key={facet.id}
+                    onClick={() => handleCategoryFacetSelect(facet.id)}
+                    className={`inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full text-xs font-bold border transition-all cursor-pointer ${
+                      facet.id === categoryId
+                        ? 'bg-primary text-white border-primary shadow-md'
+                        : 'bg-background-primary text-text-gray border-border-custom hover:border-primary/40 hover:text-primary'
+                    }`}
+                  >
+                    {facet.name}
+                    <span
+                      className={`px-1.5 py-0.5 rounded-full text-[10px] ${
+                        facet.id === categoryId
+                          ? 'bg-white/20 text-white'
+                          : 'bg-primary/10 text-primary'
+                      }`}
+                    >
+                      {facet.count.toLocaleString()}
+                    </span>
+                  </button>
+                ))}
+              </div>
             </div>
           )}
 

@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { Category } from '@/types/category';
+import { useLocatedCategoryCounts } from '@/hooks/useCategories';
 import { OptimizedImage } from './OptimizedImage';
 
 interface CategoryTilesProps {
@@ -13,6 +14,9 @@ export const CategoryTiles = ({
   categories,
   isLoading,
 }: CategoryTilesProps) => {
+  // Filter-aware counts (scoped to the selected location), falling back
+  // to the static totals while loading.
+  const { data: counts } = useLocatedCategoryCounts();
   if (isLoading) {
     return (
       <section className="py-8">
@@ -92,12 +96,17 @@ export const CategoryTiles = ({
                 </h3>
 
                 {/* Count badge */}
-                {category._count?.ads !== undefined &&
-                  category._count.ads > 0 && (
-                    <p className="text-center text-xs text-text-light-gray mt-1">
-                      {category._count.ads.toLocaleString()} ads
-                    </p>
-                  )}
+                {(() => {
+                  const count =
+                    counts?.[category.id] ?? category._count?.ads ?? 0;
+                  return (
+                    count > 0 && (
+                      <p className="text-center text-xs text-text-light-gray mt-1">
+                        {count.toLocaleString()} ads
+                      </p>
+                    )
+                  );
+                })()}
               </div>
             </Link>
           ))}

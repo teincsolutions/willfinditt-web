@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Category } from '@/types/category';
+import { useLocatedCategoryCounts } from '@/hooks/useCategories';
 import { OptimizedImage } from './OptimizedImage';
 
 interface MegaMenuProps {
@@ -17,6 +18,11 @@ export const MegaMenu = ({ categories, isOpen, onClose }: MegaMenuProps) => {
   );
   const router = useRouter();
   const searchParams = useSearchParams();
+
+  // Filter-aware counts scoped to the URL city (?cityId=) or the global
+  // location selection, falling back to static totals while loading.
+  const urlCityId = searchParams.get('cityId') || undefined;
+  const { data: counts } = useLocatedCategoryCounts({ cityId: urlCityId });
 
   const handleCategorySelect = (categoryId: string, slug?: string) => {
     const params = new URLSearchParams(searchParams.toString());
@@ -157,14 +163,20 @@ export const MegaMenu = ({ categories, isOpen, onClose }: MegaMenuProps) => {
                             <span className="font-bold text-xs group-hover:text-primary transition-colors block text-base  mb-1">
                               {subcat.name}
                             </span>
-                            {subcat._count?.ads !== undefined && (
-                              <div className="flex items-center gap-1.5">
-                                <span className="w-1.5 h-1.5 rounded-full bg-success" />
-                                <p className="text-[10px] text-text-light-gray font-semibold">
-                                  {subcat._count.ads.toLocaleString()} listings
-                                </p>
-                              </div>
-                            )}
+                            {(() => {
+                              const count =
+                                counts?.[subcat.id] ?? subcat._count?.ads ?? 0;
+                              return (
+                                count > 0 && (
+                                  <div className="flex items-center gap-1.5">
+                                    <span className="w-1.5 h-1.5 rounded-full bg-success" />
+                                    <p className="text-[10px] text-text-light-gray font-semibold">
+                                      {count.toLocaleString()} listings
+                                    </p>
+                                  </div>
+                                )
+                              );
+                            })()}
                           </div>
                         </button>
                       ))}

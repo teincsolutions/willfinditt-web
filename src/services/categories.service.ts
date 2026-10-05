@@ -63,3 +63,27 @@ export const getCategoryFields = async (
   const response = await api.get(`/category-fields/category/${categoryId}`);
   return response.data.data || response.data || [];
 };
+
+export interface CategoryCountsFilters {
+  cityIds?: string;
+  priceMin?: number;
+  priceMax?: number;
+  conditions?: string;
+  query?: string;
+  promotedOnly?: boolean;
+}
+
+// Get filter-aware ad counts per category (visible ads only).
+// Omit a filter to count across it; omit all filters for global totals.
+export const getCategoryCounts = async (
+  filters: CategoryCountsFilters = {}
+): Promise<Record<string, number>> => {
+  const params: Record<string, string | number | boolean> = {};
+  Object.entries(filters).forEach(([key, value]) => {
+    if (value !== undefined && value !== null && value !== '') {
+      params[key] = value;
+    }
+  });
+  const response = await api.get('/categories/counts', { params });
+  return response.data.counts || {};
+};

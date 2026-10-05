@@ -27,6 +27,8 @@ export enum AdSearchSortBy {
   VIEWS = 'views',
   DISTANCE = 'distance',
   PROMOTION_PRIORITY = 'promotionPriority',
+  TRENDING = 'trendingScore',
+  HOME_FEED = 'homeFeed',
 }
 
 export enum AdSearchSortOrder {

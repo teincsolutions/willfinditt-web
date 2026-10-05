@@ -29,7 +29,8 @@ export default function Home() {
   const getSortParams = (sortOption: string) => {
     switch (sortOption) {
       case 'trending':
-        return { sortBy: 'views', sortOrder: 'desc' as const };
+        // Boosted slots + hourly-rotated organic (backend homeFeed sort).
+        return { sortBy: 'homeFeed', sortOrder: 'desc' as const };
       case 'newest':
         return { sortBy: 'createdAt', sortOrder: 'desc' as const };
       case 'oldest':

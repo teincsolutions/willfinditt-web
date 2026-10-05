@@ -82,6 +82,13 @@ export const ListingCard: React.FC<ListingCardProps> = ({ ad }) => {
               </span>
             </div>
           )}
+          {ad.isPromoted && (
+            <div className="absolute bottom-3 left-3 z-20">
+              <span className="bg-primary text-white text-[10px] sm:text-xs px-2 py-1 rounded-full font-medium shadow-sm">
+                Sponsored
+              </span>
+            </div>
+          )}
           {isAuthenticated && (
             <button
               onClick={handleFavoriteClick}

@@ -98,6 +98,11 @@ export async function generateMetadata({
 
 // JSON-LD structured data for rich search results
 function generateJsonLd(ad: Ad) {
+  // Public seller identity only: business name, else account holder name.
+  const accountName =
+    `${ad.user.firstName || ''} ${ad.user.lastName || ''}`.trim();
+  const sellerName =
+    ad.user.sellerProfile?.businessName || accountName || 'Private seller';
   return {
     '@context': 'https://schema.org',
     '@type': 'Product',
@@ -119,10 +124,7 @@ function generateJsonLd(ad: Ad) {
           : 'https://schema.org/UsedCondition',
       seller: {
         '@type': 'Person',
-        name:
-          ad.user.firstName && ad.user.lastName
-            ? `${ad.user.firstName} ${ad.user.lastName}`
-            : ad.user.username,
+        name: sellerName,
       },
     },
     category: ad.category.name,

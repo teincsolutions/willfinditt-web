@@ -51,9 +51,10 @@ export function SellerPageClient({ sellerProfile }: SellerPageClientProps) {
   };
 
   const displayUser = sellerProfile?.user;
+  // Public identity only: business name, else account holder name.
+  // Never username, phone or email.
   const displayUserName = displayUser
-    ? `${displayUser.firstName || ''} ${displayUser.lastName || ''}`.trim() ||
-      displayUser.username
+    ? `${displayUser.firstName || ''} ${displayUser.lastName || ''}`.trim()
     : undefined;
   const displayName =
     sellerProfile?.businessName || displayUserName || 'Seller';

@@ -40,7 +40,6 @@ export async function generateMetadata({
   const displayName =
     seller.businessName ||
     `${seller.user?.firstName || ''} ${seller.user?.lastName || ''}`.trim() ||
-    seller.user?.username ||
     'Seller';
 
   const description =
@@ -85,7 +84,6 @@ function generateJsonLd(seller: SellerProfile) {
   const displayName =
     seller.businessName ||
     `${seller.user?.firstName || ''} ${seller.user?.lastName || ''}`.trim() ||
-    seller.user?.username ||
     'Seller';
 
   return {

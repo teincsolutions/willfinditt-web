@@ -78,12 +78,13 @@ export interface AdFieldValueResponseDto {
 
 export interface UserSummaryDto {
   id: string;
-  username: string;
+  username?: string;
   firstName?: string;
   lastName?: string;
   avatar?: string;
   sellerProfile?: {
     id: string;
+    businessName?: string;
   };
 }
 

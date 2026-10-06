@@ -260,56 +260,50 @@ export function AdDetailClient({ ad }: AdDetailClientProps) {
           {/* Seller Info */}
           <div className="bg-background-primary/20 p-4 rounded-lg border border-primary/5">
             <h3 className="font-semibold mb-2">Seller Information</h3>
-            <div className="flex items-center space-x-4">
-              <div className="w-12 h-12 bg-background-primary rounded-full flex items-center justify-center">
-                {ad.user.avatar ? (
-                  <OptimizedImage
-                    src={ad.user.avatar}
-                    alt={
-                      `${ad.user.firstName || ''} ${ad.user.lastName || ''}`.trim() ||
-                      ad.user.username
-                    }
-                    width={48}
-                    height={48}
-                    className="rounded-full"
-                  />
-                ) : (
-                  <span className="text-text-gray font-semibold">
-                    {(
-                      ad.user.firstName ||
-                      ad.user.lastName ||
-                      ad.user.username ||
-                      'U'
-                    )
-                      .charAt(0)
-                      .toUpperCase()}
-                  </span>
-                )}
-              </div>
-              <div>
-                <p className="font-medium hover:underline">
-                  <Link
-                    href={
-                      ad.user.sellerProfile?.id
-                        ? `/ads/seller/${ad.user.sellerProfile.id}`
-                        : '#'
-                    }
-                    className={
-                      !ad.user.sellerProfile?.id
-                        ? 'cursor-default hover:no-underline'
-                        : ''
-                    }
-                  >
-                    {ad.user.firstName && ad.user.lastName
-                      ? `${ad.user.firstName} ${ad.user.lastName}`
-                      : ad.user.username}
-                  </Link>
-                </p>
-                <p className="text-sm text-text-gray">
-                  Member since {new Date(ad.createdAt).getFullYear()}
-                </p>
-              </div>
-            </div>
+            {(() => {
+              // Public seller identity: business name, else the account
+              // holder's name. Never username, phone or email.
+              const accountName =
+                `${ad.user.firstName || ''} ${ad.user.lastName || ''}`.trim();
+              const displayName =
+                ad.user.sellerProfile?.businessName ||
+                accountName ||
+                'Private seller';
+              const sellerHref = ad.user.sellerProfile?.id
+                ? `/ads/seller/${ad.user.sellerProfile.id}`
+                : null;
+              return (
+                <div className="flex items-center space-x-4">
+                  <div className="w-12 h-12 bg-background-primary rounded-full flex items-center justify-center">
+                    {ad.user.avatar ? (
+                      <OptimizedImage
+                        src={ad.user.avatar}
+                        alt={displayName}
+                        width={48}
+                        height={48}
+                        className="rounded-full"
+                      />
+                    ) : (
+                      <span className="text-text-gray font-semibold">
+                        {displayName.charAt(0).toUpperCase()}
+                      </span>
+                    )}
+                  </div>
+                  <div>
+                    <p className="font-medium hover:underline">
+                      {sellerHref ? (
+                        <Link href={sellerHref}>{displayName}</Link>
+                      ) : (
+                        <span className="cursor-default">{displayName}</span>
+                      )}
+                    </p>
+                    <p className="text-sm text-text-gray">
+                      Member since {new Date(ad.createdAt).getFullYear()}
+                    </p>
+                  </div>
+                </div>
+              );
+            })()}
           </div>
         </div>
       </div>

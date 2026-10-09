@@ -2,14 +2,15 @@
 
 import { useEffect, useState } from 'react';
 import Script from 'next/script';
-import { GA_ID, PIXEL_ID, getConsent, type ConsentChoice } from '@/lib/analytics';
+import { GA_ID, PIXEL_ID, getConsent, type ConsentPreferences } from '@/lib/analytics';
 
 /**
- * Loads GA4 + Meta Pixel only when configured AND consented.
- * Consent Mode v2 defaults to denied; CookieConsent flips to granted.
+ * Loads GA4 when analytics consent is granted, Meta Pixel when marketing
+ * consent is granted. Consent Mode v2 defaults to denied; CookieConsent
+ * (or the /cookie-policy page) flips the stored preferences.
  */
 export function AnalyticsScripts() {
-  const [consent, setLocalConsent] = useState<ConsentChoice | null>(null);
+  const [consent, setLocalConsent] = useState<ConsentPreferences | null>(null);
 
   useEffect(() => {
     setLocalConsent(getConsent());
@@ -18,11 +19,9 @@ export function AnalyticsScripts() {
     return () => window.removeEventListener('wf-consent-change', onChange);
   }, []);
 
-  if (consent !== 'granted') return null;
-
   return (
     <>
-      {GA_ID && (
+      {GA_ID && consent?.analytics && (
         <>
           <Script
             src={`https://www.googletagmanager.com/gtag/js?id=${GA_ID}`}
@@ -40,12 +39,27 @@ export function AnalyticsScripts() {
                 ad_user_data: 'denied',
                 ad_personalization: 'denied'
               });
+              // Re-apply a previously stored grant (update at choose-time
+              // no-ops if gtag wasn't loaded yet).
+              try {
+                var wfStored = JSON.parse(localStorage.getItem('wf-tracking-consent') || 'null');
+                if (wfStored && wfStored.analytics) {
+                  gtag('consent', 'update', { analytics_storage: 'granted' });
+                }
+                if (wfStored && wfStored.marketing) {
+                  gtag('consent', 'update', {
+                    ad_storage: 'granted',
+                    ad_user_data: 'granted',
+                    ad_personalization: 'granted'
+                  });
+                }
+              } catch (e) {}
               gtag('config', '${GA_ID}', { send_page_view: false });
             `}
           </Script>
         </>
       )}
-      {PIXEL_ID && (
+      {PIXEL_ID && consent?.marketing && (
         <Script id="meta-pixel" strategy="afterInteractive">
           {`
             !function(f,b,e,v,n,t,s)

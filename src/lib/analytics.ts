@@ -23,24 +23,54 @@ declare global {
 }
 
 export type ConsentChoice = 'granted' | 'declined';
-const CONSENT_KEY = 'wf-tracking-consent';
 
-export function getConsent(): ConsentChoice | null {
-  if (typeof window === 'undefined') return null;
-  const v = window.localStorage.getItem(CONSENT_KEY);
-  return v === 'granted' || v === 'declined' ? v : null;
+/**
+ * Granular tracking preferences (Ghana Data Protection Act 2012:
+ * consent must be specific — analytics and marketing are separate asks).
+ * - analytics: GA4 measurement (analytics_storage)
+ * - marketing: Meta Pixel + ads personalization
+ *   (ad_storage, ad_user_data, ad_personalization)
+ * Strictly-necessary cookies (auth, security, load balancing) are always
+ * on and need no consent.
+ */
+export interface ConsentPreferences {
+  analytics: boolean;
+  marketing: boolean;
 }
 
-export function setConsent(choice: ConsentChoice): void {
+const CONSENT_KEY = 'wf-tracking-consent';
+
+export function getConsent(): ConsentPreferences | null {
+  if (typeof window === 'undefined') return null;
+  const raw = window.localStorage.getItem(CONSENT_KEY);
+  if (!raw) return null;
+  // Backward compat with the original binary banner.
+  if (raw === 'granted') return { analytics: true, marketing: true };
+  if (raw === 'declined') return { analytics: false, marketing: false };
+  try {
+    const parsed = JSON.parse(raw) as ConsentPreferences;
+    if (
+      typeof parsed.analytics === 'boolean' &&
+      typeof parsed.marketing === 'boolean'
+    ) {
+      return parsed;
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+export function setConsent(prefs: ConsentPreferences): void {
   if (typeof window === 'undefined') return;
-  window.localStorage.setItem(CONSENT_KEY, choice);
-  const granted = choice === 'granted';
+  window.localStorage.setItem(CONSENT_KEY, JSON.stringify(prefs));
   window.gtag?.('consent', 'update', {
-    ad_storage: granted ? 'granted' : 'denied',
-    analytics_storage: granted ? 'granted' : 'denied',
-    ad_user_data: granted ? 'granted' : 'denied',
-    ad_personalization: granted ? 'granted' : 'denied',
+    analytics_storage: prefs.analytics ? 'granted' : 'denied',
+    ad_storage: prefs.marketing ? 'granted' : 'denied',
+    ad_user_data: prefs.marketing ? 'granted' : 'denied',
+    ad_personalization: prefs.marketing ? 'granted' : 'denied',
   });
+  window.dispatchEvent(new Event('wf-consent-change'));
 }
 
 function pushGtag(event: string, params?: Record<string, unknown>): void {

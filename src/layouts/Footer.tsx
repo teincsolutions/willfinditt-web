@@ -63,6 +63,14 @@ export const Footer = () => {
               </li>
               <li>
                 <Link
+                  href="/cookie-policy"
+                  className="text-text-gray hover:text-primary text-sm transition-colors"
+                >
+                  Cookie Policy
+                </Link>
+              </li>
+              <li>
+                <Link
                   href="/seller-policy"
                   className="text-text-gray hover:text-primary text-sm transition-colors"
                 >

@@ -21,24 +21,37 @@ async function getCategories(): Promise<
   }
 }
 
-// Fetch recent ads for sitemap (limited to most recent)
+// Fetch recent ads for sitemap (paginated; API caps limit at 100 per page)
 async function getRecentAds(): Promise<
   Array<{ id: string; updatedAt: string }>
 > {
+  const allAds: Array<{ id: string; updatedAt: string }> = [];
+  const PAGE_SIZE = 100;
+  const MAX_ADS = 5000; // Bound sitemap build time (shard into index later)
+  let page = 1;
+
   try {
-    const res = await fetch(
-      `${process.env.NEXT_PUBLIC_API_URL}/ads?limit=1000&sortBy=updatedAt&sortOrder=desc`,
-      { next: { revalidate: 3600 } }
-    );
+    // eslint-disable-next-line no-constant-condition
+    while (true) {
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/ads?page=${page}&limit=${PAGE_SIZE}&sortBy=updatedAt&sortOrder=desc`,
+        { next: { revalidate: 3600 } },
+      );
 
-    if (!res.ok) return [];
+      if (!res.ok) break;
 
-    const data = await res.json();
-    return data.data || [];
+      const data = await res.json();
+      const ads: Array<{ id: string; updatedAt: string }> = data.data || [];
+      allAds.push(...ads);
+
+      if (ads.length < PAGE_SIZE || allAds.length >= MAX_ADS) break;
+      page += 1;
+    }
   } catch (error) {
     console.error('Error fetching ads for sitemap:', error);
-    return [];
   }
+
+  return allAds.slice(0, MAX_ADS);
 }
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {

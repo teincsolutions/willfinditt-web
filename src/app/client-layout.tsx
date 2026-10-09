@@ -8,6 +8,9 @@ import { Toaster } from 'sonner';
 
 import { GoogleOAuthProvider } from '@react-oauth/google';
 import { googleClientId, isGoogleSignInConfigured } from '@/lib/google-auth';
+import { AnalyticsScripts } from '@/components/AnalyticsScripts';
+import { CookieConsent } from '@/components/CookieConsent';
+import { PageViewTracker } from '@/components/PageViewTracker';
 
 export function ClientLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -18,9 +21,12 @@ export function ClientLayout({ children }: { children: React.ReactNode }) {
   const content = (
     <Providers>
       <Toaster position="top-center" richColors />
+      <AnalyticsScripts />
+      <PageViewTracker />
       {!isAuthPage && <Header />}
       <main className={!isAuthPage ? 'min-h-screen' : ''}>{children}</main>
       {!isAuthPage && <Footer />}
+      <CookieConsent />
     </Providers>
   );
 

@@ -12,6 +12,7 @@ import { useSocialAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
 import { GoogleLogin } from '@react-oauth/google';
 import { isGoogleSignInConfigured } from '@/lib/google-auth';
+import { trackEvent } from '@/lib/analytics';
 
 const schema = yup.object({
   identifier: yup.string().required('Email or phone number is required'),
@@ -64,6 +65,7 @@ export default function LoginPage() {
           accessToken: response.credential, // Sending ID token as accessToken
           provider: 'GOOGLE',
         });
+        trackEvent('login', { method: 'google' });
         if (!hasNavigatedRef.current) {
           hasNavigatedRef.current = true;
           toast.success('Login with Google successful!');

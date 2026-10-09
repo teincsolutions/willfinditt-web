@@ -1,8 +1,9 @@
 'use client';
 
-import { Suspense, useMemo } from 'react';
+import { Suspense, useEffect, useMemo, useRef } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useSearchAds } from '@/hooks/useAds';
+import { trackEvent } from '@/lib/analytics';
 import { ListingCard } from '@/components/ListingCard';
 import { Pagination } from '@/components/Pagination';
 import { useLocation } from '@/contexts/LocationContext';
@@ -95,6 +96,16 @@ function SearchContent() {
 
   const ads = adsResponse?.data || [];
   const meta = adsResponse?.meta;
+
+  // Analytics: results list viewed (once per query/page).
+  const trackedListRef = useRef('');
+  useEffect(() => {
+    if (!adsResponse) return;
+    const key = `${q}|${page}|${categoryId || ''}`;
+    if (trackedListRef.current === key) return;
+    trackedListRef.current = key;
+    trackEvent('view_item_list', { searchTerm: q || undefined });
+  }, [adsResponse, q, page, categoryId]);
 
   const handlePageChange = (newPage: number) => {
     const params = new URLSearchParams(searchParams.toString());

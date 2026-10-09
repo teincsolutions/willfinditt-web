@@ -1,7 +1,8 @@
 'use client';
 
 import { useParams, useSearchParams, useRouter } from 'next/navigation';
-import { useState, Suspense } from 'react';
+import { useEffect, useRef, useState, Suspense } from 'react';
+import { trackEvent } from '@/lib/analytics';
 import { useSearchAds } from '@/hooks/useAds';
 import { useCategoryBySlug, useCategoryFields } from '@/hooks/useCategories';
 import { useLocation } from '@/contexts/LocationContext';
@@ -88,6 +89,16 @@ function CategoryContent() {
 
   const ads = adsResponse?.data || [];
   const meta = adsResponse?.meta;
+
+  // Analytics: category list viewed (once per category/page).
+  const trackedListRef = useRef('');
+  useEffect(() => {
+    if (!adsResponse || !activeCategory) return;
+    const key = `${activeCategory.id}|${pageFromUrl}`;
+    if (trackedListRef.current === key) return;
+    trackedListRef.current = key;
+    trackEvent('view_item_list', { category: activeCategory.name });
+  }, [adsResponse, activeCategory, pageFromUrl]);
 
   const handleFilterChange = (key: string, value: string) => {
     // For sort/pagination, apply immediately

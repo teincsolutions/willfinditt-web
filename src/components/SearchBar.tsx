@@ -3,6 +3,7 @@
 import { Suspense, useEffect, useState } from 'react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { Button } from './Button';
+import { trackEvent } from '@/lib/analytics';
 
 const SearchBarInner = () => {
   const router = useRouter();
@@ -31,6 +32,10 @@ const SearchBarInner = () => {
   };
 
   const handleSearch = () => {
+    const trimmed = query.trim();
+    if (trimmed) {
+      trackEvent('search', { searchTerm: trimmed });
+    }
     pushSearch(query);
   };
 

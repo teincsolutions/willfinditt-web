@@ -4,7 +4,8 @@ import { OptimizedImage } from '@/components/OptimizedImage';
 import { useCategoryFields } from '@/hooks/useCategories';
 import { useAddFavorite, useRemoveFavorite } from '@/hooks/useFavorites';
 import { Button } from '@/components/Button';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { trackEvent } from '@/lib/analytics';
 import { RelatedAds } from '@/components/RelatedAds';
 import { formatCurrency } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
@@ -33,6 +34,20 @@ export function AdDetailClient({ ad }: AdDetailClientProps) {
   >(null);
   const [isSaved, setIsSaved] = useState(ad.isSaved ?? false);
   const [isContactRevealed, setIsContactRevealed] = useState(false);
+  const trackedViewRef = useRef(false);
+
+  // Analytics: ad viewed (fires once per mount).
+  useEffect(() => {
+    if (trackedViewRef.current) return;
+    trackedViewRef.current = true;
+    trackEvent('view_item', {
+      itemId: ad.id,
+      itemName: ad.title,
+      category: ad.category?.name,
+      price: ad.price ?? undefined,
+      currency: ad.currency || 'GHS',
+    });
+  }, [ad]);
 
   const isFavoriteLoading = addFavorite.isPending || removeFavorite.isPending;
 
@@ -70,6 +85,11 @@ export function AdDetailClient({ ad }: AdDetailClientProps) {
       window.location.href = `tel:${ad.contactPhone}`;
     } else if (ad.contactPhone) {
       setIsContactRevealed(true);
+      trackEvent('lead', {
+        itemId: ad.id,
+        itemName: ad.title,
+        category: ad.category?.name,
+      });
     } else {
       alert("This seller hasn't provided a phone number.");
     }

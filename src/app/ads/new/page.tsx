@@ -6,6 +6,7 @@ import { useCreateAd } from '@/hooks/useAds';
 import { useAuth } from '@/contexts/AuthContext';
 import { AdForm } from '@/components/AdForm';
 import { toast } from 'sonner';
+import { trackEvent } from '@/lib/analytics';
 
 export default function CreateAdPage() {
   const router = useRouter();
@@ -26,8 +27,13 @@ export default function CreateAdPage() {
     }
 
     createAd.mutate(adData, {
-      onSuccess: () => {
+      onSuccess: (created: { id?: string; title?: string; category?: { name?: string } }) => {
         toast.success('Ad published successfully!');
+        trackEvent('post_ad', {
+          itemId: created?.id,
+          itemName: created?.title,
+          category: created?.category?.name,
+        });
         router.push('/account/my-ads');
       },
       onError: (error: any) => {

@@ -9,13 +9,19 @@ import {
   forgotPassword,
 } from '@/services/auth.service';
 import { LoginData, RegisterData } from '@/types/user';
+import { trackEvent } from '@/lib/analytics';
 
 export const useLogin = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (data: LoginData) => login(data),
-    onSuccess: () => {
+    onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: ['me'] });
+      trackEvent('login', {
+        method: (variables as LoginData & { email?: string }).email
+          ? 'email'
+          : 'phone',
+      });
     },
   });
 };
@@ -23,6 +29,14 @@ export const useLogin = () => {
 export const useRegister = () => {
   return useMutation({
     mutationFn: (data: RegisterData) => register(data),
+    onSuccess: (_data, variables) => {
+      const v = variables as RegisterData & { email?: string; phone?: string };
+      trackEvent('sign_up', {
+        method: v.email ? 'email' : 'phone',
+        email: v.email,
+        phone: v.phone,
+      });
+    },
   });
 };
 

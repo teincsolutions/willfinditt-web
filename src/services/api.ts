@@ -16,6 +16,8 @@ api.interceptors.request.use((config) => {
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
+  // Client identification for server-side diagnostics (which app is calling)
+  config.headers['X-Client'] = 'web';
   return config;
 });
 
@@ -60,6 +62,7 @@ const refreshAccessToken = async (): Promise<string | null> => {
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${refreshToken}`,
+          'X-Client': 'web',
         }
       }
     );

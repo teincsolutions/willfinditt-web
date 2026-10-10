@@ -252,12 +252,22 @@ export const Header = () => {
                   onClick={() => setIsDropdownOpen(!isDropdownOpen)}
                   className="flex items-center space-x-2 p-2 rounded-lg hover:bg-background/50 transition-colors"
                 >
-                  <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center shadow-sm">
-                    <span className="text-white font-medium text-sm">
-                      {user?.firstName
-                        ? user.firstName.charAt(0).toUpperCase()
-                        : '👤'}
-                    </span>
+                  <div className="w-8 h-8 rounded-full overflow-hidden flex items-center justify-center shadow-sm bg-primary">
+                    {user?.avatar ? (
+                      <OptimizedImage
+                        src={user.avatar}
+                        alt={`${user?.firstName || 'User'} profile picture`}
+                        width={32}
+                        height={32}
+                        className="object-cover w-8 h-8"
+                      />
+                    ) : (
+                      <span className="text-white font-medium text-sm">
+                        {user?.firstName
+                          ? user.firstName.charAt(0).toUpperCase()
+                          : '👤'}
+                      </span>
+                    )}
                   </div>
                   <svg
                     className={`w-4 h-4 text-text-gray transition-transform ${

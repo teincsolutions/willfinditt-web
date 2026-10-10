@@ -70,12 +70,12 @@ export function CookiePolicyContent() {
             4. Marketing & ads cookies (your choice)
           </h2>
           <p>
-            With your consent we use the <strong>Meta Pixel</strong> on our
-            website to measure Facebook/Instagram ad campaigns and show
-            relevant ads. Key actions (signup, contact reveal, ad posting) may
-            also be sent to Meta server-side via the Conversions API with a
-            shared event id for deduplication. Retention is governed by
-            Meta&apos;s cookie policy. Provider: Meta Platforms, Inc.
+            With your consent we measure our advertising campaigns and show
+            relevant ads on other platforms. Key actions (such as signup,
+            contacting a seller, or posting an ad) may also be shared with
+            our advertising partners through server-side measurement using a
+            shared event id for deduplication. Retention is governed by the
+            applicable advertising partner&apos;s cookie policy.
           </p>
         </section>
 

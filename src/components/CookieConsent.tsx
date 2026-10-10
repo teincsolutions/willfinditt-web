@@ -131,8 +131,8 @@ export function CookieConsent() {
                       Marketing & ads
                     </span>
                     <br />
-                    Meta Pixel for relevant ads and campaign measurement on
-                    Facebook/Instagram.
+                    Measure advertising campaigns and show relevant ads on
+                    other platforms.
                   </span>
                   <input
                     type="checkbox"

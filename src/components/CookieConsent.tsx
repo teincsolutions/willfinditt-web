@@ -20,7 +20,8 @@ export const OPEN_COOKIE_SETTINGS_EVENT = 'wf-open-cookie-settings';
 export function CookieConsent() {
   const [visible, setVisible] = useState(false);
   const [customizing, setCustomizing] = useState(false);
-  const [analytics, setAnalytics] = useState(true);
+  // GDPR: consent must be opt-in — both default OFF, no pre-ticked boxes.
+  const [analytics, setAnalytics] = useState(false);
   const [marketing, setMarketing] = useState(false);
 
   useEffect(() => {
@@ -29,7 +30,7 @@ export function CookieConsent() {
     const t = setTimeout(() => setVisible(true), 1500);
     const reopen = () => {
       const stored = getConsent();
-      setAnalytics(stored?.analytics ?? true);
+      setAnalytics(stored?.analytics ?? false);
       setMarketing(stored?.marketing ?? false);
       setCustomizing(true);
       setVisible(true);
@@ -122,23 +123,26 @@ export function CookieConsent() {
                   className="mt-1"
                 />
               </label>
-              <label className="flex items-start justify-between gap-4 rounded-lg border border-gray-200 px-3 py-2">
-                <span>
-                  <span className="font-medium text-gray-900">
-                    Marketing & ads
+              {/* Only ask for marketing when the Pixel is actually configured. */}
+              {PIXEL_ID ? (
+                <label className="flex items-start justify-between gap-4 rounded-lg border border-gray-200 px-3 py-2">
+                  <span>
+                    <span className="font-medium text-gray-900">
+                      Marketing & ads
+                    </span>
+                    <br />
+                    Meta Pixel for relevant ads and campaign measurement on
+                    Facebook/Instagram.
                   </span>
-                  <br />
-                  Meta Pixel for relevant ads and campaign measurement on
-                  Facebook/Instagram.
-                </span>
-                <input
-                  type="checkbox"
-                  checked={marketing}
-                  onChange={(e) => setMarketing(e.target.checked)}
-                  aria-label="Marketing cookies"
-                  className="mt-1"
-                />
-              </label>
+                  <input
+                    type="checkbox"
+                    checked={marketing}
+                    onChange={(e) => setMarketing(e.target.checked)}
+                    aria-label="Marketing cookies"
+                    className="mt-1"
+                  />
+                </label>
+              ) : null}
             </div>
             <div className="flex flex-wrap items-center gap-2">
               <a href="/cookie-policy" className="text-sm underline text-gray-700">
@@ -154,7 +158,9 @@ export function CookieConsent() {
               </button>
               <button
                 type="button"
-                onClick={() => save({ analytics, marketing })}
+                onClick={() =>
+                  save({ analytics, marketing: PIXEL_ID ? marketing : false })
+                }
                 className="rounded-lg bg-green-700 px-4 py-2 text-sm font-medium text-white hover:bg-green-800"
               >
                 Save choices

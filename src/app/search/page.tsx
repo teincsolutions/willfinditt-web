@@ -27,8 +27,13 @@ function SearchContent() {
   // Global location selection applies when the URL carries no explicit city.
   const { selectedCity } = useLocation();
   const effectiveCityId = cityId || selectedCity?.id || '';
+  const hasQuery = Boolean(q.trim());
+  const sortByParam = searchParams.get('sortBy') as AdSearchSortBy | null;
   const sortBy =
-    (searchParams.get('sortBy') as AdSearchSortBy) || AdSearchSortBy.CREATED_AT;
+    !hasQuery && sortByParam === AdSearchSortBy.RELEVANCE
+      ? AdSearchSortBy.CREATED_AT
+      : sortByParam ||
+        (hasQuery ? AdSearchSortBy.RELEVANCE : AdSearchSortBy.CREATED_AT);
   const sortOrder =
     (searchParams.get('sortOrder') as AdSearchSortOrder) ||
     AdSearchSortOrder.DESC;
@@ -129,9 +134,12 @@ function SearchContent() {
   const handleSortChange = (newSortBy: AdSearchSortBy) => {
     const params = new URLSearchParams(searchParams.toString());
 
-    // Toggle order if clicking same sort
+    // Toggle order if clicking the same sort (relevance is always desc).
     let newOrder = AdSearchSortOrder.DESC;
-    if (sortBy === newSortBy) {
+    if (
+      sortBy === newSortBy &&
+      newSortBy !== AdSearchSortBy.RELEVANCE
+    ) {
       newOrder =
         sortOrder === AdSearchSortOrder.ASC
           ? AdSearchSortOrder.DESC
@@ -240,6 +248,14 @@ function SearchContent() {
             </div>
 
             <div className="flex items-center gap-3 bg-background p-2 rounded-2xl border border-border-custom shadow-sm overflow-x-auto">
+              {hasQuery && (
+                <button
+                  onClick={() => handleSortChange(AdSearchSortBy.RELEVANCE)}
+                  className={`px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap ${sortBy === AdSearchSortBy.RELEVANCE ? 'bg-primary text-white shadow-md' : 'text-text-gray hover:bg-background-primary'}`}
+                >
+                  Best Match
+                </button>
+              )}
               <button
                 onClick={() => handleSortChange(AdSearchSortBy.CREATED_AT)}
                 className={`px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap ${sortBy === AdSearchSortBy.CREATED_AT ? 'bg-primary text-white shadow-md' : 'text-text-gray hover:bg-background-primary'}`}

@@ -24,8 +24,8 @@ export function ClientLayout({ children }: { children: React.ReactNode }) {
       <Toaster position="top-center" richColors />
       <AnalyticsScripts />
       <PageViewTracker />
-      {!isAuthPage && <Header />}
       {!isAuthPage && <MobileAppBanner />}
+      {!isAuthPage && <Header />}
       <main className={!isAuthPage ? 'min-h-screen' : ''}>{children}</main>
       {!isAuthPage && <Footer />}
       <CookieConsent />

@@ -2,11 +2,11 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { format } from 'date-fns';
 import { useUserAds, useDeleteAd } from '@/hooks/useAds';
 import { Button } from '@/components/Button';
 import { OptimizedImage } from '@/components/OptimizedImage';
 import { formatCurrency } from '@/lib/utils';
+import { formatPostedDate } from '@/lib/formatDate';
 import { Pagination } from '@/components/Pagination';
 
 import { Suspense } from 'react';
@@ -118,7 +118,7 @@ function MyAdsContent() {
                     {ad.status}
                   </span>
                   <span>
-                    Posted {format(new Date(ad.createdAt), 'MMM d, yyyy')}
+                    Posted {formatPostedDate(ad.createdAt)}
                   </span>
                   <span className="flex items-center gap-1">
                     <svg

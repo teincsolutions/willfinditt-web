@@ -8,6 +8,7 @@ import { useEffect, useRef, useState } from 'react';
 import { trackEvent } from '@/lib/analytics';
 import { RelatedAds } from '@/components/RelatedAds';
 import { formatCurrency } from '@/lib/utils';
+import { formatPostedDate, formatMonthYear } from '@/lib/formatDate';
 import { useAuth } from '@/contexts/AuthContext';
 import { Dialog } from '@/components/Dialog';
 import { useRouter } from 'next/navigation';
@@ -149,6 +150,9 @@ export function AdDetailClient({ ad }: AdDetailClientProps) {
             </p>
             <p className="text-text-gray mt-1">
               {ad.address || ad.city?.name || 'Location not specified'}
+            </p>
+            <p className="text-text-gray mt-1 text-sm">
+              Posted {formatPostedDate(ad.createdAt)}
             </p>
           </div>
 
@@ -317,9 +321,11 @@ export function AdDetailClient({ ad }: AdDetailClientProps) {
                         <span className="cursor-default">{displayName}</span>
                       )}
                     </p>
-                    <p className="text-sm text-text-gray">
-                      Member since {new Date(ad.createdAt).getFullYear()}
-                    </p>
+                    {ad.user.createdAt && (
+                      <p className="text-sm text-text-gray">
+                        Member since {formatMonthYear(ad.user.createdAt)}
+                      </p>
+                    )}
                   </div>
                 </div>
               );

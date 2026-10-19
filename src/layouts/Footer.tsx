@@ -85,7 +85,7 @@ export const Footer = () => {
             </h3>
             <div className="flex space-x-4">
               <a
-                href="https://facebook.com/willfinditt"
+                href="https://facebook.com/willfinditt1"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="w-10 h-10 bg-background-primary rounded-full flex items-center justify-center text-text-gray hover:text-primary hover:bg-primary/10 transition-all"
@@ -115,7 +115,7 @@ export const Footer = () => {
                 </svg>
               </a>
               <a
-                href="https://instagram.com/willfinditt"
+                href="https://instagram.com/willfinditt1"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="w-10 h-10 bg-background-primary rounded-full flex items-center justify-center text-text-gray hover:text-primary hover:bg-primary/10 transition-all"

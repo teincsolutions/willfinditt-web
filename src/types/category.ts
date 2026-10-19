@@ -11,6 +11,11 @@ export interface Category {
   isActive?: boolean;
   children?: Category[];
   totalAdsCount?: number;
+  featuredPriceEnabled?: boolean;
+  featuredPriceLabel?: string;
+  featuredPriceDisplay?: 'chips' | 'buttons' | 'cards';
+  featuredPriceOrder?: number;
+  featuredPriceBands?: Array<{ label: string; min?: number; max?: number }>;
   fields?: CategoryField[];
   _count?: {
     ads?: number;
@@ -32,9 +37,12 @@ export interface CategoryField {
     | 'TEXTAREA'
     | 'DATE'
     | 'BOOLEAN';
-  options?: Array<{ label: string; value: string }>;
+  options?: Array<{ label: string; value: string; icon?: string }>;
   isRequired: boolean;
   sortOrder?: number;
+  showInFeaturedFilters?: boolean;
+  featuredDisplay?: 'chips' | 'buttons' | 'cards';
+  featuredOrder?: number;
 }
 
 export interface CategoryFieldFilter {

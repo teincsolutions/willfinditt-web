@@ -19,6 +19,7 @@ import { useLocation } from '@/contexts/LocationContext';
 import { ListingCard } from '@/components/ListingCard';
 import { Pagination } from '@/components/Pagination';
 import { SubcategoryChips } from '@/components/search/SubcategoryChips';
+import { FeaturedCategoryFilters } from '@/components/search/FeaturedCategoryFilters';
 import {
   SearchFiltersDrawer,
   SearchFiltersPanel,
@@ -203,13 +204,6 @@ function CategoryContent() {
         </aside>
 
         <main className="flex-1 min-w-0">
-          <SubcategoryChips
-            parent={chipParent}
-            children={chipChildren}
-            currentId={activeCategory?.id}
-            onSelect={handleCategoryChange}
-          />
-
           {/* Results Header */}
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8">
             <div>
@@ -228,6 +222,19 @@ function CategoryContent() {
               )}
             </div>
           </div>
+
+          <FeaturedCategoryFilters
+            category={activeCategory}
+            fields={categoryFields}
+            className="mb-8"
+          />
+
+          <SubcategoryChips
+            parent={chipParent}
+            children={chipChildren}
+            currentId={activeCategory?.id}
+            onSelect={handleCategoryChange}
+          />
 
           {isLoading ? (
             <div className="columns-2 gap-3 md:grid md:grid-cols-2 lg:grid-cols-3 md:gap-8">

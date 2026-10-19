@@ -132,7 +132,7 @@ export function HomeHeroCarousel() {
           return (
             <div
               key={banner.id}
-              className="relative flex min-h-[440px] w-full shrink-0 items-center justify-center overflow-hidden px-5 py-14 text-center md:min-h-[520px] md:px-8 md:py-20"
+              className="relative flex h-[380px] w-full shrink-0 items-center justify-center overflow-hidden px-5 py-10 text-center sm:h-[440px] md:h-[520px] md:px-8 md:py-16"
               style={{
                 backgroundColor: banner.backgroundColor || '#ef702a',
                 color: textColor,

@@ -6,9 +6,12 @@ export interface Category {
   image?: string;
   description?: string;
   parentId?: string | null;
+  parent?: Category | null;
   sortOrder?: number;
   isActive?: boolean;
   children?: Category[];
+  totalAdsCount?: number;
+  fields?: CategoryField[];
   _count?: {
     ads?: number;
     children?: number;

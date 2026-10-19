@@ -7,6 +7,7 @@ import { useCategories, useParentCategories } from '@/hooks/useCategories';
 import { AdStatus } from '@/types/ad';
 import { ListingCard } from '@/components/ListingCard';
 import { CategoryTiles } from '@/components/CategoryTiles';
+import { HomeHeroCarousel } from '@/components/HomeHeroCarousel';
 import { Pagination } from '@/components/Pagination';
 import { Button } from '@/components/Button';
 
@@ -67,76 +68,7 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Hero Section */}
-      <section className="bg-primary text-white py-16 relative overflow-hidden">
-        {/* Background decoration */}
-        <div className="absolute inset-0 overflow-hidden">
-          <div className="absolute -top-40 -right-40 w-80 h-80 bg-secondary/10 rounded-full blur-3xl" />
-          <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-primaryLight/10 rounded-full blur-3xl" />
-        </div>
-
-        <div className="max-w-4xl mx-auto px-4 text-center relative z-10">
-          <h1 className="text-4xl md:text-5xl font-bold mb-4">
-            Find What You Need
-          </h1>
-          <p className="text-lg md:text-xl mb-6 max-w-2xl mx-auto text-orange-100">
-            Discover amazing deals on new and used items from trusted sellers
-          </p>
-          <div className="flex items-center justify-center gap-6 text-sm">
-            <div className="flex items-center gap-2">
-              <span className="w-2 h-2 bg-success rounded-full animate-pulse" />
-              <span>{ads?.meta?.total?.toLocaleString() || 0} listings</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="w-2 h-2 bg-secondary rounded-full" />
-              <span>{categories.length} categories</span>
-            </div>
-          </div>
-
-          {/* Quick Actions */}
-          <div className="flex items-center justify-center gap-4 mt-8">
-            <Link href="/ads/new">
-              <Button className="bg-secondary text-black hover:bg-yellow shadow-lg font-bold flex flex-row items-center">
-                <svg
-                  className="w-5 h-5 mr-2"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M12 4v16m8-8H4"
-                  />
-                </svg>
-                Post an Ad
-              </Button>
-            </Link>
-            <Link href="/search">
-              <Button
-                variant="outline"
-                className="border-white/30 text-white hover:bg-background/10 flex flex-row items-center"
-              >
-                <svg
-                  className="w-5 h-5 mr-2"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                  />
-                </svg>
-                Browse All
-              </Button>
-            </Link>
-          </div>
-        </div>
-      </section>
+      <HomeHeroCarousel />
 
       {/* Category Tiles Section */}
       <CategoryTiles categories={categories} isLoading={categoriesLoading} />

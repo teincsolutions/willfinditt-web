@@ -151,9 +151,11 @@ export function AdDetailClient({ ad }: AdDetailClientProps) {
             <p className="text-text-gray mt-1">
               {ad.address || ad.city?.name || 'Location not specified'}
             </p>
-            <p className="text-text-gray mt-1 text-sm">
-              Posted {formatPostedDate(ad.createdAt)}
-            </p>
+            {formatPostedDate(ad.createdAt) && (
+              <p className="text-text-gray mt-1 text-sm">
+                Posted {formatPostedDate(ad.createdAt)}
+              </p>
+            )}
           </div>
 
           <div className="flex space-x-4">

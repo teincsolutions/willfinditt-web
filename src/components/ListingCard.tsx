@@ -29,6 +29,8 @@ export const ListingCard: React.FC<ListingCardProps> = ({ ad }) => {
       ? formatCurrency(ad.price, 'en-GH', ad.currency || 'GHS')
       : 'Contact for price';
 
+  const postedLabel = formatPostedDate(ad.createdAt);
+
   const isSaved = isSavedLocal;
   const isFavoriteLoading = addFavorite.isPending || removeFavorite.isPending;
 
@@ -148,8 +150,12 @@ export const ListingCard: React.FC<ListingCardProps> = ({ ad }) => {
               <span className="line-clamp-1">
                 {ad.address || ad.city?.name || 'Location not specified'}
               </span>
-              <span className="mx-1 flex-shrink-0">•</span>
-              <span className="flex-shrink-0">{formatPostedDate(ad.createdAt)}</span>
+              {postedLabel && (
+                <>
+                  <span className="mx-1 flex-shrink-0">•</span>
+                  <span className="flex-shrink-0">{postedLabel}</span>
+                </>
+              )}
             </div>
           </div>
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 sm:gap-0">

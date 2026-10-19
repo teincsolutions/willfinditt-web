@@ -82,9 +82,11 @@ export function AdDetailClient({ ad }: AdDetailClientProps) {
       return;
     }
 
-    if (isContactRevealed && ad.contactPhone) {
-      window.location.href = `tel:${ad.contactPhone}`;
-    } else if (ad.contactPhone) {
+    const primaryPhone = ad.contactPhone || ad.contactPhone2;
+
+    if (isContactRevealed && primaryPhone) {
+      window.location.href = `tel:${primaryPhone}`;
+    } else if (primaryPhone) {
       setIsContactRevealed(true);
       trackEvent('lead', {
         itemId: ad.id,
@@ -198,9 +200,20 @@ export function AdDetailClient({ ad }: AdDetailClientProps) {
                   d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"
                 />
               </svg>
-              {isContactRevealed ? ad.contactPhone : 'Contact Seller'}
+              {isContactRevealed
+                ? ad.contactPhone || ad.contactPhone2
+                : 'Contact Seller'}
             </Button>
           </div>
+
+          {isContactRevealed && ad.contactPhone2 && (
+            <a
+              href={`tel:${ad.contactPhone2}`}
+              className="mt-3 inline-block text-sm font-semibold text-primary hover:underline"
+            >
+              Call second number: {ad.contactPhone2}
+            </a>
+          )}
 
           <div className="bg-background-primary/20 p-4 rounded-lg border border-primary/5">
             <h3 className="font-semibold mb-2">Details</h3>

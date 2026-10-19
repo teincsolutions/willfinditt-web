@@ -126,6 +126,7 @@ export interface Ad {
   latitude?: number;
   longitude?: number;
   contactPhone?: string;
+  contactPhone2?: string | null;
   contactEmail?: string;
   isNegotiable: boolean;
   createdAt: string;
@@ -158,6 +159,7 @@ export interface CreateAdData {
   latitude?: number;
   longitude?: number;
   contactPhone?: string;
+  contactPhone2?: string | null;
   contactEmail?: string;
   isNegotiable?: boolean;
   expiresAt?: string;

@@ -42,6 +42,13 @@ const schema = yup.object().shape({
   cityId: yup.string().required('City is required'),
   address: yup.string().required('Specific address is required'),
   contactPhone: yup.string().required('Contact phone is required'),
+  contactPhone2: yup
+    .string()
+    .matches(/^[+]?[(]?[0-9]{1,4}[)]?[-\s./0-9]*$/, {
+      message: 'Invalid phone number format',
+      excludeEmptyString: true,
+    })
+    .optional(),
   contactEmail: yup
     .string()
     .email('Invalid email')
@@ -91,6 +98,7 @@ export const AdForm = ({
       cityId: initialData?.city?.id || '',
       address: initialData?.address || '',
       contactPhone: initialData?.contactPhone || user?.phone || '',
+      contactPhone2: initialData?.contactPhone2 || '',
       contactEmail: initialData?.contactEmail || user?.email || '',
       isNegotiable: initialData?.isNegotiable || false,
       dynamicFields:
@@ -182,6 +190,7 @@ export const AdForm = ({
       cityId: data.cityId,
       address: data.address,
       contactPhone: data.contactPhone,
+      contactPhone2: data.contactPhone2?.trim() || null,
       contactEmail: data.contactEmail,
       isNegotiable: data.isNegotiable,
       images,
@@ -466,6 +475,23 @@ export const AdForm = ({
               </p>
             )}
           </div>
+        </div>
+
+        <div className="mt-6 max-w-md">
+          <label className="block text-sm font-medium mb-1 text-text">
+            Second Contact Phone (optional)
+          </label>
+          <input
+            type="tel"
+            {...register('contactPhone2')}
+            className="w-full border border-border-custom rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-primary transition-all bg-background"
+            placeholder="+233..."
+          />
+          {errors.contactPhone2 && (
+            <p className="text-error text-sm mt-1">
+              {errors.contactPhone2.message}
+            </p>
+          )}
         </div>
       </div>
 

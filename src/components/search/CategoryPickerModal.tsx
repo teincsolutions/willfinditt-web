@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useParentCategories } from '@/hooks/useCategories';
 import { Category } from '@/types/category';
 
@@ -23,6 +24,7 @@ export function CategoryPickerModal({
 }: CategoryPickerModalProps) {
   const { data: parents = [], isLoading } = useParentCategories(true);
   const [activeParentId, setActiveParentId] = useState<string | null>(null);
+  const [mounted, setMounted] = useState(false);
 
   const selectedParentId = useMemo(() => {
     if (!selectedId) return null;
@@ -39,7 +41,31 @@ export function CategoryPickerModal({
     setActiveParentId(selectedParentId);
   }, [isOpen, selectedParentId]);
 
-  if (!isOpen) return null;
+  // Portal to <body> so the modal is not trapped in the sticky, scrollable
+  // filter sidebar's stacking context (it rendered behind the results).
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [isOpen]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') onClose();
+    };
+    document.addEventListener('keydown', onKeyDown);
+    return () => document.removeEventListener('keydown', onKeyDown);
+  }, [isOpen, onClose]);
+
+  if (!isOpen || !mounted) return null;
 
   const activeParent =
     parents.find((parent) => parent.id === activeParentId) ?? null;
@@ -49,8 +75,13 @@ export function CategoryPickerModal({
     onClose();
   };
 
-  return (
-    <div className="fixed inset-0 z-[120] flex items-center justify-center p-4">
+  return createPortal(
+    <div
+      className="fixed inset-0 z-[120] flex items-center justify-center p-4"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Choose a category"
+    >
       <div
         className="absolute inset-0 bg-black/50 backdrop-blur-sm"
         onClick={onClose}
@@ -231,6 +262,7 @@ export function CategoryPickerModal({
           </div>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

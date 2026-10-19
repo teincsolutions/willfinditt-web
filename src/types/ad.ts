@@ -86,6 +86,7 @@ export interface UserSummaryDto {
     id: string;
     businessName?: string;
   };
+  createdAt?: string;
 }
 
 export interface CategorySummaryDto {

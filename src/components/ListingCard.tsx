@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { OptimizedImage } from './OptimizedImage';
 import { Ad } from '@/types/ad';
 import { formatCurrency } from '@/lib/utils';
+import { formatPostedDate } from '@/lib/formatDate';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAddFavorite, useRemoveFavorite } from '@/hooks/useFavorites';
 import { Dialog } from './Dialog';
@@ -147,6 +148,8 @@ export const ListingCard: React.FC<ListingCardProps> = ({ ad }) => {
               <span className="line-clamp-1">
                 {ad.address || ad.city?.name || 'Location not specified'}
               </span>
+              <span className="mx-1 flex-shrink-0">•</span>
+              <span className="flex-shrink-0">{formatPostedDate(ad.createdAt)}</span>
             </div>
           </div>
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 sm:gap-0">

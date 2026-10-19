@@ -77,6 +77,13 @@ export const metadata: Metadata = {
     // google: 'your-google-verification-code',
     // yandex: 'your-yandex-verification-code',
   },
+  other: {
+    // Safari smart app banner (Open/View in the App Store).
+    'apple-itunes-app': 'app-id=6755352985',
+    // Some Android browsers/older Chrome use this; App Links still handle
+    // content links once the app is installed.
+    'google-play-app': 'app-id=com.willfinditt.willfinditt',
+  },
 };
 
 export default function RootLayout({

@@ -14,7 +14,13 @@ export async function GET() {
         details: [
           {
             appID: '75F9X78QJ6.com.willfinditt.willfinditt',
-            paths: ['/ads/*', '/category/*'],
+            paths: [
+              '/ads',
+              '/ads/*',
+              '/category',
+              '/category/*',
+              '/search',
+            ],
           },
         ],
       },

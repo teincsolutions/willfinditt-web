@@ -11,6 +11,7 @@ import { googleClientId, isGoogleSignInConfigured } from '@/lib/google-auth';
 import { AnalyticsScripts } from '@/components/AnalyticsScripts';
 import { CookieConsent } from '@/components/CookieConsent';
 import { PageViewTracker } from '@/components/PageViewTracker';
+import { MobileAppBanner } from '@/components/MobileAppBanner';
 
 export function ClientLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -24,6 +25,7 @@ export function ClientLayout({ children }: { children: React.ReactNode }) {
       <AnalyticsScripts />
       <PageViewTracker />
       {!isAuthPage && <Header />}
+      {!isAuthPage && <MobileAppBanner />}
       <main className={!isAuthPage ? 'min-h-screen' : ''}>{children}</main>
       {!isAuthPage && <Footer />}
       <CookieConsent />

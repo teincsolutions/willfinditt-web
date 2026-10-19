@@ -17,6 +17,7 @@ import { trackEvent } from '@/lib/analytics';
 import { ListingCard } from '@/components/ListingCard';
 import { Pagination } from '@/components/Pagination';
 import { SubcategoryChips } from '@/components/search/SubcategoryChips';
+import { FeaturedCategoryFilters } from '@/components/search/FeaturedCategoryFilters';
 import {
   SearchFiltersDrawer,
   SearchFiltersPanel,
@@ -199,6 +200,26 @@ function SearchContent() {
         </aside>
 
         <main className="flex-1 min-w-0">
+          <div className="mb-8">
+            <h1 className="text-4xl font-black text-text tracking-tight mb-2">
+              {heading}
+            </h1>
+            {meta && (
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 rounded-full bg-success animate-pulse" />
+                <p className="text-text-gray font-bold">
+                  {meta.total.toLocaleString()} listings found
+                </p>
+              </div>
+            )}
+          </div>
+
+          <FeaturedCategoryFilters
+            category={category}
+            fields={categoryFields}
+            className="mb-8"
+          />
+
           <SubcategoryChips
             parent={chipParent}
             children={chipChildren}
@@ -246,22 +267,8 @@ function SearchContent() {
             </div>
           )}
 
-          {/* Results Header */}
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8">
-            <div>
-              <h1 className="text-4xl font-black text-text tracking-tight mb-2">
-                {heading}
-              </h1>
-              {meta && (
-                <div className="flex items-center gap-2">
-                  <div className="w-2 h-2 rounded-full bg-success animate-pulse" />
-                  <p className="text-text-gray font-bold">
-                    {meta.total.toLocaleString()} listings found
-                  </p>
-                </div>
-              )}
-            </div>
-
+          {/* Sort Toolbar */}
+          <div className="flex items-center justify-end mb-8">
             <div className="flex items-center gap-3 bg-background p-2 rounded-2xl border border-border-custom shadow-sm overflow-x-auto">
               {hasQuery && (
                 <button

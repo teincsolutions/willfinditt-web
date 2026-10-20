@@ -32,7 +32,7 @@ export interface SellerProfile {
   };
   rating: number;
   totalReviews: number;
-  verified: boolean;
+  isVerified: boolean;
   createdAt: string;
   user: {
     id: string;

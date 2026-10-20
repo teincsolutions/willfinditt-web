@@ -199,7 +199,7 @@ export function HomeHeroCarousel() {
             type="button"
             onClick={() => goTo(index - 1)}
             aria-label="Previous banner"
-            className="absolute left-3 top-1/2 z-20 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-black/30 text-white backdrop-blur transition hover:bg-black/50 md:left-6 md:h-12 md:w-12"
+            className="absolute left-3 top-1/2 z-20 hidden h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-black/30 text-white backdrop-blur transition hover:bg-black/50 md:left-6 md:flex md:h-12 md:w-12"
           >
             <svg
               className="h-5 w-5 md:h-6 md:w-6"
@@ -220,7 +220,7 @@ export function HomeHeroCarousel() {
             type="button"
             onClick={() => goTo(index + 1)}
             aria-label="Next banner"
-            className="absolute right-3 top-1/2 z-20 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-black/30 text-white backdrop-blur transition hover:bg-black/50 md:right-6 md:h-12 md:w-12"
+            className="absolute right-3 top-1/2 z-20 hidden h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-black/30 text-white backdrop-blur transition hover:bg-black/50 md:right-6 md:flex md:h-12 md:w-12"
           >
             <svg
               className="h-5 w-5 md:h-6 md:w-6"

@@ -2,7 +2,6 @@
 
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
-import { OptimizedImage } from '@/components/OptimizedImage';
 import { useHomeBanners } from '@/hooks/useHomeBanners';
 import type { HomeBanner } from '@/types/home-banner';
 
@@ -140,13 +139,11 @@ export function HomeHeroCarousel() {
               aria-hidden={slideIndex !== index}
             >
               {imageUrl && (
-                <OptimizedImage
-                  src={imageUrl}
-                  alt={banner.altText || banner.title}
-                  fill
-                  sizes="100vw"
-                  className="object-cover"
-                  priority={slideIndex === 0}
+                <div
+                  role="img"
+                  aria-label={banner.altText || banner.title}
+                  className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+                  style={{ backgroundImage: `url("${imageUrl}")` }}
                 />
               )}
 

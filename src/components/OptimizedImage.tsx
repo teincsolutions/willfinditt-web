@@ -61,8 +61,10 @@ export const OptimizedImage = ({
   return (
     <div
       className={cn(
-        'relative overflow-hidden bg-background-primary/30',
-        props.fill ? 'absolute inset-0 w-full h-full' : 'inline-block max-w-full',
+        'overflow-hidden bg-background-primary/30',
+        props.fill
+          ? 'absolute inset-0 w-full h-full'
+          : 'relative inline-block max-w-full',
         isLoading && !props.fill && !isSmall ? 'min-h-[200px]' : '',
         containerClassName
       )}

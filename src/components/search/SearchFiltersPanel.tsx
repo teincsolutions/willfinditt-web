@@ -13,6 +13,7 @@ import {
 } from '@/hooks/useSearchFilterParams';
 import { AdCondition } from '@/types/ad';
 import { Category, CategoryField, CategoryFieldFilter } from '@/types/category';
+import { Select } from '@/components/ui/Select';
 import { CategoryPickerModal } from './CategoryPickerModal';
 
 type FieldDraft = string | string[] | { min?: string; max?: string };
@@ -250,18 +251,15 @@ export function SearchFiltersPanel({
       return (
         <div key={field.id}>
           <label className={labelClass}>{field.label}</label>
-          <select
+          <Select
             value={getString(field.id)}
-            onChange={(event) => setField(field.id, event.target.value)}
-            className={inputClass}
-          >
-            <option value="">Any {field.label}</option>
-            {field.options.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
+            onValueChange={(value) => setField(field.id, value)}
+            options={[
+              { value: '', label: `Any ${field.label}` },
+              ...field.options,
+            ]}
+            ariaLabel={field.label}
+          />
         </div>
       );
     }
@@ -439,34 +437,35 @@ export function SearchFiltersPanel({
         <div>
           <label className={labelClass}>Location</label>
           <div className="space-y-2">
-            <select
+            <Select
               value={stateId}
-              onChange={(event) => handleStateChange(event.target.value)}
-              className={inputClass}
-            >
-              <option value="">All regions</option>
-              {stateOptions.map((state) => (
-                <option key={state.id} value={state.id}>
-                  {state.name}
-                </option>
-              ))}
-            </select>
+              onValueChange={handleStateChange}
+              options={[
+                { value: '', label: 'All regions' },
+                ...stateOptions.map((state) => ({
+                  value: state.id,
+                  label: state.name,
+                })),
+              ]}
+              ariaLabel="Region"
+            />
 
-            <select
+            <Select
               value={cityId}
-              onChange={(event) => handleCityChange(event.target.value)}
-              className={inputClass}
+              onValueChange={handleCityChange}
+              options={[
+                {
+                  value: '',
+                  label: stateId ? 'All cities' : 'Select region first',
+                },
+                ...cityOptions.map((city) => ({
+                  value: city.id,
+                  label: city.name,
+                })),
+              ]}
               disabled={!stateId}
-            >
-              <option value="">
-                {stateId ? 'All cities' : 'Select region first'}
-              </option>
-              {cityOptions.map((city) => (
-                <option key={city.id} value={city.id}>
-                  {city.name}
-                </option>
-              ))}
-            </select>
+              ariaLabel="City"
+            />
 
             {cityId &&
               cityName &&
@@ -519,35 +518,27 @@ export function SearchFiltersPanel({
         {/* Condition */}
         <div>
           <label className={labelClass}>Item Condition</label>
-          <select
+          <Select
             value={condition}
-            onChange={(event) => setCondition(event.target.value)}
-            className={inputClass}
-          >
-            <option value="">All Conditions</option>
-            {conditionOptions.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
+            onValueChange={setCondition}
+            options={[
+              { value: '', label: 'All Conditions' },
+              ...conditionOptions,
+            ]}
+            ariaLabel="Item condition"
+          />
         </div>
 
         {/* Sort (category page) */}
         {showSort && (
           <div>
             <label className={labelClass}>Sort By</label>
-            <select
+            <Select
               value={sortValue}
-              onChange={(event) => handleSortChange(event.target.value)}
-              className={inputClass}
-            >
-              {sortOptions.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
+              onValueChange={handleSortChange}
+              options={sortOptions}
+              ariaLabel="Sort by"
+            />
           </div>
         )}
 

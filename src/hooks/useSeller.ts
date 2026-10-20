@@ -5,14 +5,13 @@ import {
   getMySellerStats,
   getMyVerification,
   getSellerById,
+  getVerificationGuidelines,
   getSellerStats,
   submitVerification,
-  updateMyVerification,
   updateSellerProfile,
   CreateSellerProfileRequest,
   UpdateSellerProfileRequest,
-  SubmitSellerVerificationRequest,
-  UpdateSellerVerificationRequest,
+  SubmitSellerVerificationV2Request,
 } from '@/services/seller.service';
 
 export const useSeller = (id: string) => {
@@ -93,28 +92,20 @@ export const useSubmitVerification = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (data: SubmitSellerVerificationRequest) => submitVerification(data),
+    mutationFn: (data: SubmitSellerVerificationV2Request) =>
+      submitVerification(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['seller', 'verification', 'mine'] });
       queryClient.invalidateQueries({ queryKey: ['seller', 'my-profile'] });
+      queryClient.invalidateQueries({ queryKey: ['me'] });
     },
   });
 };
 
-export const useUpdateMyVerification = () => {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: ({
-      verificationId,
-      data,
-    }: {
-      verificationId: string;
-      data: UpdateSellerVerificationRequest;
-    }) => updateMyVerification(verificationId, data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['seller', 'verification', 'mine'] });
-      queryClient.invalidateQueries({ queryKey: ['seller', 'my-profile'] });
-    },
+export const useVerificationGuidelines = () => {
+  return useQuery({
+    queryKey: ['seller', 'verification', 'guidelines'],
+    queryFn: getVerificationGuidelines,
+    staleTime: 60 * 60 * 1000,
   });
 };

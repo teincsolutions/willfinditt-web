@@ -75,3 +75,51 @@ export const getSignedUrl = async (s3Url: string): Promise<string> => {
   });
   return response.data.url;
 };
+
+export type KycDocumentType =
+  | 'NATIONAL_ID'
+  | 'DRIVERS_LICENSE'
+  | 'PASSPORT'
+  | 'ADDRESS_PROOF'
+  | 'PROOF_OF_ADDRESS'
+  | 'BUSINESS_LICENSE'
+  | 'BUSINESS_REGISTRATION'
+  | 'TIN_CERTIFICATE';
+
+export const uploadKycDocuments = async (
+  files: File[],
+  documentType: KycDocumentType
+): Promise<string[]> => {
+  const formData = new FormData();
+  files.forEach((file) => formData.append('documents', file));
+  formData.append('documentType', documentType);
+
+  const response = await api.post<{ urls: string[] }>(
+    '/upload/kyc-documents',
+    formData,
+    {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    }
+  );
+
+  return response.data.urls;
+};
+
+export const uploadFacePhotos = async (files: File[]): Promise<string[]> => {
+  const formData = new FormData();
+  files.forEach((file) => formData.append('photos', file));
+
+  const response = await api.post<{ urls: string[] }>(
+    '/upload/face-photos',
+    formData,
+    {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    }
+  );
+
+  return response.data.urls;
+};

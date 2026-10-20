@@ -44,7 +44,7 @@ export async function generateMetadata({
 
   const description =
     seller.description ||
-    `View listings and profile of ${displayName} on WillfindITT. ${seller.verified ? 'Verified seller.' : ''}`;
+    `View listings and profile of ${displayName} on WillfindITT. ${seller.isVerified ? 'Verified seller.' : ''}`;
 
   const ogImage = seller.user?.avatar || '/images/og-default.png';
 

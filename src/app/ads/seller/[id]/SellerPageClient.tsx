@@ -120,7 +120,7 @@ export function SellerPageClient({ sellerProfile }: SellerPageClientProps) {
                     Member since {format(memberSince, 'MMM yyyy')}
                   </span>
                 )}
-                {sellerProfile?.verified && (
+                {sellerProfile?.isVerified && (
                   <span className="flex items-center gap-1 text-success">
                     <svg
                       className="w-4 h-4"

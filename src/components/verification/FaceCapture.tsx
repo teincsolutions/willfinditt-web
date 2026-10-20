@@ -205,9 +205,21 @@ export function FaceCapture({ open, onClose, onComplete }: FaceCaptureProps) {
         );
         if (!blob) throw new Error('Could not capture image');
 
-        const livenessScore = await checkLiveness(video, metrics.bbox);
-        if (livenessScore < 0.5) {
-          setStatus('Liveness check failed. Improve lighting and try again.');
+        // The anti-spoof model is trained on frontal faces and is unreliable on
+        // profile poses. Run the liveness check once on the center capture and
+        // reuse that score for the left/right frames.
+        const centerCapture = capturesRef.current.find(
+          (item) => item.pose === 'CENTER'
+        );
+        const livenessScore =
+          pose === 'CENTER'
+            ? await checkLiveness(video, metrics.bbox)
+            : (centerCapture?.livenessScore ?? 0.5);
+
+        if (pose === 'CENTER' && livenessScore < 0.5) {
+          setStatus(
+            'Liveness check failed. Improve lighting, look straight ahead and try again.'
+          );
           stableSinceRef.current = null;
           setCountdown(null);
           capturingRef.current = false;

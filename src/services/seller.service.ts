@@ -80,53 +80,99 @@ export interface MySellerStats {
 
 export type SellerVerificationStatus =
   | 'PENDING'
+  | 'INFO_REQUESTED'
   | 'APPROVED'
   | 'REJECTED'
   | 'EXPIRED';
 
-export interface SellerVerificationMedia {
+export type VerificationType = 'INDIVIDUAL' | 'BUSINESS';
+
+export type BusinessDocumentType =
+  | 'BUSINESS_REGISTRATION'
+  | 'BUSINESS_LICENSE'
+  | 'TIN_CERTIFICATE'
+  | 'PROOF_OF_ADDRESS';
+
+export interface BusinessDocument {
+  type: BusinessDocumentType;
   url: string;
-  thumbnail?: string;
+  label?: string;
+}
+
+export interface FaceCapturePose {
+  pose: 'CENTER' | 'LEFT' | 'RIGHT';
+  yaw?: number;
+  pitch?: number;
+  roll?: number;
+  faceConfidence?: number;
+  capturedAt?: string;
+}
+
+export interface FaceCaptureMetadata {
+  engine?: string;
+  modelVersion?: string;
+  poses?: FaceCapturePose[];
+  livenessScore?: number;
+  faceMatchScore?: number;
+  [key: string]: unknown;
 }
 
 export interface SellerVerification {
   id: string;
   sellerProfileId: string;
+  verificationType: VerificationType;
   status: SellerVerificationStatus;
   documentType: 'NATIONAL_ID' | 'DRIVERS_LICENSE' | 'PASSPORT';
   documentNumber: string;
-  fullName?: string;
-  documentIssueDate?: string;
-  documentExpiryDate?: string;
+  fullName?: string | null;
+  documentIssueDate?: string | null;
+  documentExpiryDate?: string | null;
   address: string;
-  documents?: SellerVerificationMedia[];
-  facePhoto?: SellerVerificationMedia[];
-  additionalNotes?: string;
-  submittedAt?: string;
-  reviewedAt?: string;
-  reviewedBy?: string;
-  reviewNotes?: string;
-  rejectionReason?: string;
-  createdAt: string;
+  documents: string[];
+  businessRegistrationNumber?: string | null;
+  tin?: string | null;
+  businessAddress?: string | null;
+  businessDocuments: BusinessDocument[];
+  facePhoto: string[];
+  faceCapture?: FaceCaptureMetadata | null;
+  livenessScore?: number | null;
+  faceMatchScore?: number | null;
+  notes?: string | null;
+  additionalNotes?: string | null;
+  decisionReason?: string | null;
+  recommendations?: string | null;
+  infoRequestMessage?: string | null;
+  infoRequestedAt?: string | null;
+  sellerNotes?: string | null;
+  submittedAt?: string | null;
+  reviewedAt?: string | null;
+  expiresAt?: string | null;
   updatedAt: string;
 }
 
-export interface SubmitSellerVerificationRequest {
-  sellerProfileId: string;
+export interface SubmitSellerVerificationV2Request {
+  verificationType: VerificationType;
   documentType: 'NATIONAL_ID' | 'DRIVERS_LICENSE' | 'PASSPORT';
   documentNumber: string;
   fullName?: string;
   documentIssueDate?: string;
   documentExpiryDate?: string;
   address: string;
-  documents?: string[];
+  documents: string[];
+  businessRegistrationNumber?: string;
+  tin?: string;
+  businessAddress?: string;
+  businessDocuments?: BusinessDocument[];
   facePhoto: string[];
-  additionalNotes?: string;
+  faceCapture?: FaceCaptureMetadata;
+  sellerNotes?: string;
+  consent: boolean;
 }
 
-export type UpdateSellerVerificationRequest = Partial<
-  Omit<SubmitSellerVerificationRequest, 'sellerProfileId'>
->;
+const API_V2_BASE = (process.env.NEXT_PUBLIC_API_URL || '').replace(
+  /\/v1\/?$/,
+  '/v2'
+);
 
 export const getSellerById = async (id: string): Promise<SellerProfile> => {
   const response = await api.get<SellerProfile>(`/sellers/${id}`);
@@ -165,25 +211,26 @@ export const getMySellerStats = async (): Promise<MySellerStats> => {
 
 export const getMyVerification = async (): Promise<SellerVerification> => {
   const response = await api.get<SellerVerification>(
-    '/seller-verification/my-verification'
+    '/seller-verification/my-verification',
+    { baseURL: API_V2_BASE }
   );
   return response.data;
 };
 
 export const submitVerification = async (
-  data: SubmitSellerVerificationRequest
+  data: SubmitSellerVerificationV2Request
 ): Promise<SellerVerification> => {
-  const response = await api.post<SellerVerification>('/seller-verification', data);
+  const response = await api.post<SellerVerification>(
+    '/seller-verification',
+    data,
+    { baseURL: API_V2_BASE }
+  );
   return response.data;
 };
 
-export const updateMyVerification = async (
-  verificationId: string,
-  data: UpdateSellerVerificationRequest
-): Promise<SellerVerification> => {
-  const response = await api.patch<SellerVerification>(
-    `/seller-verification/${verificationId}`,
-    data
-  );
+export const getVerificationGuidelines = async () => {
+  const response = await api.get('/seller-verification/guidelines', {
+    baseURL: API_V2_BASE,
+  });
   return response.data;
 };

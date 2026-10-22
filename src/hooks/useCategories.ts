@@ -56,11 +56,30 @@ export const useCategoriesTree = () => {
   });
 };
 
-// Get parent categories with children (for navigation bar)
-export const useParentCategories = (includeChildren = true) => {
+export interface ParentCategoryOptions {
+  /** Attach each root category's children (mega menu, category picker). */
+  includeChildren?: boolean;
+  /** Attach custom fields. Rarely needed outside the ad form. */
+  includeFields?: boolean;
+}
+
+/**
+ * Root ("main") categories. The `/categories/parents` endpoint is not
+ * paginated, so this always returns every top-level category. Pass
+ * `{ includeChildren: false, includeFields: false }` for the plain list
+ * (no relation joins) - that is all the home page tiles need.
+ */
+export const useParentCategories = (
+  options: boolean | ParentCategoryOptions = true
+) => {
+  const normalized =
+    typeof options === 'boolean' ? { includeChildren: options } : options;
+  const includeChildren = normalized.includeChildren ?? true;
+  const includeFields = normalized.includeFields ?? false;
+
   return useQuery({
-    queryKey: ['categories', 'parents', { includeChildren }],
-    queryFn: () => getParentCategories({ includeChildren }),
+    queryKey: ['categories', 'parents', { includeChildren, includeFields }],
+    queryFn: () => getParentCategories({ includeChildren, includeFields }),
     staleTime: 5 * 60 * 1000, // Cache for 5 minutes
   });
 };

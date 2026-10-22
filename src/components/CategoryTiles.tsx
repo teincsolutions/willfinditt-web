@@ -24,8 +24,8 @@ export const CategoryTiles = ({
           <h2 className="text-2xl font-bold text-text mb-6">
             Browse Categories
           </h2>
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
-            {[...Array(6)].map((_, i) => (
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-7 gap-4">
+            {[...Array(10)].map((_, i) => (
               <div key={i} className="animate-pulse">
                 <div className="bg-background-primary/30 rounded-2xl aspect-square mb-3" />
                 <div className="h-4 bg-background-primary/30 rounded w-3/4 mx-auto" />
@@ -46,29 +46,15 @@ export const CategoryTiles = ({
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-2xl font-bold text-text">Browse Categories</h2>
-          <Link
-            href="/categories"
-            className="text-primary hover:text-primary/80 font-medium text-sm flex items-center gap-1"
-          >
-            View all
-            <svg
-              className="w-4 h-4"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M9 5l7 7-7 7"
-              />
-            </svg>
-          </Link>
+          {/* Every main category is listed below, so there is nothing left to
+              "view all" (and /categories never existed). */}
+          <span className="text-sm font-medium text-text-light-gray">
+            {categories.length} categories
+          </span>
         </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-8 gap-4">
-          {categories.slice(0, 12).map((category) => (
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-7 gap-4">
+          {categories.map((category) => (
             <Link
               key={category.id}
               href={`/category/${category.slug}?categoryId=${category.id}`}

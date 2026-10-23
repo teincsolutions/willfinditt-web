@@ -6,6 +6,7 @@ import { OptimizedImage } from './OptimizedImage';
 import { Ad } from '@/types/ad';
 import { formatCurrency } from '@/lib/utils';
 import { formatPostedDate } from '@/lib/formatDate';
+import { getImageMeta, imageAspectRatio } from '@/lib/imageMeta';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAddFavorite, useRemoveFavorite } from '@/hooks/useFavorites';
 import { Dialog } from './Dialog';
@@ -23,6 +24,12 @@ export const ListingCard: React.FC<ListingCardProps> = ({ ad }) => {
   const removeFavorite = useRemoveFavorite();
   const [showLoginDialog, setShowLoginDialog] = useState(false);
   const [isSavedLocal, setIsSavedLocal] = useState(ad.isSaved ?? false);
+
+  // The API ships the original pixel size with every image, so the card can
+  // reserve the right height up front instead of cropping every picture to
+  // the same box.
+  const meta = getImageMeta(ad);
+  const aspectRatio = imageAspectRatio(meta);
 
   const priceDisplay =
     ad.price && ad.price > 0
@@ -61,13 +68,18 @@ export const ListingCard: React.FC<ListingCardProps> = ({ ad }) => {
     <>
       <Link
         href={`/ads/${ad.id}`}
-        className="group block h-auto sm:h-[450px] bg-background rounded-xl shadow-sm border border-border-custom overflow-hidden hover:shadow-2xl hover:border-primary/30 transition-all duration-300 transform hover:-translate-y-2"
+        className="group block h-auto bg-background rounded-xl shadow-sm border border-border-custom overflow-hidden hover:shadow-2xl hover:border-primary/30 transition-all duration-300 transform hover:-translate-y-2"
       >
-        <div className="relative overflow-hidden bg-background-primary/5 max-h-[279px] flex items-center justify-center">
+        <div
+          className="relative overflow-hidden bg-background-primary/5 flex items-center justify-center"
+          style={{ aspectRatio: aspectRatio ?? '4 / 3' }}
+        >
           <OptimizedImage
+            fill
             src={ad.images[0]}
+            thumbnailSrc={meta?.thumbnailUrl}
             alt={ad.title}
-            className="w-full h-auto object-cover group-hover:scale-110 transition-transform duration-300"
+            className="object-cover group-hover:scale-110 transition-transform duration-300"
           />
           {ad.condition && (
             <div className="absolute top-3 right-3 z-20">

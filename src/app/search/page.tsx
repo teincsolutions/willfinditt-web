@@ -300,11 +300,11 @@ function SearchContent() {
           </div>
 
           {isLoading ? (
-            <div className="columns-2 gap-3 md:grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 md:gap-8">
+            <div className="columns-2 md:columns-3 xl:columns-4 gap-3 md:gap-8">
               {[...Array(8)].map((_, i) => (
                 <div
                   key={i}
-                  className="break-inside-avoid mb-3 md:mb-0 bg-background rounded-xl overflow-hidden animate-pulse border border-border-custom flex flex-col h-full"
+                  className="break-inside-avoid mb-3 md:mb-6 bg-background rounded-xl overflow-hidden animate-pulse border border-border-custom flex flex-col h-full"
                 >
                   <div className="aspect-[4/3] bg-background-primary/20" />
                   <div className="p-3 sm:p-5 flex-1 flex flex-col space-y-3">
@@ -322,10 +322,10 @@ function SearchContent() {
             <>
               <div
                 key={`ads-page-${page}`}
-                className="columns-2 gap-3 md:grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 md:gap-8 mb-12"
+                className="columns-2 md:columns-3 xl:columns-4 gap-3 md:gap-8 mb-12"
               >
                 {ads.map((ad) => (
-                  <div key={ad.id} className="break-inside-avoid mb-3 md:mb-0">
+                  <div key={ad.id} className="break-inside-avoid mb-3 md:mb-6">
                     <ListingCard ad={ad} />
                   </div>
                 ))}

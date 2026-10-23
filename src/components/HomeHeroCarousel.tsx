@@ -36,8 +36,8 @@ function CtaButton({
 }) {
   const external = /^https?:\/\//i.test(href);
   const className = primary
-    ? 'inline-flex items-center justify-center rounded-full px-6 py-3 text-sm font-bold transition hover:opacity-90'
-    : 'inline-flex items-center justify-center rounded-full border px-6 py-3 text-sm font-bold transition hover:bg-white/10';
+    ? 'inline-flex items-center justify-center rounded-full px-4 py-2 text-xs font-bold transition hover:opacity-90 sm:px-6 sm:py-3 sm:text-sm'
+    : 'inline-flex items-center justify-center rounded-full border px-4 py-2 text-xs font-bold transition hover:bg-white/10 sm:px-6 sm:py-3 sm:text-sm';
   const style = primary
     ? { backgroundColor: color, color: '#1a1a1a' }
     : { borderColor: color, color };
@@ -68,7 +68,22 @@ export function HomeHeroCarousel() {
   const banners = data?.length ? data : FALLBACK_BANNERS;
   const [index, setIndex] = useState(0);
   const [paused, setPaused] = useState(false);
+  // Natural aspect ratio of each banner image, so the space it takes can be
+  // reserved before it loads and the artwork is never cropped to fit.
+  const [imageRatios, setImageRatios] = useState<Record<string, string>>({});
   const touchStartX = useRef<number | null>(null);
+
+  const handleImageLoad = (
+    bannerId: string,
+    event: React.SyntheticEvent<HTMLImageElement>
+  ) => {
+    const { naturalWidth, naturalHeight } = event.currentTarget;
+    if (!naturalWidth || !naturalHeight) return;
+    const ratio = `${naturalWidth} / ${naturalHeight}`;
+    setImageRatios((prev) =>
+      prev[bannerId] === ratio ? prev : { ...prev, [bannerId]: ratio }
+    );
+  };
 
   useEffect(() => {
     if (index > banners.length - 1) setIndex(0);
@@ -131,25 +146,47 @@ export function HomeHeroCarousel() {
           return (
             <div
               key={banner.id}
-              className="relative flex h-[380px] w-full shrink-0 items-center justify-center overflow-hidden px-5 py-10 text-center sm:h-[440px] md:h-[520px] md:px-8 md:py-16"
+              className="relative w-full shrink-0 overflow-hidden text-center lg:h-[520px]"
               style={{
                 backgroundColor: banner.backgroundColor || '#ef702a',
                 color: textColor,
               }}
               aria-hidden={slideIndex !== index}
             >
-              {imageUrl && (
-                <div
-                  role="img"
-                  aria-label={banner.altText || banner.title}
-                  className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-                  style={{ backgroundImage: `url("${imageUrl}")` }}
-                />
-              )}
+              {/* Banner artwork is authored very wide (roughly 2.3:1). On a
+                  phone the hero is far narrower than it is tall, so filling it
+                  with `object-cover` cropped off most of the artwork - the
+                  subject and the brand logo ended up outside the frame.
+                  Below `lg` the artwork keeps its own aspect ratio, so the
+                  whole banner is visible and the slide is only as tall as the
+                  artwork itself - the compact slider the mobile app shows.
+                  From `lg` up it keeps filling the hero the way it always
+                  has. */}
+              <div
+                className="relative w-full lg:absolute lg:inset-0 lg:h-full"
+                style={
+                  {
+                    aspectRatio: imageRatios[banner.id] ?? '7 / 3',
+                  } as React.CSSProperties
+                }
+              >
+                {imageUrl && (
+                  // The banner artwork is served from a host that is not in
+                  // the Next image loader's allow-list, and is already a
+                  // compressed PNG.
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={imageUrl}
+                    alt={banner.altText || banner.title || ''}
+                    onLoad={(event) => handleImageLoad(banner.id, event)}
+                    className="h-full w-full object-contain lg:object-cover"
+                  />
+                )}
+              </div>
 
               {imageUrl && banner.imageOverlay && (
                 <div
-                  className="absolute inset-0"
+                  className="pointer-events-none absolute inset-0"
                   style={{
                     background:
                       'linear-gradient(90deg, rgba(0,0,0,0.56), rgba(0,0,0,0.28), rgba(0,0,0,0.56))',
@@ -157,19 +194,21 @@ export function HomeHeroCarousel() {
                 />
               )}
 
-              <div className="relative z-10 max-w-3xl">
-                <h2 className="text-3xl font-extrabold leading-tight md:text-5xl lg:text-6xl">
-                  {banner.title}
-                </h2>
+              <div className="absolute inset-0 flex flex-col items-center justify-center px-5 pb-8 pt-4 lg:mx-auto lg:max-w-3xl lg:px-8 lg:py-16">
+                {banner.title && (
+                  <h2 className="text-xl font-extrabold leading-tight sm:text-2xl lg:text-5xl xl:text-6xl">
+                    {banner.title}
+                  </h2>
+                )}
                 {banner.subtitle && (
-                  <p className="mx-auto mt-4 max-w-2xl text-base leading-relaxed opacity-95 md:text-lg">
+                  <p className="mx-auto mt-1.5 max-w-2xl text-xs leading-relaxed opacity-95 sm:mt-2 sm:text-sm lg:mt-4 lg:text-lg">
                     {banner.subtitle}
                   </p>
                 )}
 
                 {(banner.primaryCtaLabel && banner.primaryCtaUrl) ||
                 (banner.secondaryCtaLabel && banner.secondaryCtaUrl) ? (
-                  <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
+                  <div className="mt-3 flex flex-wrap items-center justify-center gap-2 sm:mt-4 sm:gap-3 lg:mt-8">
                     {banner.primaryCtaLabel && banner.primaryCtaUrl && (
                       <CtaButton
                         label={banner.primaryCtaLabel}
@@ -199,7 +238,7 @@ export function HomeHeroCarousel() {
             type="button"
             onClick={() => goTo(index - 1)}
             aria-label="Previous banner"
-            className="absolute left-3 top-1/2 z-20 hidden h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-black/30 text-white backdrop-blur transition hover:bg-black/50 md:left-6 md:flex md:h-12 md:w-12"
+            className="absolute left-3 top-1/2 z-20 hidden h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-black/30 text-white backdrop-blur transition hover:bg-black/50 lg:left-6 lg:flex lg:h-12 lg:w-12"
           >
             <svg
               className="h-5 w-5 md:h-6 md:w-6"
@@ -220,7 +259,7 @@ export function HomeHeroCarousel() {
             type="button"
             onClick={() => goTo(index + 1)}
             aria-label="Next banner"
-            className="absolute right-3 top-1/2 z-20 hidden h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-black/30 text-white backdrop-blur transition hover:bg-black/50 md:right-6 md:flex md:h-12 md:w-12"
+            className="absolute right-3 top-1/2 z-20 hidden h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-black/30 text-white backdrop-blur transition hover:bg-black/50 lg:right-6 lg:flex lg:h-12 lg:w-12"
           >
             <svg
               className="h-5 w-5 md:h-6 md:w-6"

@@ -2,7 +2,6 @@
 
 import Link from 'next/link';
 import { Category } from '@/types/category';
-import { useLocatedCategoryCounts } from '@/hooks/useCategories';
 import { OptimizedImage } from './OptimizedImage';
 
 interface CategoryTilesProps {
@@ -14,21 +13,21 @@ export const CategoryTiles = ({
   categories,
   isLoading,
 }: CategoryTilesProps) => {
-  // Filter-aware counts (scoped to the selected location), falling back
-  // to the static totals while loading.
-  const { data: counts } = useLocatedCategoryCounts();
   if (isLoading) {
     return (
-      <section className="py-8">
+      <section className="py-6 sm:py-8">
         <div className="container mx-auto px-4">
-          <h2 className="text-2xl font-bold text-text mb-6">
+          <h2 className="mb-4 text-xl font-bold text-text sm:mb-6 sm:text-2xl">
             Browse Categories
           </h2>
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-7 gap-4">
-            {[...Array(10)].map((_, i) => (
-              <div key={i} className="animate-pulse">
-                <div className="bg-background-primary/30 rounded-2xl aspect-square mb-3" />
-                <div className="h-4 bg-background-primary/30 rounded w-3/4 mx-auto" />
+          <div className="grid grid-cols-4 gap-x-3 gap-y-5 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-8 xl:grid-cols-10">
+            {[...Array(20)].map((_, i) => (
+              <div
+                key={i}
+                className="flex animate-pulse flex-col items-center gap-2"
+              >
+                <div className="h-12 w-12 rounded-2xl bg-background-primary/30 sm:h-14 sm:w-14 md:h-16 md:w-16" />
+                <div className="h-3 w-3/4 rounded bg-background-primary/30" />
               </div>
             ))}
           </div>
@@ -42,58 +41,50 @@ export const CategoryTiles = ({
   }
 
   return (
-    <section className="py-8 bg-background">
+    <section className="bg-background py-6 sm:py-8">
       <div className="container mx-auto px-4">
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-2xl font-bold text-text">Browse Categories</h2>
+        <div className="mb-4 flex items-center justify-between sm:mb-6">
+          <h2 className="text-xl font-bold text-text sm:text-2xl">
+            Browse Categories
+          </h2>
           {/* Every main category is listed below, so there is nothing left to
               "view all" (and /categories never existed). */}
-          <span className="text-sm font-medium text-text-light-gray">
+          <span className="text-xs font-medium text-text-light-gray sm:text-sm">
             {categories.length} categories
           </span>
         </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-7 gap-4">
+        {/* Compact icon tiles, the same shape the mobile app uses: the
+            artwork sits in a small rounded tile with the name underneath.
+            The old cards carried a rounded box, 16px of padding and an
+            "N ads" line, which left a lot of dead space on a phone. */}
+        <div className="grid grid-cols-4 gap-x-3 gap-y-5 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-8 xl:grid-cols-10">
           {categories.map((category) => (
             <Link
               key={category.id}
               href={`/category/${category.slug}?categoryId=${category.id}`}
-              className="group"
+              className="group flex flex-col items-center gap-2"
+              title={category.name}
             >
-              <div className="relative bg-background rounded-2xl p-4 shadow-sm border border-border-custom hover:shadow-lg hover:border-primary/20 transition-all duration-300 hover:-translate-y-1">
-                {/* Icon/Image */}
-                <div className="flex items-center justify-center w-16 h-16 mx-auto mb-3 rounded-xl bg-background-primary group-hover:bg-primary/10 transition-colors overflow-hidden">
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-primary to-secondary p-0.5 transition-transform duration-300 group-hover:scale-105 sm:h-14 sm:w-14 md:h-16 md:w-16">
+                <div className="relative h-full w-full overflow-hidden rounded-[14px] bg-background">
                   {category.icon ? (
                     <OptimizedImage
                       src={category.icon}
                       alt={category.name}
-                      width={64}
-                      height={64}
-                      className="w-full h-full object-cover"
+                      fill
+                      containerClassName="bg-background"
+                      className="object-cover"
                     />
                   ) : (
-                    <span className="text-3xl">📦</span>
+                    <span className="text-xl sm:text-2xl">📦</span>
                   )}
                 </div>
-
-                {/* Name */}
-                <h3 className="text-center font-medium text-text group-hover:text-primary transition-colors text-sm line-clamp-2">
-                  {category.name}
-                </h3>
-
-                {/* Count badge */}
-                {(() => {
-                  const count =
-                    counts?.[category.id] ?? category._count?.ads ?? 0;
-                  return (
-                    count > 0 && (
-                      <p className="text-center text-xs text-text-light-gray mt-1">
-                        {count.toLocaleString()} ads
-                      </p>
-                    )
-                  );
-                })()}
               </div>
+
+              <h3 className="line-clamp-2 text-center text-xs font-medium leading-tight text-text transition-colors group-hover:text-primary sm:text-sm">
+                {category.name}
+              </h3>
             </Link>
           ))}
         </div>

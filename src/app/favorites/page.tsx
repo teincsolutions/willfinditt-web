@@ -37,11 +37,11 @@ export default function FavoritesPage() {
           </Link>
         </div>
       ) : (
-        <div className="columns-2 gap-3 md:grid md:grid-cols-2 lg:grid-cols-3 md:gap-6">
+        <div className="columns-2 md:columns-3 gap-3 md:gap-6">
           {favoriteAds.map((ad) => (
             <div
               key={ad.id}
-              className="relative break-inside-avoid mb-3 md:mb-0"
+              className="relative break-inside-avoid mb-3 md:mb-6"
             >
               <ListingCard ad={ad} />
               <Button

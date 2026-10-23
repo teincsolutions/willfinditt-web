@@ -110,6 +110,12 @@ export interface LocationDto {
   };
 }
 
+export interface AdImageMeta {
+  thumbnailUrl: string | null;
+  width: number | null;
+  height: number | null;
+}
+
 export interface Ad {
   id: string;
   title: string;
@@ -118,6 +124,8 @@ export interface Ad {
   currency: string;
   condition?: AdCondition;
   images: string[];
+  /** Per-image metadata, aligned with `images` by index. */
+  imageMeta?: AdImageMeta[];
   videos: string[];
   status: AdStatus;
   isPromoted: boolean;

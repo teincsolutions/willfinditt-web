@@ -196,11 +196,11 @@ export default function Home() {
 
         {/* Ads Grid */}
         {isLoading ? (
-          <div className="columns-2 gap-3 md:grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 md:gap-6">
+          <div className="columns-2 md:columns-3 xl:columns-4 gap-3 md:gap-6">
             {[...Array(12)].map((_, i) => (
               <div
                 key={i}
-                className="break-inside-avoid mb-3 md:mb-0 bg-background rounded-xl shadow-sm border border-border-custom overflow-hidden animate-pulse flex flex-col h-full"
+                className="break-inside-avoid mb-3 md:mb-6 bg-background rounded-xl shadow-sm border border-border-custom overflow-hidden animate-pulse flex flex-col h-full"
               >
                 <div className="aspect-[4/3] bg-background-primary/30" />
                 <div className="p-3 sm:p-5 flex-1 flex flex-col space-y-3">
@@ -215,9 +215,9 @@ export default function Home() {
             ))}
           </div>
         ) : ads?.data.length ? (
-          <div className="columns-2 gap-3 md:grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 md:gap-6">
+          <div className="columns-2 md:columns-3 xl:columns-4 gap-3 md:gap-6">
             {ads.data.map((ad: any) => (
-              <div key={ad.id} className="break-inside-avoid mb-3 md:mb-0">
+              <div key={ad.id} className="break-inside-avoid mb-3 md:mb-6">
                 <ListingCard ad={ad} />
               </div>
             ))}

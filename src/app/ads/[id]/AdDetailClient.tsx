@@ -114,6 +114,7 @@ export function AdDetailClient({ ad }: AdDetailClientProps) {
           >
             <OptimizedImage
               src={ad.images[currentImageIndex]}
+              thumbnailSrc={ad.imageMeta?.[currentImageIndex]?.thumbnailUrl}
               alt={ad.title}
               fill
               className="object-cover"
@@ -133,6 +134,7 @@ export function AdDetailClient({ ad }: AdDetailClientProps) {
                 >
                   <OptimizedImage
                     src={image}
+                    thumbnailSrc={ad.imageMeta?.[index]?.thumbnailUrl}
                     alt={`${ad.title} ${index + 1}`}
                     fill
                     className="object-cover rounded"

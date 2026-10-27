@@ -1,5 +1,6 @@
 import { User } from './user';
 import { Category, CategoryFieldFilter } from './category';
+import { CategoryFormConfig } from '@/lib/categoryFormConfig';
 
 // Enums matching API documentation
 export enum AdStatus {
@@ -94,6 +95,15 @@ export interface CategorySummaryDto {
   name: string;
   slug: string;
   icon?: string;
+  formConfig?: CategoryFormConfig | null;
+  effectiveFormConfig?: CategoryFormConfig | null;
+  parent?: {
+    id: string;
+    name: string;
+    slug: string;
+    formConfig?: CategoryFormConfig | null;
+    effectiveFormConfig?: CategoryFormConfig | null;
+  } | null;
 }
 
 export interface LocationDto {
@@ -120,7 +130,7 @@ export interface Ad {
   id: string;
   title: string;
   description: string;
-  price?: number;
+  price?: number | null;
   currency: string;
   condition?: AdCondition;
   images: string[];
@@ -136,6 +146,8 @@ export interface Ad {
   contactPhone?: string;
   contactPhone2?: string | null;
   contactEmail?: string;
+  nickname?: string | null;
+  hideSellerInfo?: boolean;
   isNegotiable: boolean;
   createdAt: string;
   updatedAt: string;
@@ -154,8 +166,8 @@ export interface Ad {
 
 export interface CreateAdData {
   title: string;
-  description: string;
-  price?: number;
+  description?: string;
+  price?: number | null;
   currency?: string;
   condition?: AdCondition;
   images?: string[];
@@ -169,6 +181,7 @@ export interface CreateAdData {
   contactPhone?: string;
   contactPhone2?: string | null;
   contactEmail?: string;
+  nickname?: string | null;
   isNegotiable?: boolean;
   expiresAt?: string;
   fieldValues?: AdFieldValueDto[];

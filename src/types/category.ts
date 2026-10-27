@@ -1,3 +1,5 @@
+import { CategoryFormConfig } from '@/lib/categoryFormConfig';
+
 export interface Category {
   id: string;
   name: string;
@@ -16,6 +18,8 @@ export interface Category {
   featuredPriceDisplay?: 'chips' | 'buttons' | 'cards';
   featuredPriceOrder?: number;
   featuredPriceBands?: Array<{ label: string; min?: number; max?: number }>;
+  formConfig?: CategoryFormConfig | null;
+  effectiveFormConfig?: CategoryFormConfig | null;
   fields?: CategoryField[];
   _count?: {
     ads?: number;
@@ -36,13 +40,17 @@ export interface CategoryField {
     | 'CHECKBOX'
     | 'TEXTAREA'
     | 'DATE'
-    | 'BOOLEAN';
+    | 'BOOLEAN'
+    | 'IMAGE';
   options?: Array<{ label: string; value: string; icon?: string }>;
   isRequired: boolean;
   sortOrder?: number;
   showInFeaturedFilters?: boolean;
   featuredDisplay?: 'chips' | 'buttons' | 'cards';
   featuredOrder?: number;
+  parentFieldId?: string | null;
+  parentOptionValue?: string | null;
+  children?: CategoryField[];
 }
 
 export interface CategoryFieldFilter {

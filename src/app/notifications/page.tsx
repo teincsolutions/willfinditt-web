@@ -1,13 +1,18 @@
 'use client';
 
 import { formatDistanceToNow } from 'date-fns';
-import { useInfiniteNotifications, useMarkAllAsRead, useMarkAsRead } from '@/hooks/useNotifications';
+import {
+  useInfiniteNotifications,
+  useMarkAllAsRead,
+  useMarkAsRead,
+} from '@/hooks/useNotifications';
 import { Button } from '@/components/Button';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
-import { useEffect, useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { toast } from 'sonner';
 
-interface Notification {
+interface NotificationItem {
   id: string;
   type: string;
   title: string;
@@ -15,6 +20,8 @@ interface Notification {
   isRead: boolean;
   createdAt: string;
 }
+
+const BROWSER_NOTIF_KEY = 'willfinditt_web_browser_notifications_enabled';
 
 export default function NotificationsPage() {
   const router = useRouter();
@@ -32,23 +39,104 @@ export default function NotificationsPage() {
   const hasAutoMarkedRef = useRef(false);
   const sentinelRef = useRef<HTMLDivElement | null>(null);
 
-  const notifications: Notification[] = useMemo(
+  const [browserSupported, setBrowserSupported] = useState(false);
+  const [permission, setPermission] = useState<NotificationPermission>('default');
+  const [browserNotificationsEnabled, setBrowserNotificationsEnabled] =
+    useState(true);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    if ('Notification' in window) {
+      setBrowserSupported(true);
+      setPermission(window.Notification.permission);
+    }
+    try {
+      const stored = window.localStorage.getItem(BROWSER_NOTIF_KEY);
+      if (stored !== null) {
+        setBrowserNotificationsEnabled(stored === 'true');
+      } else {
+        window.localStorage.setItem(BROWSER_NOTIF_KEY, 'true');
+        setBrowserNotificationsEnabled(true);
+      }
+    } catch {
+      // ignore storage errors
+    }
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/sw.js').catch(() => {
+        // non-blocking
+      });
+    }
+  }, []);
+
+  const handleToggleBrowserNotifications = async () => {
+    if (typeof window === 'undefined' || !('Notification' in window)) {
+      toast.error('This browser does not support desktop notifications.');
+      return;
+    }
+
+    if (permission !== 'granted') {
+      const result = await window.Notification.requestPermission();
+      setPermission(result);
+      if (result === 'granted') {
+        setBrowserNotificationsEnabled(true);
+        try {
+          window.localStorage.setItem(BROWSER_NOTIF_KEY, 'true');
+        } catch {
+          // ignore
+        }
+        toast.success('Browser notifications enabled!');
+        try {
+          const reg = await navigator.serviceWorker?.getRegistration();
+          if (reg && 'showNotification' in reg) {
+            await reg.showNotification('Willfinditt Notifications Enabled', {
+              body: 'You will now receive real-time alerts in your browser.',
+              icon: '/favicon.ico',
+            });
+          } else {
+            new window.Notification('Willfinditt Notifications Enabled', {
+              body: 'You will now receive real-time alerts in your browser.',
+            });
+          }
+        } catch {
+          // ignore
+        }
+      } else if (result === 'denied') {
+        toast.error(
+          'Notification permission was blocked. Please allow notifications in your browser site settings.'
+        );
+      }
+      return;
+    }
+
+    const next = !browserNotificationsEnabled;
+    setBrowserNotificationsEnabled(next);
+    try {
+      window.localStorage.setItem(BROWSER_NOTIF_KEY, String(next));
+    } catch {
+      // ignore
+    }
+    toast.success(
+      next
+        ? 'Browser notifications enabled'
+        : 'Browser notifications paused'
+    );
+  };
+
+  const notifications: NotificationItem[] = useMemo(
     () => data?.pages.flatMap((page) => page.data) ?? [],
     [data]
   );
 
   useEffect(() => {
     if (!authLoading && !isAuthenticated) {
-        router.push('/auth/login?redirect=/notifications');
+      router.push('/auth/login?redirect=/notifications');
     }
   }, [authLoading, isAuthenticated, router]);
 
   // Auto-mark all as read once the first page has loaded with unread items.
-  // Deps included so it retries when data arrives (previously `[]` meant it
-  // often ran before data loaded and never fired again).
   useEffect(() => {
     const autoMarkAll = async () => {
-      const hasUnread = notifications.some(n => !n.isRead);
+      const hasUnread = notifications.some((n) => !n.isRead);
       if (hasUnread && !hasAutoMarkedRef.current && !markAllAsRead.isPending) {
         hasAutoMarkedRef.current = true;
         try {
@@ -96,30 +184,54 @@ export default function NotificationsPage() {
   };
 
   if (authLoading || notificationsLoading) {
-    return <div className="container mx-auto px-4 py-8">Loading notifications...</div>;
+    return (
+      <div className="container mx-auto px-4 py-8">
+        Loading notifications...
+      </div>
+    );
   }
+
+  const isBrowserActive =
+    browserSupported &&
+    browserNotificationsEnabled &&
+    permission !== 'denied';
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-3xl">
-      <div className="flex justify-between items-center mb-6">
+      <div className="flex flex-wrap justify-between items-center gap-3 mb-6">
         <h1 className="text-2xl font-bold">Notifications</h1>
-        {notifications.length > 0 && (
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => markAllAsRead.mutate()}
-            disabled={markAllAsRead.isPending}
-          >
-            Mark all as read
-          </Button>
-        )}
+        <div className="flex items-center gap-2">
+          {browserSupported && (
+            <Button
+              variant={isBrowserActive ? 'outline' : 'primary'}
+              size="sm"
+              onClick={handleToggleBrowserNotifications}
+            >
+              {permission === 'granted' && browserNotificationsEnabled
+                ? 'Browser Notifications: Enabled'
+                : permission === 'denied'
+                  ? 'Browser Notifications: Blocked in Browser'
+                  : 'Enable Browser Notifications'}
+            </Button>
+          )}
+          {notifications.length > 0 && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => markAllAsRead.mutate()}
+              disabled={markAllAsRead.isPending}
+            >
+              Mark all as read
+            </Button>
+          )}
+        </div>
       </div>
 
       <div className="space-y-4">
         {notifications.length === 0 ? (
           <div className="text-center py-12 text-text-gray bg-background rounded-xl border border-border-custom">
-             <div className="text-4xl mb-3">🔔</div>
-             <p>You have no notifications.</p>
+            <div className="text-4xl mb-3">🔔</div>
+            <p>You have no notifications.</p>
           </div>
         ) : (
           notifications.map((notification) => (
@@ -130,18 +242,24 @@ export default function NotificationsPage() {
                   ? 'bg-background border-border-custom'
                   : 'bg-background-primary/50 border-primary/20 hover:bg-background-primary'
               }`}
-              onClick={() => handleMarkAsRead(notification.id, notification.isRead)}
+              onClick={() =>
+                handleMarkAsRead(notification.id, notification.isRead)
+              }
             >
               <div className="flex justify-between items-start gap-4">
                 <div>
-                   <h3 className="font-semibold text-text">{notification.title}</h3>
-                   <p className="text-text-gray mt-1">{notification.message}</p>
-                   <p className="text-xs text-text-light-gray mt-2">
-                     {formatDistanceToNow(new Date(notification.createdAt), { addSuffix: true })}
-                   </p>
+                  <h3 className="font-semibold text-text">
+                    {notification.title}
+                  </h3>
+                  <p className="text-text-gray mt-1">{notification.message}</p>
+                  <p className="text-xs text-text-light-gray mt-2">
+                    {formatDistanceToNow(new Date(notification.createdAt), {
+                      addSuffix: true,
+                    })}
+                  </p>
                 </div>
                 {!notification.isRead && (
-                   <div className="w-2.5 h-2.5 rounded-full bg-primary mt-2 flex-shrink-0 shadow-sm shadow-primary/30"></div>
+                  <div className="w-2.5 h-2.5 rounded-full bg-primary mt-2 flex-shrink-0 shadow-sm shadow-primary/30"></div>
                 )}
               </div>
             </div>
@@ -166,7 +284,9 @@ export default function NotificationsPage() {
             </Button>
           )}
           {!hasNextPage && (
-            <p className="text-xs text-text-light-gray">You&apos;re all caught up.</p>
+            <p className="text-xs text-text-light-gray">
+              You&apos;re all caught up.
+            </p>
           )}
         </div>
       )}

@@ -21,13 +21,25 @@ export default function CreateAdPage() {
   }, [authLoading, isAuthenticated, router]);
 
   const onSubmit = (adData: any) => {
-    if (!adData.images || adData.images.length === 0) {
+    const { _imagesOptional, ...payload } = adData;
+
+    if (
+      !_imagesOptional &&
+      (!payload.images || payload.images.length === 0)
+    ) {
       toast.error('Please upload at least one image.');
       return;
     }
 
-    createAd.mutate(adData, {
+    createAd.mutate(payload, {
       onSuccess: (created: { id?: string; title?: string; category?: { name?: string } }) => {
+        if (typeof window !== 'undefined') {
+          try {
+            window.sessionStorage.removeItem('willfinditt_post_category_draft');
+          } catch {
+            // ignore
+          }
+        }
         toast.success('Ad published successfully!');
         trackEvent('post_ad', {
           itemId: created?.id,
@@ -64,7 +76,7 @@ export default function CreateAdPage() {
           <div className="bg-primary px-8 py-6">
             <h1 className="text-2xl font-bold text-white">Post a New Ad</h1>
             <p className="text-primaryLight mt-1">
-              Fill in the details to list your item for sale.
+              Fill in the details to list your advert.
             </p>
           </div>
 

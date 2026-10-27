@@ -9,6 +9,7 @@ import { OptimizedImage } from '@/components/OptimizedImage';
 import { Pagination } from '@/components/Pagination';
 import { Button } from '@/components/Button';
 import { formatCurrency } from '@/lib/utils';
+import { formatPostedDate } from '@/lib/formatDate';
 import { Ad } from '@/types/ad';
 
 type SellerAdStatus =
@@ -33,7 +34,7 @@ const STATUS_TABS: Array<{ key: SellerAdStatus; label: string }> = [
 ];
 
 function formatApprovalTime(hours?: number | null) {
-  if (hours === undefined || hours === null || hours <= 0) return '—';
+  if (hours === undefined || hours === null || hours <= 0) return 'â€”';
   if (hours < 1) return `${Math.round(hours * 60)}m`;
   if (hours < 48) return `${Math.round(hours)}h`;
   return `${(hours / 24).toFixed(1)}d`;
@@ -254,7 +255,7 @@ export default function BusinessPage() {
                     <span className={`px-2 py-0.5 rounded border ${getStatusBadge(ad.status)}`}>
                       {ad.status}
                     </span>
-                    <span>Posted {format(new Date(ad.createdAt), 'MMM d, yyyy')}</span>
+                    <span>Posted {formatPostedDate(ad.createdAt)}</span>
                     <span>{ad.views} views</span>
                   </div>
                 </div>

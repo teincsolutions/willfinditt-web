@@ -2,6 +2,7 @@ import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { AdDetailClient } from './AdDetailClient';
 import { Ad } from '@/types/ad';
+import { resolveEffectiveFormConfig } from '@/lib/categoryFormConfig';
 
 // Server-side fetch function for ad data
 async function getAd(id: string): Promise<Ad | null> {
@@ -37,15 +38,18 @@ export async function generateMetadata({
     };
   }
 
+  const formConfig = resolveEffectiveFormConfig(ad.category);
   const priceDisplay =
     ad.price && ad.price > 0
       ? `${ad.currency || 'GHS'} ${ad.price.toLocaleString()}`
-      : 'Contact for price';
+      : formConfig.hidePrice
+        ? ad.category.name
+        : 'Contact for price';
 
-  const description =
-    ad.description
-      .replace(/<[^>]*>/g, '') // Strip HTML tags
-      .substring(0, 160) + (ad.description.length > 160 ? '...' : '');
+  const rawDesc = (ad.description || '').replace(/<[^>]*>/g, '').trim();
+  const description = rawDesc
+    ? rawDesc.substring(0, 160) + (rawDesc.length > 160 ? '...' : '')
+    : `${ad.title} in ${ad.category.name}`;
 
   const ogImage = ad.images?.[0] || '/images/og-default.png';
   const location = ad.city?.name || ad.address || 'Ghana';
@@ -98,16 +102,21 @@ export async function generateMetadata({
 
 // JSON-LD structured data for rich search results
 function generateJsonLd(ad: Ad) {
-  // Public seller identity only: business name, else account holder name.
+  const formConfig = resolveEffectiveFormConfig(ad.category);
+  const isSellerHidden = Boolean(
+    ad.hideSellerInfo || formConfig.hideSellerInfo
+  );
   const accountName =
     `${ad.user.firstName || ''} ${ad.user.lastName || ''}`.trim();
-  const sellerName =
-    ad.user.sellerProfile?.businessName || accountName || 'Private seller';
+  const sellerName = isSellerHidden
+    ? ad.nickname || ad.user.firstName || 'Anonymous'
+    : ad.user.sellerProfile?.businessName || accountName || 'Private seller';
+
   return {
     '@context': 'https://schema.org',
     '@type': 'Product',
     name: ad.title,
-    description: ad.description.replace(/<[^>]*>/g, ''),
+    description: (ad.description || '').replace(/<[^>]*>/g, ''),
     image: ad.images,
     url: `https://willfinditt.com/ads/${ad.id}`,
     offers: {

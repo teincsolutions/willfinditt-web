@@ -32,8 +32,9 @@ export default function EditAdPage({ params }: EditAdPageProps) {
   }, [authLoading, isAuthenticated, ad, user, id, router]);
 
   const onSubmit = (adData: any) => {
+    const { _imagesOptional, ...payload } = adData;
     updateAd.mutate(
-      { ...adData, id },
+      { ...payload, id },
       {
         onSuccess: () => {
           toast.success('Ad updated successfully!');

@@ -5,7 +5,12 @@ import { useForm, Controller } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
 import { AdCondition, Ad } from '@/types/ad';
-import { useParentCategories, useSubcategories } from '@/hooks/useCategories';
+import {
+  useCategoryFieldTree,
+  useParentCategories,
+  useSubcategories,
+} from '@/hooks/useCategories';
+import { getVisibleFieldIds } from '@/lib/categoryFields';
 import { useCountries, useStates, useCities } from '@/hooks/useLocations';
 import { Button } from '@/components/Button';
 import { ImageUploader } from '@/components/ImageUploader';
@@ -103,7 +108,8 @@ export const AdForm = ({
       isNegotiable: initialData?.isNegotiable || false,
       dynamicFields:
         (initialData?.fieldValues || []).reduce((acc: any, f: any) => {
-          const fieldName = f.categoryField?.name || f.categoryFieldId;
+          // Keyed by field ID, which is what the field inputs register under.
+          const fieldName = f.categoryFieldId;
           const fieldType = f.categoryField?.type;
           if (fieldType === 'CHECKBOX') {
             const val = f.value;
@@ -129,6 +135,7 @@ export const AdForm = ({
   const categoryId = watch('categoryId');
   const stateId = watch('stateId');
   const { data: subcategories } = useSubcategories(selectedParentId);
+  const { data: categoryFieldTree } = useCategoryFieldTree(categoryId);
 
   // Categories Effect
   useEffect(() => {
@@ -157,9 +164,20 @@ export const AdForm = ({
     const dynamicFieldsData = data.dynamicFields || {};
     const categoryId = data.categoryId;
 
+    // Only save fields that are shown for this category: not those left over
+    // from a previously chosen category, nor sub-fields whose parent option
+    // is no longer selected.
+    const visibleFieldIds = categoryFieldTree
+      ? getVisibleFieldIds(categoryFieldTree, dynamicFieldsData)
+      : null;
+
     const fieldValues = Object.entries(dynamicFieldsData)
       .filter(
-        ([, value]) => value !== undefined && value !== '' && value !== null
+        ([fieldId, value]) =>
+          value !== undefined &&
+          value !== '' &&
+          value !== null &&
+          (!visibleFieldIds || visibleFieldIds.has(fieldId))
       )
       .map(([fieldName, value]) => {
         let finalValue: string;
@@ -327,7 +345,7 @@ export const AdForm = ({
           initialValues={
             initialData?.fieldValues
               ? initialData.fieldValues.reduce((acc: any, f: any) => {
-                  const fieldName = f.categoryField?.name || f.categoryFieldId;
+                  const fieldName = f.categoryFieldId;
                   if (
                     f.value &&
                     typeof f.value === 'string' &&

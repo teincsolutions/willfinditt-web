@@ -1,10 +1,11 @@
 'use client';
 
 import { OptimizedImage } from '@/components/OptimizedImage';
-import { useCategoryFields } from '@/hooks/useCategories';
+import { useCategoryFieldTree } from '@/hooks/useCategories';
+import { flattenFieldTree } from '@/lib/categoryFields';
 import { useAddFavorite, useRemoveFavorite } from '@/hooks/useFavorites';
 import { Button } from '@/components/Button';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { trackEvent } from '@/lib/analytics';
 import { RelatedAds } from '@/components/RelatedAds';
 import { formatCurrency } from '@/lib/utils';
@@ -20,7 +21,18 @@ interface AdDetailClientProps {
 }
 
 export function AdDetailClient({ ad }: AdDetailClientProps) {
-  const { data: categoryFields } = useCategoryFields(ad?.category?.id || '');
+  const { data: categoryFieldTree } = useCategoryFieldTree(
+    ad?.category?.id || ''
+  );
+  // Every field, each parent followed by its sub-fields (the form's order).
+  const categoryFields = useMemo(
+    () => flattenFieldTree(categoryFieldTree || []),
+    [categoryFieldTree]
+  );
+  const fieldOrder = (categoryFieldId: string) => {
+    const index = categoryFields.findIndex((f) => f.id === categoryFieldId);
+    return index === -1 ? categoryFields.length : index;
+  };
   const addFavorite = useAddFavorite();
   const removeFavorite = useRemoveFavorite();
 
@@ -183,7 +195,11 @@ export function AdDetailClient({ ad }: AdDetailClientProps) {
                   />
                 </svg>
               )}
-              {isFavoriteLoading ? 'Loading...' : isSaved ? 'Saved' : 'Add to Favorites'}
+              {isFavoriteLoading
+                ? 'Loading...'
+                : isSaved
+                  ? 'Saved'
+                  : 'Add to Favorites'}
             </Button>
             <Button
               onClick={handleContactSeller}
@@ -235,16 +251,27 @@ export function AdDetailClient({ ad }: AdDetailClientProps) {
               )}
 
               {/* Dynamic Category Fields */}
-              {ad.fieldValues?.map((field) => {
-                const fieldDef = categoryFields?.find(
-                  (f) => f.id === field.categoryFieldId
-                );
-                let displayValue: React.ReactNode = field.value;
+              {[...(ad.fieldValues || [])]
+                .sort(
+                  (a, b) =>
+                    fieldOrder(a.categoryFieldId) -
+                    fieldOrder(b.categoryFieldId)
+                )
+                .map((field) => {
+                  const fieldDef = categoryFields.find(
+                    (f) => f.id === field.categoryFieldId
+                  );
+                  let displayValue: React.ReactNode = field.value;
 
-                if (fieldDef?.type === 'CHECKBOX') {
-                  // Value is stored as stringified JSON array, e.g. "[\"pool\",\"gym\"]"
-                  try {
-                    const values = JSON.parse(field.value);
+                  if (fieldDef?.type === 'CHECKBOX') {
+                    // Value is stored as stringified JSON array, e.g. "[\"pool\",\"gym\"]",
+                    // or comma-separated ("pool,gym") when posted from the web.
+                    let values: unknown;
+                    try {
+                      values = JSON.parse(field.value);
+                    } catch {
+                      values = field.value.split(',');
+                    }
                     if (Array.isArray(values)) {
                       const labels = values.map(
                         (v: string) =>
@@ -264,27 +291,27 @@ export function AdDetailClient({ ad }: AdDetailClientProps) {
                         </div>
                       );
                     }
-                  } catch {
-                    // If parsing fails, show raw value
-                    displayValue = field.value;
+                  } else if (fieldDef?.options) {
+                    // Handle single select/radio
+                    const option = fieldDef.options.find(
+                      (opt) => opt.value === field.value
+                    );
+                    if (option) displayValue = option.label;
                   }
-                } else if (fieldDef?.options) {
-                  // Handle single select/radio
-                  const option = fieldDef.options.find(
-                    (opt) => opt.value === field.value
-                  );
-                  if (option) displayValue = option.label;
-                }
 
-                return (
-                  <div key={field.id}>
-                    <span className="font-medium">
-                      {field.categoryField.label}:
-                    </span>{' '}
-                    {displayValue}
-                  </div>
-                );
-              })}
+                  return (
+                    // Sub-fields are indented under their parent field.
+                    <div
+                      key={field.id}
+                      className={fieldDef?.parentFieldId ? 'pl-4' : undefined}
+                    >
+                      <span className="font-medium">
+                        {field.categoryField.label}:
+                      </span>{' '}
+                      {displayValue}
+                    </div>
+                  );
+                })}
             </div>
           </div>
 

@@ -43,6 +43,11 @@ export interface CategoryField {
   showInFeaturedFilters?: boolean;
   featuredDisplay?: 'chips' | 'buttons' | 'cards';
   featuredOrder?: number;
+  // Conditional sub-field: shown only when the parent field has this option
+  // selected. Only the v2 fields endpoint returns sub-fields (as `children`).
+  parentFieldId?: string | null;
+  parentOptionValue?: string | null;
+  children?: CategoryField[];
 }
 
 export interface CategoryFieldFilter {

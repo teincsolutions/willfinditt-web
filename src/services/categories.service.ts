@@ -64,6 +64,22 @@ export const getCategoryFields = async (
   return response.data.data || response.data || [];
 };
 
+const API_V2_BASE = (process.env.NEXT_PUBLIC_API_URL || '').replace(
+  /\/v1\/?$/,
+  '/v2'
+);
+
+// Get category fields as a tree (v2): conditional sub-fields are nested under
+// their parent field in `children`.
+export const getCategoryFieldTree = async (
+  categoryId: string
+): Promise<CategoryField[]> => {
+  const response = await api.get(`/category-fields/category/${categoryId}`, {
+    baseURL: API_V2_BASE,
+  });
+  return response.data.data || response.data || [];
+};
+
 export interface CategoryCountsFilters {
   cityIds?: string;
   priceMin?: number;

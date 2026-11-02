@@ -5,6 +5,7 @@ import {
   getCategory,
   getCategoryBySlug,
   getCategoryFields,
+  getCategoryFieldTree,
   getCategoriesTree,
   getParentCategories,
   getSubcategories,
@@ -43,6 +44,15 @@ export const useCategoryFields = (categoryId: string) => {
   return useQuery({
     queryKey: ['categoryFields', categoryId],
     queryFn: () => getCategoryFields(categoryId),
+    enabled: !!categoryId,
+  });
+};
+
+// Get category fields as a tree, including conditional sub-fields
+export const useCategoryFieldTree = (categoryId: string) => {
+  return useQuery({
+    queryKey: ['categoryFieldTree', categoryId],
+    queryFn: () => getCategoryFieldTree(categoryId),
     enabled: !!categoryId,
   });
 };

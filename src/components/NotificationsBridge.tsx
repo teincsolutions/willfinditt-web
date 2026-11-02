@@ -2,6 +2,7 @@
 
 import { useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
+import { getAccessToken } from '@/lib/auth';
 import { useNotificationsSocket } from '@/hooks/useNotificationsSocket';
 import {
   releaseWebPushRegistration,
@@ -43,7 +44,14 @@ export function NotificationsBridge() {
     if (isAuthenticated) {
       // The FCM token survives logins, but it must point at the current user.
       void syncWebPushRegistration();
-    } else {
+      return;
+    }
+
+    // `isLoading` is false while the profile query is disabled (it only runs
+    // once the provider has detected a token), so a valid session briefly
+    // looks signed out on load. Only release once there is no token at all,
+    // otherwise every page load deactivates and re-registers the device.
+    if (!getAccessToken()) {
       // Stop this browser receiving the previous user's notifications.
       void releaseWebPushRegistration();
     }

@@ -3,6 +3,7 @@
 import { formatDistanceToNow } from 'date-fns';
 import { useInfiniteNotifications, useMarkAllAsRead, useMarkAsRead } from '@/hooks/useNotifications';
 import { Button } from '@/components/Button';
+import { BrowserAlertsToggle } from '@/components/BrowserAlertsToggle';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useRef } from 'react';
@@ -114,6 +115,8 @@ export default function NotificationsPage() {
           </Button>
         )}
       </div>
+
+      <BrowserAlertsToggle />
 
       <div className="space-y-4">
         {notifications.length === 0 ? (

@@ -12,6 +12,7 @@ import { AnalyticsScripts } from '@/components/AnalyticsScripts';
 import { CookieConsent } from '@/components/CookieConsent';
 import { PageViewTracker } from '@/components/PageViewTracker';
 import { MobileAppBanner } from '@/components/MobileAppBanner';
+import { NotificationsBridge } from '@/components/NotificationsBridge';
 
 export function ClientLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -22,6 +23,7 @@ export function ClientLayout({ children }: { children: React.ReactNode }) {
   const content = (
     <Providers>
       <Toaster position="top-center" richColors />
+      <NotificationsBridge />
       <AnalyticsScripts />
       <PageViewTracker />
       {!isAuthPage && <MobileAppBanner />}

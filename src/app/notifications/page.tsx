@@ -5,6 +5,7 @@ import { useInfiniteNotifications, useMarkAllAsRead, useMarkAsRead } from '@/hoo
 import { Button } from '@/components/Button';
 import { BrowserAlertsToggle } from '@/components/BrowserAlertsToggle';
 import { useAuth } from '@/contexts/AuthContext';
+import { getAccessToken } from '@/lib/auth';
 import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useRef } from 'react';
 
@@ -39,7 +40,11 @@ export default function NotificationsPage() {
   );
 
   useEffect(() => {
-    if (!authLoading && !isAuthenticated) {
+    // `isLoading` is false while the profile query is disabled (it only runs
+    // once the provider has detected a token), so also check the token
+    // directly. Otherwise a hard load/refresh with a valid session redirects
+    // to the login page before the user is fetched.
+    if (!authLoading && !isAuthenticated && !getAccessToken()) {
         router.push('/auth/login?redirect=/notifications');
     }
   }, [authLoading, isAuthenticated, router]);

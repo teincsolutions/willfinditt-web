@@ -13,6 +13,36 @@ self.addEventListener('activate', (event) => {
   event.waitUntil(self.clients.claim());
 });
 
+// Web push (FCM). Shown by the service worker so it also works when the tab is
+// closed and on Android Chrome, where `new Notification()` is not available.
+self.addEventListener('push', (event) => {
+  let payload = {};
+  try {
+    payload = event.data ? event.data.json() : {};
+  } catch (error) {
+    payload = {};
+  }
+
+  const notification = payload.notification || {};
+  const data = payload.data || {};
+  const title = notification.title || payload.title || 'Willfinditt';
+  const body = notification.body || payload.body || '';
+  const link =
+    (payload.fcmOptions && payload.fcmOptions.link) ||
+    data.url ||
+    '/notifications';
+
+  event.waitUntil(
+    self.registration.showNotification(title, {
+      body,
+      icon: '/images/logo-favicon.png',
+      badge: '/images/logo-favicon.png',
+      tag: data.notificationId || data.tag || undefined,
+      data: { url: link },
+    })
+  );
+});
+
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
 

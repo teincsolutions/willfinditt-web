@@ -5,6 +5,9 @@ on:
     branches: [main, test]
   pull_request:
     branches: [main]
+  # Manual deploy of any branch/tag (no merge to main required):
+  #   gh workflow run deploy.yml --ref <branch>
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -16,6 +19,15 @@ env:
   DOCKER_IMAGE_NAME: ghcr.io/${{ github.repository_owner }}/willfind8-web
   NEXT_PUBLIC_API_URL: https://api.willfind8.com/api/v1
   NEXT_PUBLIC_SITE_URL: https://willfinditt.com
+  # Firebase web config is public (it ships in the browser bundle). These must
+  # be present at `next build` time or web push silently disables itself.
+  NEXT_PUBLIC_FIREBASE_API_KEY: AIzaSyBanySrNTtgcbCr37abITSkRI-08K3QNXg
+  NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: willfinditt.firebaseapp.com
+  NEXT_PUBLIC_FIREBASE_PROJECT_ID: willfinditt
+  NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET: willfinditt.firebasestorage.app
+  NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID: '679415897594'
+  NEXT_PUBLIC_FIREBASE_APP_ID: '1:679415897594:web:966b289eeedb9b198dd843'
+  NEXT_PUBLIC_FIREBASE_VAPID_KEY: BARtyHlrVgfPEFI3rgmvFVDJJk_ZvaaMmqK7qC6YXuf3eMfLGkuvhT4eP2RIMlbGesNEkLYS38A6gauPe8u3Aw8
 
 jobs:
   build:
@@ -65,6 +77,13 @@ jobs:
             --build-arg NEXT_PUBLIC_GOOGLE_CLIENT_ID=${{ secrets.NEXT_PUBLIC_GOOGLE_CLIENT_ID }} \
             --build-arg NEXT_PUBLIC_GA_ID=${{ secrets.NEXT_PUBLIC_GA_ID }} \
             --build-arg NEXT_PUBLIC_META_PIXEL_ID=${{ secrets.NEXT_PUBLIC_META_PIXEL_ID }} \
+            --build-arg NEXT_PUBLIC_FIREBASE_API_KEY=$NEXT_PUBLIC_FIREBASE_API_KEY \
+            --build-arg NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=$NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN \
+            --build-arg NEXT_PUBLIC_FIREBASE_PROJECT_ID=$NEXT_PUBLIC_FIREBASE_PROJECT_ID \
+            --build-arg NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=$NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET \
+            --build-arg NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=$NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID \
+            --build-arg NEXT_PUBLIC_FIREBASE_APP_ID=$NEXT_PUBLIC_FIREBASE_APP_ID \
+            --build-arg NEXT_PUBLIC_FIREBASE_VAPID_KEY=$NEXT_PUBLIC_FIREBASE_VAPID_KEY \
             --tag ${{ env.DOCKER_IMAGE_NAME }}:${{ steps.tag.outputs.tag }} \
             --tag ${{ env.DOCKER_IMAGE_NAME }}:latest \
             .
@@ -123,7 +142,7 @@ jobs:
   deploy:
     name: Deploy to Production
     needs: [build, security-scan, verify-image]
-    if: github.ref_name == 'main' && github.event_name == 'push'
+    if: (github.event_name == 'push' && github.ref_name == 'main') || github.event_name == 'workflow_dispatch'
     runs-on: [self-hosted, willfind8]
     environment:
       name: production

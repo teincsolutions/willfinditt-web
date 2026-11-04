@@ -67,3 +67,22 @@ export const markNotificationAsRead = async (id: string): Promise<void> => {
 export const markAllAsRead = async (): Promise<void> => {
   await api.patch('/notifications/mark-all-read');
 };
+
+// Register a push token (Firebase web push / mobile FCM) for the current user
+export const registerPushToken = async (
+  token: string,
+  platform: 'ios' | 'android' | 'web' = 'web',
+  meta?: Record<string, unknown>
+): Promise<{ providerRegistered: boolean }> => {
+  const response = await api.post('/notifications/push-token', {
+    token,
+    platform,
+    meta,
+  });
+  return response.data;
+};
+
+// Stop delivering pushes to a token
+export const unregisterPushToken = async (token: string): Promise<void> => {
+  await api.delete('/notifications/push-token', { data: { token } });
+};

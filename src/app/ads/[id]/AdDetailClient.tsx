@@ -15,6 +15,7 @@ import { Dialog } from '@/components/Dialog';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Ad } from '@/types/ad';
+import { needsSignedUrl } from '@/lib/s3Utils';
 
 interface AdDetailClientProps {
   ad: Ad;
@@ -343,7 +344,8 @@ export function AdDetailClient({ ad }: AdDetailClientProps) {
               return (
                 <div className="flex items-center space-x-4">
                   <div className="w-12 h-12 bg-background-primary rounded-full flex items-center justify-center">
-                    {ad.user.avatar ? (
+                    {ad.user.avatar &&
+                    (isAuthenticated || !needsSignedUrl(ad.user.avatar)) ? (
                       <OptimizedImage
                         src={ad.user.avatar}
                         alt={displayName}

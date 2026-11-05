@@ -117,9 +117,9 @@ function MyAdsContent() {
                   >
                     {ad.status}
                   </span>
-                  <span>
-                    Posted {formatPostedDate(ad.createdAt)}
-                  </span>
+                  {formatPostedDate(ad.createdAt) && (
+                    <span>Posted {formatPostedDate(ad.createdAt)}</span>
+                  )}
                   <span className="flex items-center gap-1">
                     <svg
                       className="w-4 h-4"

@@ -3,8 +3,9 @@ import { format } from 'date-fns';
 /**
  * Posting-time display.
  *
- * Shows a relative time ("3h ago", "2d ago") for recent ads and falls back to
- * an absolute date once the ad is older than the configurable cut-off.
+ * Shows a relative time ("3h ago", "2d ago") for recent ads. Once an ad is older
+ * than the configurable cut-off the timestamp is hidden entirely (returns ""),
+ * so callers must not render their label or separator for an empty value.
  *
  * The cut-off is read from `NEXT_PUBLIC_SHOW_TIME_AGO_DAYS` (default 30). As
  * with every `NEXT_PUBLIC_*` value it is baked in at build time.
@@ -32,7 +33,8 @@ export function formatPostedDate(input?: string | Date | null): string {
   const days = Math.floor(hours / 24);
   if (days < SHOW_TIME_AGO_DAYS) return `${days}d ago`;
 
-  return format(date, 'MMM d, yyyy');
+  // Older than the cut-off: hide the posting time (same as the mobile app).
+  return '';
 }
 
 /** Absolute month/year, e.g. "Mar 2024" — for "member since" style labels. */

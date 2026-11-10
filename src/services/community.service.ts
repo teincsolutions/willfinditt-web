@@ -7,6 +7,7 @@ import type {
   EventProfile,
   EventProfileInput,
   EventType,
+  LostFoundFormConfig,
   LostFoundInput,
   LostFoundKind,
   LostFoundPost,
@@ -63,8 +64,12 @@ export const noticesApi = {
 // --- Lost & Found -----------------------------------------------------------
 
 export const lostFoundApi = {
+  formConfig: async (): Promise<LostFoundFormConfig> =>
+    (await api.get('/lost-found/form-config')).data.data,
+
   list: async (params: {
     kind?: LostFoundKind;
+    category?: string;
     city?: string;
     cursor?: string;
   }): Promise<CursorPage<LostFoundPost>> =>

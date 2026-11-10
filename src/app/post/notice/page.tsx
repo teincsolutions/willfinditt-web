@@ -142,7 +142,7 @@ function NoticeForm({ existing }: { existing: EventPost | null }) {
     existing?.images.filter((i) => i.role === role).map((i) => i.url) ?? [];
 
   const [eventType, setEventType] = useState<EventType>(
-    existing?.eventType ?? 'FUNERAL'
+    existing?.eventType ?? config?.eventTypes[0]?.value ?? 'FUNERAL'
   );
   const [title, setTitle] = useState(existing?.title ?? '');
   const [body, setBody] = useState(existing?.body ?? '');
@@ -210,6 +210,13 @@ function NoticeForm({ existing }: { existing: EventPost | null }) {
           value={eventType}
           onChange={(e) => setEventType(e.target.value as EventType)}
         >
+          {existing &&
+            !config?.eventTypes.some((t) => t.value === existing.eventType) && (
+              // Type switched off by admins after posting: still keepable.
+              <option value={existing.eventType}>
+                {existing.eventTypeLabel ?? existing.eventType}
+              </option>
+            )}
           {(config?.eventTypes ?? []).map((t) => (
             <option key={t.value} value={t.value}>
               {t.label}
@@ -328,6 +335,8 @@ function NoticeFlow({ readOnly }: { readOnly: boolean }) {
     enabled: isAuthenticated && Boolean(editId),
   });
   const [profileDone, setProfileDone] = useState(false);
+  // Types are admin-managed; wait for them so the form starts on a real one.
+  const typeConfig = useNoticeFormConfig();
 
   useEffect(() => {
     if (!authLoading && !isAuthenticated) {
@@ -338,7 +347,13 @@ function NoticeFlow({ readOnly }: { readOnly: boolean }) {
   if (readOnly) {
     return <p className="py-16 text-center">Posting is paused at the moment.</p>;
   }
-  if (authLoading || !isAuthenticated || profile.isLoading || (editId && mine.isLoading)) {
+  if (
+    authLoading ||
+    !isAuthenticated ||
+    profile.isLoading ||
+    typeConfig.isLoading ||
+    (editId && mine.isLoading)
+  ) {
     return <p className="py-16 text-text-gray">Loading…</p>;
   }
   if (profile.data?.status === 'SUSPENDED') {

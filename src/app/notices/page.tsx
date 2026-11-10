@@ -3,21 +3,20 @@
 import Link from 'next/link';
 import { useState } from 'react';
 import { SectionGate, LoadMore } from '@/components/community/SectionGate';
-import { NoticeCard, EVENT_TYPE_LABELS } from '@/components/community/Cards';
+import { NoticeCard } from '@/components/community/Cards';
 import { CityPicker } from '@/components/community/CityPicker';
-import { useNotices } from '@/hooks/useCommunity';
+import { useNoticeFormConfig, useNotices } from '@/hooks/useCommunity';
 import type { EventType } from '@/types/community';
 
-const TYPES: (EventType | '')[] = [
-  '',
-  'FUNERAL',
-  'MEMORIAL',
-  'OBITUARY',
-  'OTHER',
-];
 
 function NoticesList({ readOnly }: { readOnly: boolean }) {
   const [eventType, setEventType] = useState<EventType | ''>('');
+  // Types are admin-managed; chips show the active ones.
+  const { data: config } = useNoticeFormConfig();
+  const TYPES: { value: EventType | ''; label: string }[] = [
+    { value: '', label: 'All' },
+    ...(config?.eventTypes ?? []).map((t) => ({ value: t.value, label: t.label })),
+  ];
   const [city, setCity] = useState('');
   const query = useNotices({
     eventType: eventType || undefined,
@@ -47,16 +46,16 @@ function NoticesList({ readOnly }: { readOnly: boolean }) {
       <div className="flex flex-wrap gap-2 mb-4">
         {TYPES.map((t) => (
           <button
-            key={t || 'all'}
+            key={t.value || 'all'}
             type="button"
-            onClick={() => setEventType(t)}
+            onClick={() => setEventType(t.value)}
             className={`px-4 py-1.5 rounded-full text-sm font-semibold border ${
-              eventType === t
+              eventType === t.value
                 ? 'bg-primary text-white border-primary'
                 : 'border-border-custom hover:bg-background-primary'
             }`}
           >
-            {t ? EVENT_TYPE_LABELS[t] : 'All'}
+            {t.label}
           </button>
         ))}
       </div>

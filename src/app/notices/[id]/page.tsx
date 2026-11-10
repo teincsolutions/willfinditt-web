@@ -5,7 +5,8 @@ import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { format } from 'date-fns';
 import { SectionGate } from '@/components/community/SectionGate';
-import { EVENT_TYPE_LABELS } from '@/components/community/Cards';
+import { noticeTypeLabel } from '@/components/community/Cards';
+import { ShareButton } from '@/components/community/ShareButton';
 import { ChatButton } from '@/components/community/ContactButtons';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNotice } from '@/hooks/useCommunity';
@@ -22,7 +23,7 @@ function NoticeDetail({ post, readOnly }: { post: EventPost; readOnly: boolean }
       <article className="lg:col-span-2 space-y-6">
         <div>
           <span className="text-sm font-semibold text-primary">
-            {EVENT_TYPE_LABELS[post.eventType]}
+            {noticeTypeLabel(post)}
           </span>
           <h1 className="text-2xl md:text-3xl font-bold mt-1">{post.title}</h1>
         </div>
@@ -116,6 +117,7 @@ function NoticeDetail({ post, readOnly }: { post: EventPost; readOnly: boolean }
           disabled={readOnly}
           label={readOnly ? 'Messaging paused' : 'Message the family'}
         />
+        <ShareButton title={post.title} path={`/notices/${post.id}`} />
         <p className="text-xs text-text-light-gray">
           Posted {format(new Date(post.createdAt), 'd MMM yyyy')}
           {post.visibility === 'UNLISTED' && ' · Only people with the link'}

@@ -3,14 +3,11 @@
 import Link from 'next/link';
 import { format } from 'date-fns';
 import { formatPostedDate } from '@/lib/formatDate';
-import type { EventPost, EventType, LostFoundPost } from '@/types/community';
+import type { EventPost, LostFoundPost } from '@/types/community';
 
-export const EVENT_TYPE_LABELS: Record<EventType, string> = {
-  FUNERAL: 'Funeral',
-  MEMORIAL: 'Memorial',
-  OBITUARY: 'Obituary',
-  OTHER: 'Notice',
-};
+/** Readable type name (admin-managed list), falling back to the key. */
+export const noticeTypeLabel = (post: EventPost) =>
+  post.eventTypeLabel ?? post.eventType;
 
 /** Picks the image to show on a card: deceased photo, poster, then gallery. */
 export function noticeCover(post: EventPost): string | null {
@@ -30,13 +27,13 @@ export function NoticeCard({ post }: { post: EventPost }) {
           <img src={cover} alt="" className="w-full h-full object-cover" />
         ) : (
           <div className="w-full h-full flex items-center justify-center text-xs text-text-gray">
-            {EVENT_TYPE_LABELS[post.eventType]}
+            {noticeTypeLabel(post)}
           </div>
         )}
       </div>
       <div className="min-w-0 flex-1">
         <span className="inline-block text-xs font-semibold text-primary mb-1">
-          {EVENT_TYPE_LABELS[post.eventType]}
+          {noticeTypeLabel(post)}
         </span>
         <h3 className="font-bold leading-snug line-clamp-2">{post.title}</h3>
         {post.eventAt && (
@@ -82,6 +79,9 @@ export function LostFoundCard({ post }: { post: LostFoundPost }) {
         >
           {lost ? 'Lost' : 'Found'}
         </span>
+        {post.categoryLabel && (
+          <span className="ml-2 text-xs text-text-gray">{post.categoryLabel}</span>
+        )}
         <h3 className="font-bold leading-snug line-clamp-2">{post.title}</h3>
         <p className="text-sm text-text-gray truncate">
           {[post.place, post.city?.name].filter(Boolean).join(', ')}

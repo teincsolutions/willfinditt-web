@@ -59,8 +59,16 @@ export const useNoticeFormConfig = () =>
     staleTime: 5 * 60_000,
   });
 
+export const useLostFoundFormConfig = () =>
+  useQuery({
+    queryKey: ['community', 'lost-found', 'form-config'],
+    queryFn: lostFoundApi.formConfig,
+    staleTime: 5 * 60_000,
+  });
+
 export const useLostFound = (filters: {
   kind?: LostFoundKind;
+  category?: string;
   city?: string;
 }) =>
   useInfiniteQuery({

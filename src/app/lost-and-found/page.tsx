@@ -5,7 +5,7 @@ import { useState } from 'react';
 import { SectionGate, LoadMore } from '@/components/community/SectionGate';
 import { LostFoundCard } from '@/components/community/Cards';
 import { CityPicker } from '@/components/community/CityPicker';
-import { useLostFound } from '@/hooks/useCommunity';
+import { useLostFound, useLostFoundFormConfig } from '@/hooks/useCommunity';
 import type { LostFoundKind } from '@/types/community';
 
 const KINDS: { value: LostFoundKind | ''; label: string }[] = [
@@ -17,8 +17,12 @@ const KINDS: { value: LostFoundKind | ''; label: string }[] = [
 function LostFoundList({ readOnly }: { readOnly: boolean }) {
   const [kind, setKind] = useState<LostFoundKind | ''>('');
   const [city, setCity] = useState('');
+  // Categories are admin-managed; chips show the active ones.
+  const [category, setCategory] = useState('');
+  const { data: config } = useLostFoundFormConfig();
   const query = useLostFound({
     kind: kind || undefined,
+    category: category || undefined,
     city: city || undefined,
   });
   const posts = query.data?.pages.flatMap((p) => p.items) ?? [];
@@ -58,6 +62,24 @@ function LostFoundList({ readOnly }: { readOnly: boolean }) {
           </button>
         ))}
       </div>
+      {(config?.categories.length ?? 0) > 1 && (
+        <div className="flex flex-wrap gap-2 mb-4">
+          {[{ value: '', label: 'All categories' }, ...(config?.categories ?? [])].map((c) => (
+            <button
+              key={c.value || 'all'}
+              type="button"
+              onClick={() => setCategory(c.value)}
+              className={`px-3 py-1 rounded-full text-xs font-semibold border ${
+                category === c.value
+                  ? 'bg-primaryLight text-primary border-primary'
+                  : 'border-border-custom hover:bg-background-primary'
+              }`}
+            >
+              {c.label}
+            </button>
+          ))}
+        </div>
+      )}
       <div className="max-w-md mb-6">
         <CityPicker value={city} onChange={setCity} label="Filter by city" />
       </div>

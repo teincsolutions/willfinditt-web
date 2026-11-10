@@ -15,12 +15,15 @@ import {
 } from '@/components/community/form';
 import { useAuth } from '@/contexts/AuthContext';
 import { apiError, lostFoundApi } from '@/services/community.service';
+import { useLostFoundFormConfig } from '@/hooks/useCommunity';
 import type { LostFoundKind, LostFoundPost } from '@/types/community';
 
 function LostFoundForm({ existing }: { existing: LostFoundPost | null }) {
   const router = useRouter();
   const queryClient = useQueryClient();
   const [kind, setKind] = useState<LostFoundKind>(existing?.kind ?? 'LOST');
+  const { data: config } = useLostFoundFormConfig();
+  const [category, setCategory] = useState(existing?.category ?? 'ITEM');
   const [title, setTitle] = useState(existing?.title ?? '');
   const [body, setBody] = useState(existing?.body ?? '');
   const [place, setPlace] = useState(existing?.place ?? '');
@@ -40,6 +43,7 @@ function LostFoundForm({ existing }: { existing: LostFoundPost | null }) {
     setBusy(true);
     const input = {
       kind,
+      category,
       title: title.trim(),
       body: body.trim(),
       place: place.trim() || undefined,
@@ -85,6 +89,27 @@ function LostFoundForm({ existing }: { existing: LostFoundPost | null }) {
         ))}
       </div>
 
+      {(config?.categories.length ?? 0) > 0 && (
+        <Field label="What is it?">
+          <select
+            className={inputClass}
+            value={category}
+            onChange={(e) => setCategory(e.target.value)}
+          >
+            {existing &&
+              !config?.categories.some((c) => c.value === existing.category) && (
+                <option value={existing.category}>
+                  {existing.categoryLabel ?? existing.category}
+                </option>
+              )}
+            {config?.categories.map((c) => (
+              <option key={c.value} value={c.value}>
+                {c.label}
+              </option>
+            ))}
+          </select>
+        </Field>
+      )}
       <Field label="Title" hint="e.g. Black leather wallet lost at Kaneshie">
         <input
           className={inputClass}

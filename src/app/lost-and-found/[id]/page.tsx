@@ -10,6 +10,7 @@ import {
   RevealPhoneButton,
 } from '@/components/community/ContactButtons';
 import { useLostFoundPost } from '@/hooks/useCommunity';
+import { ShareButton } from '@/components/community/ShareButton';
 import { lostFoundApi } from '@/services/community.service';
 import type { LostFoundPost } from '@/types/community';
 
@@ -28,6 +29,11 @@ function Detail({ post, readOnly }: { post: LostFoundPost; readOnly: boolean }) 
           >
             {lost ? 'Lost' : 'Found'}
           </span>
+          {post.categoryLabel && (
+            <span className="inline-block ml-2 text-xs font-semibold text-text-gray">
+              {post.categoryLabel}
+            </span>
+          )}
           {resolved && (
             <span className="inline-block ml-2 text-xs font-bold px-2 py-0.5 rounded bg-background-primary">
               Resolved
@@ -92,6 +98,7 @@ function Detail({ post, readOnly }: { post: LostFoundPost; readOnly: boolean }) 
             )}
           </>
         )}
+        <ShareButton title={post.title} path={`/lost-and-found/${post.id}`} />
         <p className="text-xs text-text-light-gray">
           Meet in a public place. Never pay a &quot;reward&quot; before you see
           the item.

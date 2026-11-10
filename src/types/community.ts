@@ -22,7 +22,8 @@ export interface CityRef {
 
 // --- Events & Notices -------------------------------------------------------
 
-export type EventType = 'FUNERAL' | 'MEMORIAL' | 'OBITUARY' | 'OTHER';
+/** Key of an admin-managed notice type, e.g. FUNERAL, WEDDING. */
+export type EventType = string;
 export type ImageRole = 'DECEASED_PHOTO' | 'POSTER' | 'GALLERY';
 export type Visibility = 'PUBLIC' | 'UNLISTED';
 
@@ -35,6 +36,8 @@ export interface EventImage {
 export interface EventPost {
   id: string;
   eventType: EventType;
+  /** Readable name of the type, from the admin-managed list. */
+  eventTypeLabel?: string;
   title: string;
   body: string;
   eventAt: string | null;
@@ -63,7 +66,12 @@ export interface EventProfile {
 }
 
 export interface EventFormConfig {
-  eventTypes: { value: EventType; label: string; imageRoles: ImageRole[] }[];
+  eventTypes: {
+    value: EventType;
+    label: string;
+    description?: string | null;
+    imageRoles: ImageRole[];
+  }[];
   imageRoles: { value: ImageRole; label: string; max: number }[];
   visibility: {
     default: Visibility;
@@ -98,6 +106,9 @@ export type LostFoundKind = 'LOST' | 'FOUND';
 export interface LostFoundPost {
   id: string;
   kind: LostFoundKind;
+  /** Key of an admin-managed category, e.g. ITEM, PET. */
+  category: string;
+  categoryLabel?: string;
   title: string;
   body: string;
   place: string | null;
@@ -114,8 +125,13 @@ export interface LostFoundPost {
   phone?: string | null;
 }
 
+export interface LostFoundFormConfig {
+  categories: { value: string; label: string; description?: string | null }[];
+}
+
 export interface LostFoundInput {
   kind: LostFoundKind;
+  category?: string;
   title: string;
   body: string;
   place?: string;

@@ -5,6 +5,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Category } from '@/types/category';
 import { useLocation } from '@/contexts/LocationContext';
 import { OptimizedImage } from './OptimizedImage';
+import { CommunityNavLinks } from './community/CommunityNavLinks';
 
 interface MobileDrawerProps {
   isOpen: boolean;
@@ -108,7 +109,7 @@ export const MobileDrawer = ({
 
             <div className="space-y-1">
               <Link
-                href="/ads/new"
+                href="/post"
                 onClick={onClose}
                 className="flex items-center gap-4 p-3 rounded-2xl hover:bg-background-primary transition-all group"
               >
@@ -134,6 +135,8 @@ export const MobileDrawer = ({
                   </span>
                 </div>
               </Link>
+
+              <CommunityNavLinks onNavigate={onClose} />
 
               <Link
                 href="/favorites"

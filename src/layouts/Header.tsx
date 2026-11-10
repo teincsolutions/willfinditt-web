@@ -149,7 +149,7 @@ export const Header = () => {
             {/* Desktop Actions */}
             <div className="hidden lg:flex items-center space-x-3">
               {/* Sell Button */}
-              <Link href="/ads/new">
+              <Link href="/post">
                 <Button
                   size="sm"
                   className="bg-primary hover:opacity-90 shadow-md flex flex-row items-center"
@@ -457,7 +457,7 @@ export const Header = () => {
                 )}
               </Link>
               <Link
-                href="/ads/new"
+                href="/post"
                 className="p-2 bg-success hover:opacity-90 rounded-lg transition-colors"
               >
                 <svg

@@ -1,12 +1,17 @@
 import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/contexts/AuthContext';
 import {
+  datingApi,
   getSections,
   lostFoundApi,
   noticesApi,
 } from '@/services/community.service';
 import type {
   CursorPage,
+  DatingAgeBand,
+  DatingGender,
+  DatingPost,
+  DatingSeeking,
   EventPost,
   EventType,
   LostFoundKind,
@@ -133,4 +138,78 @@ export const useSellHref = () => {
     (f) => (f.key === 'event_notices' || f.key === 'lost_found') && f.state === 'ON'
   );
   return anyOpen ? '/post' : '/ads/new';
+};
+
+// --- Love & Dating (Phase 2 — plan v3 PR 13) --------------------------------
+
+export const useDatingFormConfig = (enabled = true) =>
+  useQuery({
+    queryKey: ['community', 'dating', 'form-config'],
+    queryFn: datingApi.formConfig,
+    staleTime: 5 * 60_000,
+    enabled,
+  });
+
+export const useMyDatingKyc = (enabled = true) => {
+  const myKey = useMyKey();
+  return useQuery({
+    queryKey: [...myKey, 'dating-kyc'],
+    queryFn: datingApi.myKyc,
+    enabled,
+    retry: false,
+  });
+};
+
+export const useMyDatingProfile = (enabled = true) => {
+  const myKey = useMyKey();
+  return useQuery({
+    queryKey: [...myKey, 'dating-profile'],
+    queryFn: datingApi.myProfile,
+    enabled,
+    retry: false,
+  });
+};
+
+export const useDatingPosts = (
+  filters: {
+    city?: string;
+    gender?: DatingGender;
+    seeking?: DatingSeeking;
+    ageBand?: DatingAgeBand;
+  },
+  enabled = true
+) =>
+  useInfiniteQuery({
+    queryKey: ['community', 'dating', 'posts', filters],
+    queryFn: ({ pageParam }) =>
+      datingApi.listPosts({ ...filters, cursor: pageParam }),
+    initialPageParam: undefined as string | undefined,
+    getNextPageParam: (last) => last.nextCursor ?? undefined,
+    enabled,
+  });
+
+export const useDatingConversations = (enabled = true) => {
+  const myKey = useMyKey();
+  return useQuery({
+    queryKey: [...myKey, 'dating-conversations'],
+    queryFn: datingApi.listConversations,
+    enabled,
+    refetchInterval: 15_000,
+  });
+};
+
+export const useDatingMessages = (
+  conversationId: string | null,
+  enabled = true
+) => {
+  const myKey = useMyKey();
+  return useInfiniteQuery({
+    queryKey: [...myKey, 'dating-messages', conversationId],
+    queryFn: ({ pageParam }) =>
+      datingApi.listMessages(conversationId as string, pageParam),
+    initialPageParam: undefined as string | undefined,
+    getNextPageParam: (last) => last.nextCursor ?? undefined,
+    enabled: enabled && Boolean(conversationId),
+    refetchInterval: 10_000,
+  });
 };

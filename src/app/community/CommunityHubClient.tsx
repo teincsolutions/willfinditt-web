@@ -8,6 +8,7 @@ import { CityPicker } from '@/components/community/CityPicker';
 import { CommunityProfileCard } from '@/components/community/CommunityProfileCard';
 import { CommunitySearch } from '@/components/community/CommunitySearch';
 import { CommunityTabs, type CommunityTab } from '@/components/community/CommunityTabs';
+import { DatingHubPanel } from '@/components/community/DatingHubPanel';
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 import {
   useLostFound,
@@ -198,7 +199,7 @@ export function CommunityHubClient({ initialFlags }: { initialFlags?: SectionFla
                 </div>
               )}
             </>
-          ) : (
+          ) : activeTab === 'lost-found' ? (
             <>
               <div className="mb-3 flex flex-wrap gap-2">
                 {[
@@ -258,13 +259,17 @@ export function CommunityHubClient({ initialFlags }: { initialFlags?: SectionFla
                 </div>
               )}
             </>
+          ) : (
+            <DatingHubPanel />
           )}
 
-          <LoadMore
-            show={Boolean(activeQuery.hasNextPage)}
-            loading={activeQuery.isFetchingNextPage}
-            onClick={() => activeQuery.fetchNextPage()}
-          />
+          {activeTab !== 'dating' ? (
+            <LoadMore
+              show={Boolean(activeQuery.hasNextPage)}
+              loading={activeQuery.isFetchingNextPage}
+              onClick={() => activeQuery.fetchNextPage()}
+            />
+          ) : null}
         </div>
 
         {/* Sidebar */}

@@ -2,6 +2,18 @@ import api from './api';
 import type {
   CommunityImage,
   CursorPage,
+  DatingAgeBand,
+  DatingConversation,
+  DatingFormConfig,
+  DatingGender,
+  DatingKycState,
+  DatingKycSubmitInput,
+  DatingMessage,
+  DatingMyProfile,
+  DatingPost,
+  DatingPostInput,
+  DatingProfileInput,
+  DatingSeeking,
   EventFormConfig,
   EventPost,
   EventPostInput,
@@ -150,6 +162,108 @@ export const lostFoundApi = {
 
   chat: async (id: string): Promise<{ chatId: string }> =>
     (await api.post(`/lost-found/posts/${id}/chat`)).data.data,
+};
+
+// --- Love & Dating (Phase 2 — plan v3 PR 13) --------------------------------
+
+export const datingApi = {
+  formConfig: async (): Promise<DatingFormConfig> =>
+    (await api.get('/dating/form-config')).data.data,
+
+  myKyc: async (): Promise<DatingKycState> =>
+    (await api.get('/dating/kyc/me')).data.data,
+
+  uploadKycImage: async (file: File): Promise<{ key: string }> => {
+    const form = new FormData();
+    form.append('file', file);
+    const res = await api.post('/dating/kyc/upload', form, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+    return res.data.data;
+  },
+
+  submitKyc: async (input: DatingKycSubmitInput): Promise<DatingKycState> =>
+    (await api.post('/dating/kyc/me', input)).data.data,
+
+  myProfile: async (): Promise<DatingMyProfile | null> =>
+    (await api.get('/dating/profile/me')).data.data,
+
+  saveProfile: async (input: DatingProfileInput): Promise<DatingMyProfile> =>
+    (await api.post('/dating/profile/me', input)).data.data,
+
+  deleteProfile: async (): Promise<void> => {
+    await api.delete('/dating/profile/me');
+  },
+
+  listPosts: async (params: {
+    city?: string;
+    gender?: DatingGender;
+    seeking?: DatingSeeking;
+    ageBand?: DatingAgeBand;
+    cursor?: string;
+  }): Promise<CursorPage<DatingPost>> =>
+    (await api.get('/dating/posts', { params })).data,
+
+  getPost: async (id: string): Promise<DatingPost> =>
+    (await api.get(`/dating/posts/${id}`)).data.data,
+
+  createPost: async (input: DatingPostInput): Promise<DatingPost> =>
+    (await api.post('/dating/posts', input)).data.data,
+
+  myPosts: async (cursor?: string): Promise<CursorPage<DatingPost>> =>
+    (await api.get('/dating/posts/mine', { params: { cursor } })).data,
+
+  deletePost: async (id: string): Promise<void> => {
+    await api.delete(`/dating/posts/${id}`);
+  },
+
+  startConversation: async (
+    postId: string
+  ): Promise<{ id: string; conversationKey: string; postId: string }> =>
+    (await api.post(`/dating/posts/${postId}/chat`)).data.data,
+
+  listConversations: async (): Promise<DatingConversation[]> =>
+    (await api.get('/dating/conversations')).data.data,
+
+  listMessages: async (
+    conversationId: string,
+    cursor?: string
+  ): Promise<CursorPage<DatingMessage>> =>
+    (
+      await api.get(`/dating/conversations/${conversationId}/messages`, {
+        params: { cursor },
+      })
+    ).data,
+
+  sendMessage: async (
+    conversationId: string,
+    input: { body?: string; assetId?: string }
+  ): Promise<DatingMessage> =>
+    (await api.post(`/dating/conversations/${conversationId}/messages`, input))
+      .data.data,
+
+  sharePhone: async (
+    conversationId: string,
+    phone?: string
+  ): Promise<DatingMessage> =>
+    (
+      await api.post(
+        `/dating/conversations/${conversationId}/share-phone`,
+        phone ? { phone } : {}
+      )
+    ).data.data,
+
+  deleteConversation: async (conversationId: string): Promise<void> => {
+    await api.delete(`/dating/conversations/${conversationId}`);
+  },
+
+  reportMessage: async (messageId: string, reason: string): Promise<void> => {
+    await api.post(`/dating/messages/${messageId}/report`, { reason });
+  },
+
+  blockUser: async (userId: string): Promise<void> => {
+    await api.post(`/dating/blocks/${userId}`);
+  },
 };
 
 /** Readable message from an API error. */

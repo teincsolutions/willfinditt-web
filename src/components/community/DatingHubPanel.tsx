@@ -20,38 +20,27 @@ import {
   uploadCommunityImage,
 } from '@/services/community.service';
 import type {
-  DatingAgeBand,
   DatingDocumentType,
   DatingGender,
+  DatingLookingFor,
   DatingPost,
-  DatingSeeking,
 } from '@/types/community';
 
-const AGE_BAND_LABELS: Record<DatingAgeBand, string> = {
-  AGE_18_24: '18–24',
-  AGE_25_34: '25–34',
-  AGE_35_44: '35–44',
-  AGE_45_54: '45–54',
-  AGE_55_PLUS: '55+',
-};
-
 const GENDER_LABELS: Record<DatingGender, string> = {
-  FEMALE: 'Woman',
-  MALE: 'Man',
-  PREFER_NOT_TO_SAY: 'Prefer not to say',
+  WOMAN: 'Woman',
+  MAN: 'Man',
 };
 
-const SEEKING_LABELS: Record<DatingSeeking, string> = {
-  FEMALE: 'Seeking women',
-  MALE: 'Seeking men',
-  ANY: 'Open to anyone',
+const LOOKING_FOR_LABELS: Record<DatingLookingFor, string> = {
+  WOMAN: 'Seeking a woman',
+  MAN: 'Seeking a man',
+  ANYONE: 'Open to anyone',
 };
 
 const DOC_TYPES: { value: DatingDocumentType; label: string }[] = [
-  { value: 'GHANA_CARD', label: 'Ghana Card (National ID)' },
-  { value: 'PASSPORT', label: 'Passport' },
+  { value: 'NATIONAL_ID', label: 'National ID (Ghana Card)' },
   { value: 'DRIVERS_LICENSE', label: "Driver's Licence" },
-  { value: 'VOTER_ID', label: 'Voter ID' },
+  { value: 'PASSPORT', label: 'Passport' },
 ];
 
 type SubView = 'browse' | 'new-post' | 'inbox' | 'profile';
@@ -75,17 +64,17 @@ export function DatingHubPanel() {
 
   // Browse filters
   const [filterGender, setFilterGender] = useState<DatingGender | ''>('');
-  const [filterAgeBand, setFilterAgeBand] = useState<DatingAgeBand | ''>('');
+  const [filterLookingFor, setFilterLookingFor] = useState<
+    DatingLookingFor | ''
+  >('');
   const [filterCity, setFilterCity] = useState('');
 
   // KYC onboarding state (3-step wizard)
   const [kycStep, setKycStep] = useState<1 | 2 | 3>(1);
-  const [docType, setDocType] = useState<DatingDocumentType>('GHANA_CARD');
+  const [docType, setDocType] = useState<DatingDocumentType>('NATIONAL_ID');
   const [docNumber, setDocNumber] = useState('');
-  const [birthYear, setBirthYear] = useState<number>(1996);
-  const [consentGiven, setConsentGiven] = useState(false);
-  const [idFrontKey, setIdFrontKey] = useState('');
-  const [idBackKey, setIdBackKey] = useState('');
+  const [consent, setConsent] = useState(false);
+  const [documentKey, setDocumentKey] = useState('');
   const [faceKeys, setFaceKeys] = useState<[string, string, string]>([
     '',
     '',
@@ -96,9 +85,10 @@ export function DatingHubPanel() {
 
   // Dating profile setup state
   const [nickname, setNickname] = useState('');
-  const [gender, setGender] = useState<DatingGender>('MALE');
-  const [seeking, setSeeking] = useState<DatingSeeking>('FEMALE');
-  const [bio, setBio] = useState('');
+  const [birthYear, setBirthYear] = useState<number>(1996);
+  const [gender, setGender] = useState<DatingGender>('MAN');
+  const [lookingFor, setLookingFor] = useState<DatingLookingFor>('WOMAN');
+  const [about, setAbout] = useState('');
   const [profileCity, setProfileCity] = useState('');
   const [photoAssetId, setPhotoAssetId] = useState<string | null>(null);
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
@@ -118,17 +108,18 @@ export function DatingHubPanel() {
   const [reportMsgId, setReportMsgId] = useState<string | null>(null);
   const [reportReason, setReportReason] = useState('');
 
-  const kycStatus = kycQuery.data?.status ?? 'NOT_STARTED';
+  const kycRecord = kycQuery.data ?? null;
+  const kycStatus = kycRecord?.status ?? 'NOT_STARTED';
   const myProfile = profileQuery.data ?? null;
   const isVerifiedAndActive =
     isAuthenticated &&
     kycStatus === 'APPROVED' &&
-    myProfile?.status === 'ACTIVE';
+    (myProfile?.status === 'ACTIVE' || myProfile?.status === 'HIDDEN');
 
   const postsQuery = useDatingPosts(
     {
       gender: filterGender || undefined,
-      ageBand: filterAgeBand || undefined,
+      lookingFor: filterLookingFor || undefined,
       city: filterCity || undefined,
     },
     isVerifiedAndActive && subView === 'browse'
@@ -149,13 +140,13 @@ export function DatingHubPanel() {
           ID-Verified &amp; Private
         </span>
         <h2 className="mt-3 text-2xl font-black text-text">
-          Love &amp; Dating on WillfindITT
+          Love &amp; Dating on Willfinditt
         </h2>
         <p className="mt-2 max-w-xl text-sm leading-relaxed text-text-gray">
           Every member verifies their identity with a government ID and three
           live face checks before joining. Your real name, phone number, email,
           and marketplace ads are never shown on your dating profile — only your
-          chosen dating nickname and city appear.
+          chosen dating nickname, approximate age, and city appear.
         </p>
         <div className="mt-6 flex flex-wrap gap-3">
           <Link
@@ -190,13 +181,11 @@ export function DatingHubPanel() {
     setKycBusy(true);
     try {
       await datingApi.submitKyc({
+        consent,
         documentType: docType,
         documentNumber: docNumber.trim(),
-        birthYear: Number(birthYear),
-        idDocumentFrontKey: idFrontKey,
-        idDocumentBackKey: idBackKey || undefined,
-        facePhotoKeys: faceKeys,
-        consentGiven,
+        documentKey,
+        faceKeys,
       });
       await queryClient.invalidateQueries({
         queryKey: [...myKey, 'dating-kyc'],
@@ -212,19 +201,28 @@ export function DatingHubPanel() {
     setProfileMsg(null);
     setProfileBusy(true);
     try {
-      await datingApi.saveProfile({
-        nickname: nickname.trim() || myProfile?.nickname,
-        birthYear: myProfile?.birthYear ?? Number(birthYear),
+      const payload = {
+        nickname: nickname.trim() || myProfile?.nickname || '',
+        birthYear: Number(birthYear || myProfile?.birthYear || 1996),
         gender,
-        seeking,
-        bio: bio.trim() || null,
+        lookingFor,
+        about: about.trim() || null,
         cityId: profileCity || null,
-        photoAssetId: photoAssetId ?? undefined,
-      });
+        ...(photoAssetId ? { photoAssetId } : {}),
+      };
+      if (myProfile) {
+        await datingApi.updateProfile(payload);
+      } else {
+        await datingApi.createProfile(payload);
+      }
       await queryClient.invalidateQueries({
         queryKey: [...myKey, 'dating-profile'],
       });
-      setProfileMsg('Dating profile saved.');
+      setProfileMsg(
+        myProfile
+          ? 'Dating profile updated.'
+          : 'Dating profile created (pending approval).'
+      );
     } catch (err) {
       setProfileMsg(apiError(err, 'Could not save dating profile'));
     } finally {
@@ -266,11 +264,26 @@ export function DatingHubPanel() {
     }
   };
 
+  const handleSelectConversation = async (convId: string) => {
+    setActiveConvId(convId);
+    try {
+      await datingApi.markRead(convId);
+      await queryClient.invalidateQueries({
+        queryKey: [...myKey, 'dating-conversations'],
+      });
+    } catch {
+      // Non-fatal
+    }
+  };
+
   const handleSendMessage = async () => {
     if (!activeConvId || !draftMsg.trim()) return;
     setChatBusy(true);
     try {
-      await datingApi.sendMessage(activeConvId, { body: draftMsg.trim() });
+      await datingApi.sendMessage(activeConvId, {
+        type: 'TEXT',
+        text: draftMsg.trim(),
+      });
       setDraftMsg('');
       await queryClient.invalidateQueries({
         queryKey: [...myKey, 'dating-messages', activeConvId],
@@ -320,11 +333,18 @@ export function DatingHubPanel() {
   };
 
   const handleReportMessage = async () => {
-    if (!reportMsgId || reportReason.trim().length < 5) return;
+    if (!activeConvId || !reportMsgId || reportReason.trim().length < 3) return;
     try {
-      await datingApi.reportMessage(reportMsgId, reportReason.trim());
+      await datingApi.reportMessage(
+        activeConvId,
+        reportMsgId,
+        reportReason.trim()
+      );
       setReportMsgId(null);
       setReportReason('');
+      await queryClient.invalidateQueries({
+        queryKey: [...myKey, 'dating-messages', activeConvId],
+      });
       alert('Report sent to the safety team.');
     } catch (err) {
       alert(apiError(err, 'Could not report message'));
@@ -352,23 +372,24 @@ export function DatingHubPanel() {
             </div>
           </div>
 
-          {kycQuery.data?.rejectionReason ? (
+          {kycRecord?.decisionReason || kycRecord?.infoRequestMessage ? (
             <div className="mt-4 rounded-xl border border-error/40 bg-error/5 p-3 text-sm text-error">
-              Reviewer note: {kycQuery.data.rejectionReason}
+              Reviewer note:{' '}
+              {kycRecord.infoRequestMessage || kycRecord.decisionReason}
             </div>
           ) : null}
 
-          {kycStatus === 'PENDING_REVIEW' ? (
+          {kycStatus === 'PENDING' ? (
             <div className="mt-4 rounded-xl border border-border-custom bg-background-primary p-4 text-sm text-text">
               Your ID &amp; face verification photos have been submitted and are
-              waiting for moderator approval. You can prepare your dating
-              nickname and profile below so it goes live as soon as KYC is
+              waiting for moderator approval. Make sure your pseudonymous dating
+              profile below is filled in so it goes live right away once
               approved.
             </div>
           ) : kycStatus !== 'APPROVED' ? (
             <div className="mt-6 space-y-5 border-t border-border-custom pt-5">
               {/* Step indicators */}
-              <div className="flex items-center gap-2 text-xs font-bold">
+              <div className="flex flex-wrap items-center gap-2 text-xs font-bold">
                 {[
                   { s: 1 as const, label: '1. ID Details & Consent' },
                   { s: 2 as const, label: '2. ID Document Photo' },
@@ -390,7 +411,7 @@ export function DatingHubPanel() {
               ) : null}
 
               {kycStep === 1 ? (
-                <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                   <div>
                     <label className="mb-1 block text-xs font-bold text-text">
                       Government ID Type
@@ -411,7 +432,7 @@ export function DatingHubPanel() {
                   </div>
                   <div>
                     <label className="mb-1 block text-xs font-bold text-text">
-                      Document Number (hashed with HMAC)
+                      Document Number (HMAC hashed, never stored in plain text)
                     </label>
                     <input
                       type="text"
@@ -421,38 +442,25 @@ export function DatingHubPanel() {
                       className="w-full rounded-lg border border-border-custom bg-background px-3 py-2 text-sm text-text"
                     />
                   </div>
-                  <div>
-                    <label className="mb-1 block text-xs font-bold text-text">
-                      Birth Year (18+ only)
-                    </label>
-                    <input
-                      type="number"
-                      min={1925}
-                      max={new Date().getFullYear() - 18}
-                      value={birthYear}
-                      onChange={(e) => setBirthYear(Number(e.target.value))}
-                      className="w-full rounded-lg border border-border-custom bg-background px-3 py-2 text-sm text-text"
-                    />
-                  </div>
-                  <div className="md:col-span-3">
+                  <div className="md:col-span-2">
                     <label className="flex items-start gap-2 text-sm text-text-gray">
                       <input
                         type="checkbox"
-                        checked={consentGiven}
-                        onChange={(e) => setConsentGiven(e.target.checked)}
+                        checked={consent}
+                        onChange={(e) => setConsent(e.target.checked)}
                         className="mt-1"
                       />
                       <span>
-                        I consent to WillfindITT verifying my ID and 3 live face
+                        I consent to Willfinditt verifying my ID and 3 live face
                         photos for safety and age verification. Raw verification
                         photos are deleted 30 days after review.
                       </span>
                     </label>
                   </div>
-                  <div className="md:col-span-3">
+                  <div className="md:col-span-2">
                     <button
                       type="button"
-                      disabled={!docNumber.trim() || !consentGiven}
+                      disabled={docNumber.trim().length < 5 || !consent}
                       onClick={() => setKycStep(2)}
                       className="rounded-lg bg-primary px-4 py-2 text-sm font-bold text-white disabled:opacity-50"
                     >
@@ -462,45 +470,27 @@ export function DatingHubPanel() {
                 </div>
               ) : kycStep === 2 ? (
                 <div className="space-y-4">
-                  <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                    <div className="rounded-xl border border-border-custom p-4">
-                      <p className="text-sm font-bold text-text">
-                        ID Front Photo (Required)
+                  <div className="rounded-xl border border-border-custom p-4">
+                    <p className="text-sm font-bold text-text">
+                      Government ID Photo (Required)
+                    </p>
+                    <p className="mt-1 text-xs text-text-gray">
+                      Upload a clear photo of the front of your selected ID.
+                    </p>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => {
+                        const f = e.target.files?.[0];
+                        if (f) handleUploadKycSlot(f, setDocumentKey);
+                      }}
+                      className="mt-2 block w-full text-xs text-text-gray"
+                    />
+                    {documentKey ? (
+                      <p className="mt-1 text-xs font-semibold text-green-600">
+                        Uploaded securely
                       </p>
-                      <input
-                        type="file"
-                        accept="image/*"
-                        onChange={(e) => {
-                          const f = e.target.files?.[0];
-                          if (f) handleUploadKycSlot(f, setIdFrontKey);
-                        }}
-                        className="mt-2 block w-full text-xs text-text-gray"
-                      />
-                      {idFrontKey ? (
-                        <p className="mt-1 text-xs font-semibold text-green-600">
-                          Uploaded securely
-                        </p>
-                      ) : null}
-                    </div>
-                    <div className="rounded-xl border border-border-custom p-4">
-                      <p className="text-sm font-bold text-text">
-                        ID Back Photo (Optional)
-                      </p>
-                      <input
-                        type="file"
-                        accept="image/*"
-                        onChange={(e) => {
-                          const f = e.target.files?.[0];
-                          if (f) handleUploadKycSlot(f, setIdBackKey);
-                        }}
-                        className="mt-2 block w-full text-xs text-text-gray"
-                      />
-                      {idBackKey ? (
-                        <p className="mt-1 text-xs font-semibold text-green-600">
-                          Uploaded securely
-                        </p>
-                      ) : null}
-                    </div>
+                    ) : null}
                   </div>
                   <div className="flex gap-2">
                     <button
@@ -512,7 +502,7 @@ export function DatingHubPanel() {
                     </button>
                     <button
                       type="button"
-                      disabled={!idFrontKey || kycBusy}
+                      disabled={!documentKey || kycBusy}
                       onClick={() => setKycStep(3)}
                       className="rounded-lg bg-primary px-4 py-2 text-sm font-bold text-white disabled:opacity-50"
                     >
@@ -572,7 +562,7 @@ export function DatingHubPanel() {
                       type="button"
                       disabled={
                         kycBusy ||
-                        !idFrontKey ||
+                        !documentKey ||
                         !faceKeys[0] ||
                         !faceKeys[1] ||
                         !faceKeys[2]
@@ -596,7 +586,8 @@ export function DatingHubPanel() {
           </h3>
           <p className="mt-1 text-sm text-text-gray">
             Choose a nickname that is different from your real name. Only your
-            nickname, age band, city, and dating photo are visible in Dating.
+            nickname, approximate age, city, and dating photo are visible in
+            Dating.
           </p>
 
           <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
@@ -608,8 +599,57 @@ export function DatingHubPanel() {
                 type="text"
                 value={nickname || myProfile?.nickname || ''}
                 onChange={(e) => setNickname(e.target.value)}
-                placeholder="e.g. KofiAccra"
+                placeholder="e.g. SunnyAma"
                 className="w-full rounded-lg border border-border-custom bg-background px-3 py-2 text-sm text-text"
+              />
+            </div>
+            <div>
+              <label className="mb-1 block text-xs font-bold text-text">
+                Birth Year (18+ only — never shown publicly)
+              </label>
+              <input
+                type="number"
+                min={1925}
+                max={new Date().getFullYear() - 18}
+                value={birthYear || myProfile?.birthYear || 1996}
+                onChange={(e) => setBirthYear(Number(e.target.value))}
+                className="w-full rounded-lg border border-border-custom bg-background px-3 py-2 text-sm text-text"
+              />
+            </div>
+            <div>
+              <label className="mb-1 block text-xs font-bold text-text">
+                I am a
+              </label>
+              <select
+                value={gender}
+                onChange={(e) => setGender(e.target.value as DatingGender)}
+                className="w-full rounded-lg border border-border-custom bg-background px-3 py-2 text-sm text-text"
+              >
+                <option value="MAN">Man</option>
+                <option value="WOMAN">Woman</option>
+              </select>
+            </div>
+            <div>
+              <label className="mb-1 block text-xs font-bold text-text">
+                Looking for
+              </label>
+              <select
+                value={lookingFor}
+                onChange={(e) =>
+                  setLookingFor(e.target.value as DatingLookingFor)
+                }
+                className="w-full rounded-lg border border-border-custom bg-background px-3 py-2 text-sm text-text"
+              >
+                <option value="WOMAN">A woman</option>
+                <option value="MAN">A man</option>
+                <option value="ANYONE">Anyone</option>
+              </select>
+            </div>
+            <div>
+              <CityPicker
+                value={profileCity}
+                onChange={setProfileCity}
+                label="City (optional)"
               />
             </div>
             <div>
@@ -636,49 +676,14 @@ export function DatingHubPanel() {
                 <p className="mt-1 text-xs text-green-600">Photo attached</p>
               ) : null}
             </div>
-            <div>
-              <label className="mb-1 block text-xs font-bold text-text">
-                I am a
-              </label>
-              <select
-                value={gender}
-                onChange={(e) => setGender(e.target.value as DatingGender)}
-                className="w-full rounded-lg border border-border-custom bg-background px-3 py-2 text-sm text-text"
-              >
-                <option value="MALE">Man</option>
-                <option value="FEMALE">Woman</option>
-                <option value="PREFER_NOT_TO_SAY">Prefer not to say</option>
-              </select>
-            </div>
-            <div>
-              <label className="mb-1 block text-xs font-bold text-text">
-                Interested in
-              </label>
-              <select
-                value={seeking}
-                onChange={(e) => setSeeking(e.target.value as DatingSeeking)}
-                className="w-full rounded-lg border border-border-custom bg-background px-3 py-2 text-sm text-text"
-              >
-                <option value="FEMALE">Women</option>
-                <option value="MALE">Men</option>
-                <option value="ANY">Anyone</option>
-              </select>
-            </div>
-            <div className="md:col-span-2">
-              <CityPicker
-                value={profileCity}
-                onChange={setProfileCity}
-                label="City (optional)"
-              />
-            </div>
             <div className="md:col-span-2">
               <label className="mb-1 block text-xs font-bold text-text">
-                Short Bio
+                About you
               </label>
               <textarea
                 rows={3}
-                value={bio || myProfile?.bio || ''}
-                onChange={(e) => setBio(e.target.value)}
+                value={about || myProfile?.about || ''}
+                onChange={(e) => setAbout(e.target.value)}
                 placeholder="Share your interests, values, and what kind of connection you are looking for…"
                 className="w-full rounded-lg border border-border-custom bg-background px-3 py-2 text-sm text-text"
               />
@@ -707,7 +712,9 @@ export function DatingHubPanel() {
   // Verified & Active Member View
   const posts = postsQuery.data?.pages.flatMap((p) => p.items) ?? [];
   const conversations = conversationsQuery.data ?? [];
-  const messages = messagesQuery.data?.pages.flatMap((p) => p.items) ?? [];
+  const messages = [
+    ...(messagesQuery.data?.pages.flatMap((p) => p.items) ?? []),
+  ].reverse();
 
   return (
     <div className="space-y-6">
@@ -731,7 +738,9 @@ export function DatingHubPanel() {
           ))}
         </div>
         <span className="text-xs font-semibold text-text-gray">
-          Signed in as <strong className="text-text">{myProfile.nickname}</strong> · KYC Verified
+          Signed in as{' '}
+          <strong className="text-text">{myProfile.nickname}</strong> · KYC
+          Verified
         </span>
       </div>
 
@@ -739,9 +748,9 @@ export function DatingHubPanel() {
         <div className="space-y-4">
           <div className="flex flex-wrap items-center gap-2">
             {[
-              { value: '' as const, label: 'All' },
-              { value: 'FEMALE' as const, label: 'Women' },
-              { value: 'MALE' as const, label: 'Men' },
+              { value: '' as const, label: 'All posters' },
+              { value: 'WOMAN' as const, label: 'Women' },
+              { value: 'MAN' as const, label: 'Men' },
             ].map((g) => (
               <button
                 key={g.label}
@@ -753,16 +762,19 @@ export function DatingHubPanel() {
               </button>
             ))}
 
-            {(Object.keys(AGE_BAND_LABELS) as DatingAgeBand[]).map((ab) => (
+            {[
+              { value: '' as const, label: 'Looking for: Any' },
+              { value: 'WOMAN' as const, label: 'Seeking a woman' },
+              { value: 'MAN' as const, label: 'Seeking a man' },
+              { value: 'ANYONE' as const, label: 'Open to anyone' },
+            ].map((lf) => (
               <button
-                key={ab}
+                key={lf.label}
                 type="button"
-                onClick={() =>
-                  setFilterAgeBand(filterAgeBand === ab ? '' : ab)
-                }
-                className={pillClass(filterAgeBand === ab)}
+                onClick={() => setFilterLookingFor(lf.value)}
+                className={pillClass(filterLookingFor === lf.value)}
               >
-                {AGE_BAND_LABELS[ab]}
+                {lf.label}
               </button>
             ))}
           </div>
@@ -805,6 +817,7 @@ export function DatingHubPanel() {
                         <img
                           src={post.profile.photoUrl}
                           alt={post.profile.nickname}
+                          referrerPolicy="no-referrer"
                           className="h-14 w-14 rounded-full object-cover"
                         />
                       ) : (
@@ -814,12 +827,11 @@ export function DatingHubPanel() {
                       )}
                       <div>
                         <p className="font-bold text-text">
-                          {post.profile.nickname}
+                          {post.profile.nickname}, {post.profile.age}
                         </p>
                         <p className="text-xs text-text-gray">
                           {GENDER_LABELS[post.profile.gender]} ·{' '}
-                          {AGE_BAND_LABELS[post.profile.ageBand]} ·{' '}
-                          {SEEKING_LABELS[post.profile.seeking]}
+                          {LOOKING_FOR_LABELS[post.profile.lookingFor]}
                           {post.city ? ` · ${post.city.name}` : ''}
                         </p>
                       </div>
@@ -867,7 +879,7 @@ export function DatingHubPanel() {
           <div className="mt-4 space-y-4">
             <div>
               <label className="mb-1 block text-xs font-bold text-text">
-                Headline
+                Headline (3–120 characters)
               </label>
               <input
                 type="text"
@@ -879,7 +891,7 @@ export function DatingHubPanel() {
             </div>
             <div>
               <label className="mb-1 block text-xs font-bold text-text">
-                About you &amp; who you&apos;d like to meet
+                About you &amp; who you&apos;d like to meet (min 10 characters)
               </label>
               <textarea
                 rows={5}
@@ -894,7 +906,11 @@ export function DatingHubPanel() {
             ) : null}
             <button
               type="button"
-              disabled={postBusy || postTitle.trim().length < 5 || postBody.trim().length < 20}
+              disabled={
+                postBusy ||
+                postTitle.trim().length < 3 ||
+                postBody.trim().length < 10
+              }
               onClick={handleCreatePost}
               className="rounded-lg bg-primary px-5 py-2.5 text-sm font-bold text-white disabled:opacity-50"
             >
@@ -923,7 +939,7 @@ export function DatingHubPanel() {
                   <button
                     key={conv.id}
                     type="button"
-                    onClick={() => setActiveConvId(conv.id)}
+                    onClick={() => handleSelectConversation(conv.id)}
                     className={`flex w-full items-center justify-between rounded-xl p-2.5 text-left transition-colors ${
                       activeConvId === conv.id
                         ? 'bg-primaryLight text-primary'
@@ -931,12 +947,12 @@ export function DatingHubPanel() {
                     }`}
                   >
                     <div>
-                      <p className="text-sm font-bold">{conv.peer.nickname}</p>
-                      {conv.peer.city ? (
-                        <p className="text-xs text-text-gray">
-                          {conv.peer.city.name}
-                        </p>
-                      ) : null}
+                      <p className="text-sm font-bold">
+                        {conv.peerProfile?.nickname ?? 'Dating member'}
+                      </p>
+                      <p className="truncate text-xs text-text-gray">
+                        {conv.post.title}
+                      </p>
                     </div>
                     {conv.unreadCount > 0 ? (
                       <span className="rounded-full bg-primary px-2 py-0.5 text-[11px] font-bold text-white">
@@ -996,9 +1012,9 @@ export function DatingHubPanel() {
                         }`}
                       >
                         {m.type === 'PHONE_SHARE' ? (
-                          <p className="font-semibold">Shared phone: {m.body}</p>
+                          <p className="font-semibold">Shared phone: {m.text}</p>
                         ) : (
-                          <p className="whitespace-pre-wrap">{m.body}</p>
+                          <p className="whitespace-pre-wrap">{m.text}</p>
                         )}
                       </div>
                       {!m.isMine ? (
@@ -1023,7 +1039,7 @@ export function DatingHubPanel() {
                       type="text"
                       value={reportReason}
                       onChange={(e) => setReportReason(e.target.value)}
-                      placeholder="Describe the issue (at least 5 characters)…"
+                      placeholder="Describe the issue (at least 3 characters)…"
                       className="mt-2 w-full rounded-lg border border-border-custom bg-white px-3 py-1.5 text-xs"
                     />
                     <div className="mt-2 flex gap-2">
@@ -1072,13 +1088,28 @@ export function DatingHubPanel() {
             My Dating Profile &amp; Privacy
           </h3>
           <p className="mt-1 text-sm text-text-gray">
-            Nickname: <strong>{myProfile.nickname}</strong> · Age band:{' '}
-            {AGE_BAND_LABELS[myProfile.ageBand]}
+            Nickname: <strong>{myProfile.nickname}</strong> · Age:{' '}
+            {myProfile.age} · Status: {myProfile.status}
           </p>
           <p className="mt-2 text-sm text-text-gray">
-            {myProfile.bio || 'No bio set.'}
+            {myProfile.about || 'No about text set.'}
           </p>
-          <div className="mt-6 border-t border-border-custom pt-4">
+          <div className="mt-6 flex flex-wrap gap-3 border-t border-border-custom pt-4">
+            <button
+              type="button"
+              onClick={async () => {
+                const nextHidden = myProfile.status !== 'HIDDEN';
+                await datingApi.updateProfile({ hidden: nextHidden });
+                await queryClient.invalidateQueries({
+                  queryKey: [...myKey, 'dating-profile'],
+                });
+              }}
+              className="rounded-lg border border-border-custom px-4 py-2 text-xs font-bold text-text hover:bg-background-primary"
+            >
+              {myProfile.status === 'HIDDEN'
+                ? 'Show My Dating Profile'
+                : 'Hide My Dating Profile'}
+            </button>
             <button
               type="button"
               onClick={async () => {

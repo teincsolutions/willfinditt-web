@@ -8,10 +8,8 @@ import {
 } from '@/services/community.service';
 import type {
   CursorPage,
-  DatingAgeBand,
   DatingGender,
-  DatingPost,
-  DatingSeeking,
+  DatingLookingFor,
   EventPost,
   EventType,
   LostFoundKind,
@@ -174,8 +172,7 @@ export const useDatingPosts = (
   filters: {
     city?: string;
     gender?: DatingGender;
-    seeking?: DatingSeeking;
-    ageBand?: DatingAgeBand;
+    lookingFor?: DatingLookingFor;
   },
   enabled = true
 ) =>

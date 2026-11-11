@@ -2,18 +2,17 @@ import api from './api';
 import type {
   CommunityImage,
   CursorPage,
-  DatingAgeBand,
   DatingConversation,
   DatingFormConfig,
   DatingGender,
   DatingKycState,
   DatingKycSubmitInput,
+  DatingLookingFor,
   DatingMessage,
   DatingMyProfile,
   DatingPost,
   DatingPostInput,
   DatingProfileInput,
-  DatingSeeking,
   EventFormConfig,
   EventPost,
   EventPostInput,
@@ -164,16 +163,16 @@ export const lostFoundApi = {
     (await api.post(`/lost-found/posts/${id}/chat`)).data.data,
 };
 
-// --- Love & Dating (Phase 2 — plan v3 PR 13) --------------------------------
+// --- Love & Dating (Phase 2 — matches willfind8-api dating module) ---------
 
 export const datingApi = {
   formConfig: async (): Promise<DatingFormConfig> =>
     (await api.get('/dating/form-config')).data.data,
 
-  myKyc: async (): Promise<DatingKycState> =>
+  myKyc: async (): Promise<DatingKycState | null> =>
     (await api.get('/dating/kyc/me')).data.data,
 
-  uploadKycImage: async (file: File): Promise<{ key: string }> => {
+  uploadKycImage: async (file: File): Promise<{ key: string; url: string }> => {
     const form = new FormData();
     form.append('file', file);
     const res = await api.post('/dating/kyc/upload', form, {
@@ -188,8 +187,15 @@ export const datingApi = {
   myProfile: async (): Promise<DatingMyProfile | null> =>
     (await api.get('/dating/profile/me')).data.data,
 
-  saveProfile: async (input: DatingProfileInput): Promise<DatingMyProfile> =>
+  createProfile: async (
+    input: DatingProfileInput
+  ): Promise<DatingMyProfile> =>
     (await api.post('/dating/profile/me', input)).data.data,
+
+  updateProfile: async (
+    input: DatingProfileInput
+  ): Promise<DatingMyProfile> =>
+    (await api.patch('/dating/profile/me', input)).data.data,
 
   deleteProfile: async (): Promise<void> => {
     await api.delete('/dating/profile/me');
@@ -198,8 +204,7 @@ export const datingApi = {
   listPosts: async (params: {
     city?: string;
     gender?: DatingGender;
-    seeking?: DatingSeeking;
-    ageBand?: DatingAgeBand;
+    lookingFor?: DatingLookingFor;
     cursor?: string;
   }): Promise<CursorPage<DatingPost>> =>
     (await api.get('/dating/posts', { params })).data,
@@ -217,13 +222,11 @@ export const datingApi = {
     await api.delete(`/dating/posts/${id}`);
   },
 
-  startConversation: async (
-    postId: string
-  ): Promise<{ id: string; conversationKey: string; postId: string }> =>
-    (await api.post(`/dating/posts/${postId}/chat`)).data.data,
+  startConversation: async (postId: string): Promise<DatingConversation> =>
+    (await api.post(`/dating/posts/${postId}/conversations`)).data.data,
 
   listConversations: async (): Promise<DatingConversation[]> =>
-    (await api.get('/dating/conversations')).data.data,
+    (await api.get('/dating/conversations')).data.items,
 
   listMessages: async (
     conversationId: string,
@@ -237,32 +240,43 @@ export const datingApi = {
 
   sendMessage: async (
     conversationId: string,
-    input: { body?: string; assetId?: string }
+    input: {
+      type?: 'TEXT' | 'IMAGE' | 'PHONE_SHARE';
+      text?: string;
+      mediaAssetId?: string;
+    }
   ): Promise<DatingMessage> =>
     (await api.post(`/dating/conversations/${conversationId}/messages`, input))
       .data.data,
+
+  markRead: async (conversationId: string): Promise<void> => {
+    await api.post(`/dating/conversations/${conversationId}/read`);
+  },
 
   sharePhone: async (
     conversationId: string,
     phone?: string
   ): Promise<DatingMessage> =>
     (
-      await api.post(
-        `/dating/conversations/${conversationId}/share-phone`,
-        phone ? { phone } : {}
-      )
+      await api.post(`/dating/conversations/${conversationId}/messages`, {
+        type: 'PHONE_SHARE',
+        ...(phone ? { text: phone } : {}),
+      })
     ).data.data,
 
   deleteConversation: async (conversationId: string): Promise<void> => {
     await api.delete(`/dating/conversations/${conversationId}`);
   },
 
-  reportMessage: async (messageId: string, reason: string): Promise<void> => {
-    await api.post(`/dating/messages/${messageId}/report`, { reason });
-  },
-
-  blockUser: async (userId: string): Promise<void> => {
-    await api.post(`/dating/blocks/${userId}`);
+  reportMessage: async (
+    conversationId: string,
+    messageId: string,
+    reason: string
+  ): Promise<void> => {
+    await api.post(`/dating/conversations/${conversationId}/report`, {
+      messageId,
+      reason,
+    });
   },
 };
 

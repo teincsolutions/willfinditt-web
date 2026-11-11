@@ -5,7 +5,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Category } from '@/types/category';
 import { useLocation } from '@/contexts/LocationContext';
 import { OptimizedImage } from './OptimizedImage';
-import { CommunityNavLinks } from './community/CommunityNavLinks';
+import { CommunityDrawerSection } from './community/CommunityDrawerSection';
 import { useSellHref } from '@/hooks/useCommunity';
 
 interface MobileDrawerProps {
@@ -131,14 +131,14 @@ export const MobileDrawer = ({
                   </svg>
                 </div>
                 <div className="flex-1">
-                  <span className="font-bold text-text block">Post an Ad</span>
+                  <span className="font-bold text-text block">Sell / Post</span>
                   <span className="text-[11px] text-text-light-gray font-medium">
-                    Sell items quickly
+                    Sell an item or post to the community
                   </span>
                 </div>
               </Link>
 
-              <CommunityNavLinks onNavigate={onClose} />
+              <CommunityDrawerSection onNavigate={onClose} />
 
               <Link
                 href="/favorites"

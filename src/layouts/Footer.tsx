@@ -5,7 +5,7 @@ export const Footer = () => {
   return (
     <footer className="bg-background border-t border-border-custom py-12 text-text">
       <div className="container mx-auto px-4">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-12">
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-12">
           <div className="space-y-4">
             <Link href="/" className="flex items-center space-x-2">
               <div className="relative w-8 h-8 overflow-hidden rounded bg-primary shadow-sm">
@@ -44,6 +44,37 @@ export const Footer = () => {
                   className="text-text-gray hover:text-primary text-sm transition-colors"
                 >
                   Terms of Service
+                </Link>
+              </li>
+            </ul>
+          </div>
+          <div>
+            <h3 className="text-sm font-bold uppercase tracking-wider text-text mb-6">
+              Community
+            </h3>
+            <ul className="space-y-3">
+              <li>
+                <Link
+                  href="/notices"
+                  className="text-text-gray hover:text-primary text-sm transition-colors"
+                >
+                  Events &amp; Notices
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="/lost-and-found"
+                  className="text-text-gray hover:text-primary text-sm transition-colors"
+                >
+                  Lost &amp; Found
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="/account/community"
+                  className="text-text-gray hover:text-primary text-sm transition-colors"
+                >
+                  My Community
                 </Link>
               </li>
             </ul>

@@ -50,6 +50,7 @@ export const noticesApi = {
     eventType?: EventType;
     city?: string;
     profile?: string;
+    q?: string;
     cursor?: string;
   }): Promise<CursorPage<EventPost>> =>
     (await api.get('/event-notices/posts', { params })).data,
@@ -107,6 +108,7 @@ export const lostFoundApi = {
     kind?: LostFoundKind;
     category?: string;
     city?: string;
+    q?: string;
     cursor?: string;
   }): Promise<CursorPage<LostFoundPost>> =>
     (await api.get('/lost-found/posts', { params })).data,

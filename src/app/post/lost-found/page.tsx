@@ -4,9 +4,16 @@ import { Suspense, useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { ImageUploader } from '@/components/ImageUploader';
 import { SectionGate } from '@/components/community/SectionGate';
 import { CityPicker } from '@/components/community/CityPicker';
+import {
+  CommunityImageUploader,
+  type UploadedImage,
+} from '@/components/community/CommunityImageUploader';
+import {
+  ExpiryText,
+  ListingPeriodPicker,
+} from '@/components/community/ListingPeriod';
 import {
   Field,
   fromLocalInput,
@@ -15,14 +22,31 @@ import {
 } from '@/components/community/form';
 import { useAuth } from '@/contexts/AuthContext';
 import { apiError, lostFoundApi } from '@/services/community.service';
-import { useLostFoundFormConfig } from '@/hooks/useCommunity';
-import type { LostFoundKind, LostFoundPost } from '@/types/community';
+import { useLostFoundFormConfig, useMyKey } from '@/hooks/useCommunity';
+import type {
+  ListingPeriodInput,
+  LostFoundFormConfig,
+  LostFoundKind,
+  LostFoundPost,
+} from '@/types/community';
 
-function LostFoundForm({ existing }: { existing: LostFoundPost | null }) {
+function LostFoundForm({
+  existing,
+  config,
+}: {
+  existing: LostFoundPost | null;
+  config?: LostFoundFormConfig;
+}) {
   const router = useRouter();
   const queryClient = useQueryClient();
+  const rules = {
+    title: config?.fields.title ?? { required: true, min: 3, max: 120 },
+    body: config?.fields.body ?? { required: true, min: 10, max: 3000 },
+    place: config?.fields.place ?? { required: false, max: 200 },
+    posterName: config?.fields.posterName ?? { required: true, min: 2, max: 40 },
+    images: config?.fields.images ?? { required: false, max: 6 },
+  };
   const [kind, setKind] = useState<LostFoundKind>(existing?.kind ?? 'LOST');
-  const { data: config } = useLostFoundFormConfig();
   const [category, setCategory] = useState(existing?.category ?? 'ITEM');
   const [title, setTitle] = useState(existing?.title ?? '');
   const [body, setBody] = useState(existing?.body ?? '');
@@ -32,16 +56,24 @@ function LostFoundForm({ existing }: { existing: LostFoundPost | null }) {
   );
   const [cityId, setCityId] = useState(existing?.city?.id ?? '');
   const [phone, setPhone] = useState(existing?.phone ?? '');
-  const [posterName, setPosterName] = useState(existing?.posterName ?? '');
-  const [images, setImages] = useState<string[]>(
-    existing?.images.map((i) => i.url) ?? []
+  // Older posts may show the neutral name; ask for a real choice on edit.
+  const [posterName, setPosterName] = useState(
+    existing?.posterName === 'Willfinditt user' ? '' : (existing?.posterName ?? '')
   );
+  const [images, setImages] = useState<UploadedImage[]>(
+    existing?.images
+      .filter((i): i is typeof i & { assetId: string } => Boolean(i.assetId))
+      .map((i) => ({ assetId: i.assetId, url: i.url })) ?? []
+  );
+  const [listing, setListing] = useState<ListingPeriodInput>({
+    listingDays: config?.listing.defaultDays ?? 30,
+  });
   const [busy, setBusy] = useState(false);
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     setBusy(true);
-    const input = {
+    const fields = {
       kind,
       category,
       title: title.trim(),
@@ -50,13 +82,13 @@ function LostFoundForm({ existing }: { existing: LostFoundPost | null }) {
       happenedAt: fromLocalInput(happenedAt),
       cityId: cityId || undefined,
       phone: phone.trim() || undefined,
-      posterName: posterName.trim() || undefined,
-      images,
+      posterName: posterName.trim(),
+      images: images.map((i) => i.assetId),
     };
     try {
       const saved = existing
-        ? await lostFoundApi.update(existing.id, input)
-        : await lostFoundApi.create(input);
+        ? await lostFoundApi.update(existing.id, fields)
+        : await lostFoundApi.create({ ...fields, ...listing });
       queryClient.invalidateQueries({ queryKey: ['community'] });
       toast.success(existing ? 'Post updated' : 'Posted');
       router.push(`/lost-and-found/${saved.id}`);
@@ -116,8 +148,8 @@ function LostFoundForm({ existing }: { existing: LostFoundPost | null }) {
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           required
-          minLength={3}
-          maxLength={120}
+          minLength={rules.title.min}
+          maxLength={rules.title.max}
         />
       </Field>
       <Field
@@ -134,8 +166,8 @@ function LostFoundForm({ existing }: { existing: LostFoundPost | null }) {
           value={body}
           onChange={(e) => setBody(e.target.value)}
           required
-          minLength={10}
-          maxLength={3000}
+          minLength={rules.body.min}
+          maxLength={rules.body.max}
         />
       </Field>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -144,7 +176,7 @@ function LostFoundForm({ existing }: { existing: LostFoundPost | null }) {
             className={inputClass}
             value={place}
             onChange={(e) => setPlace(e.target.value)}
-            maxLength={200}
+            maxLength={rules.place.max}
           />
         </Field>
         <Field label="When (optional)">
@@ -173,19 +205,44 @@ function LostFoundForm({ existing }: { existing: LostFoundPost | null }) {
             inputMode="tel"
           />
         </Field>
-        <Field label="Name to show (optional)" hint="Defaults to your first name">
+        <Field
+          label="Name to show"
+          hint="Shown on the post and in messages. A nickname is fine."
+        >
           <input
             className={inputClass}
             value={posterName}
             onChange={(e) => setPosterName(e.target.value)}
-            maxLength={40}
+            required
+            minLength={rules.posterName.min}
+            maxLength={rules.posterName.max}
           />
         </Field>
       </div>
       <div>
-        <span className="block text-sm font-semibold mb-1">Photos (optional, up to 6)</span>
-        <ImageUploader images={images} onImagesChange={setImages} maxImages={6} />
+        <span className="block text-sm font-semibold mb-1">
+          Photos (optional, up to {rules.images.max})
+        </span>
+        <CommunityImageUploader
+          images={images}
+          onChange={setImages}
+          max={rules.images.max ?? 6}
+        />
       </div>
+
+      {existing ? (
+        <p className="text-sm text-text-gray">
+          <ExpiryText expiresAt={existing.expiresAt} />. To keep it up for
+          longer, use Renew in My community posts.
+        </p>
+      ) : (
+        <ListingPeriodPicker
+          value={listing}
+          onChange={setListing}
+          rules={config?.listing}
+        />
+      )}
+
       <button
         type="submit"
         disabled={busy}
@@ -201,10 +258,13 @@ function Flow({ readOnly }: { readOnly: boolean }) {
   const router = useRouter();
   const editId = useSearchParams().get('edit');
   const { isAuthenticated, isLoading: authLoading } = useAuth();
-  const mine = useQuery({
-    queryKey: ['community', 'my-lost-found'],
-    queryFn: () => lostFoundApi.mine(),
+  const myKey = useMyKey();
+  const config = useLostFoundFormConfig();
+  const existing = useQuery({
+    queryKey: [...myKey, 'lost-found', editId],
+    queryFn: () => lostFoundApi.getMine(editId as string),
     enabled: isAuthenticated && Boolean(editId),
+    retry: false,
   });
 
   useEffect(() => {
@@ -216,16 +276,24 @@ function Flow({ readOnly }: { readOnly: boolean }) {
   if (readOnly) {
     return <p className="py-16 text-center">Posting is paused at the moment.</p>;
   }
-  if (authLoading || !isAuthenticated || (editId && mine.isLoading)) {
+  if (
+    authLoading ||
+    !isAuthenticated ||
+    config.isLoading ||
+    (editId && existing.isLoading)
+  ) {
     return <p className="py-16 text-text-gray">Loading…</p>;
   }
-  const existing = editId
-    ? (mine.data?.items.find((p) => p.id === editId) ?? null)
-    : null;
-  if (editId && !existing) {
+  if (editId && !existing.data) {
     return <p className="py-16 text-center">Post not found.</p>;
   }
-  return <LostFoundForm key={existing?.id ?? 'new'} existing={existing} />;
+  return (
+    <LostFoundForm
+      key={existing.data?.id ?? 'new'}
+      existing={existing.data ?? null}
+      config={config.data}
+    />
+  );
 }
 
 export default function PostLostFoundPage() {

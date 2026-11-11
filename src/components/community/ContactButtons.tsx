@@ -97,3 +97,54 @@ export function RevealPhoneButton({
     </button>
   );
 }
+
+/**
+ * Family / organiser numbers on Events & Notices: hidden until an explicit
+ * tap (signed-in only; the server limits and logs each reveal).
+ */
+export function RevealPhonesButton({
+  reveal,
+}: {
+  reveal: () => Promise<string[]>;
+}) {
+  const requireLogin = useRequireLogin();
+  const [phones, setPhones] = useState<string[] | null>(null);
+  const [busy, setBusy] = useState(false);
+
+  if (phones) {
+    return (
+      <div className="flex flex-wrap gap-2">
+        {phones.map((phone) => (
+          <a
+            key={phone}
+            href={`tel:${phone.replace(/[^\d+]/g, '')}`}
+            className="px-4 py-2 rounded-xl border-2 border-primary text-primary font-bold"
+          >
+            {phone}
+          </a>
+        ))}
+      </div>
+    );
+  }
+
+  return (
+    <button
+      type="button"
+      disabled={busy}
+      onClick={async () => {
+        if (!requireLogin()) return;
+        setBusy(true);
+        try {
+          setPhones(await reveal());
+        } catch (error) {
+          toast.error(apiError(error, 'Could not show the numbers'));
+        } finally {
+          setBusy(false);
+        }
+      }}
+      className="w-full py-2.5 rounded-xl border-2 border-primary text-primary font-bold hover:bg-primaryLight disabled:opacity-60"
+    >
+      {busy ? 'Loading…' : 'Show phone numbers'}
+    </button>
+  );
+}

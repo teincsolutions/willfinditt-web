@@ -1,137 +1,55 @@
-'use client';
-
-/* eslint-disable @next/next/no-img-element -- upload bucket images */
-import Link from 'next/link';
-import { useParams } from 'next/navigation';
-import { format } from 'date-fns';
-import { SectionGate } from '@/components/community/SectionGate';
+import type { Metadata } from 'next';
+import { notFound } from 'next/navigation';
 import {
-  ChatButton,
-  RevealPhoneButton,
-} from '@/components/community/ContactButtons';
-import { useLostFoundPost } from '@/hooks/useCommunity';
-import { ShareButton } from '@/components/community/ShareButton';
-import { lostFoundApi } from '@/services/community.service';
-import type { LostFoundPost } from '@/types/community';
+  fetchLostFoundPost,
+  fetchSections,
+  sectionState,
+  summary,
+} from '@/lib/community-server';
+import { LostFoundPostClient } from './LostFoundPostClient';
 
-function Detail({ post, readOnly }: { post: LostFoundPost; readOnly: boolean }) {
-  const lost = post.kind === 'LOST';
-  const resolved = post.status === 'RESOLVED';
+export const dynamic = 'force-dynamic';
 
-  return (
-    <div className="max-w-5xl mx-auto px-4 py-8 grid grid-cols-1 lg:grid-cols-3 gap-8">
-      <article className="lg:col-span-2 space-y-6">
-        <div>
-          <span
-            className={`inline-block text-xs font-bold px-2 py-0.5 rounded ${
-              lost ? 'bg-errorLight text-error' : 'bg-successLight text-success'
-            }`}
-          >
-            {lost ? 'Lost' : 'Found'}
-          </span>
-          {post.categoryLabel && (
-            <span className="inline-block ml-2 text-xs font-semibold text-text-gray">
-              {post.categoryLabel}
-            </span>
-          )}
-          {resolved && (
-            <span className="inline-block ml-2 text-xs font-bold px-2 py-0.5 rounded bg-background-primary">
-              Resolved
-            </span>
-          )}
-          <h1 className="text-2xl md:text-3xl font-bold mt-2">{post.title}</h1>
-        </div>
+type Params = { params: Promise<{ id: string }> };
 
-        {post.images.length > 0 && (
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-            {post.images.map((img) => (
-              <a key={img.url} href={img.url} target="_blank" rel="noreferrer">
-                <img
-                  src={img.url}
-                  alt=""
-                  className="w-full aspect-square object-cover rounded-lg bg-background-primary"
-                />
-              </a>
-            ))}
-          </div>
-        )}
-
-        <div className="rounded-xl border border-border-custom p-4 space-y-1 text-sm">
-          {(post.place || post.city) && (
-            <p>
-              <span className="font-semibold">Where: </span>
-              {[post.place, post.city?.name].filter(Boolean).join(', ')}
-            </p>
-          )}
-          {post.happenedAt && (
-            <p>
-              <span className="font-semibold">When: </span>
-              {format(new Date(post.happenedAt), 'd MMMM yyyy')}
-            </p>
-          )}
-        </div>
-
-        <p className="whitespace-pre-wrap leading-relaxed">{post.body}</p>
-      </article>
-
-      <aside className="space-y-4">
-        <div className="rounded-xl border border-border-custom p-4">
-          <p className="text-xs text-text-gray mb-1">Posted by</p>
-          <p className="font-bold">{post.posterName}</p>
-          <p className="text-xs text-text-light-gray mt-1">
-            {format(new Date(post.createdAt), 'd MMM yyyy')}
-          </p>
-        </div>
-        {resolved ? (
-          <p className="rounded-xl bg-background-primary p-4 text-sm">
-            The poster marked this as resolved.
-          </p>
-        ) : (
-          <>
-            <ChatButton
-              startChat={() => lostFoundApi.chat(post.id)}
-              disabled={readOnly}
-              label={readOnly ? 'Messaging paused' : 'Message'}
-            />
-            {post.hasPhone && (
-              <RevealPhoneButton reveal={() => lostFoundApi.revealPhone(post.id)} />
-            )}
-          </>
-        )}
-        <ShareButton title={post.title} path={`/lost-and-found/${post.id}`} />
-        <p className="text-xs text-text-light-gray">
-          Meet in a public place. Never pay a &quot;reward&quot; before you see
-          the item.
-        </p>
-      </aside>
-    </div>
-  );
+export async function generateMetadata({ params }: Params): Promise<Metadata> {
+  const { id } = await params;
+  const state = sectionState(await fetchSections(), 'lost_found');
+  if (state === 'OFF') return { title: 'Page not found', robots: { index: false } };
+  const post = state === 'SHUTDOWN' ? null : await fetchLostFoundPost(id);
+  if (!post) return { title: 'Lost & Found', robots: { index: false } };
+  const title = `${post.kind === 'LOST' ? 'Lost' : 'Found'}: ${post.title}`;
+  const description = summary(post.body);
+  return {
+    title,
+    description,
+    // Resolved posts stay reachable by link but leave search results.
+    robots: { index: !post.resolved, follow: true },
+    alternates: { canonical: `/lost-and-found/${id}` },
+    openGraph: {
+      title,
+      description,
+      url: `/lost-and-found/${id}`,
+      type: 'article',
+      siteName: 'WillfindITT',
+    },
+  };
 }
 
-function Loader({ readOnly }: { readOnly: boolean }) {
-  const { id } = useParams<{ id: string }>();
-  const query = useLostFoundPost(id);
-  if (query.isLoading) {
-    return <p className="max-w-5xl mx-auto px-4 py-16 text-text-gray">Loading…</p>;
-  }
-  if (!query.data) {
-    return (
-      <div className="max-w-xl mx-auto px-4 py-20 text-center">
-        <h1 className="text-2xl font-bold mb-2">Post not found</h1>
-        <p className="text-text-gray mb-6">It may have ended or been removed.</p>
-        <Link href="/lost-and-found" className="text-primary font-semibold">
-          See all lost & found posts
-        </Link>
-      </div>
-    );
-  }
-  return <Detail post={query.data} readOnly={readOnly} />;
-}
-
-export default function LostFoundPostPage() {
+export default async function LostFoundPostPage({ params }: Params) {
+  const { id } = await params;
+  const flags = await fetchSections();
+  const state = sectionState(flags, 'lost_found');
+  if (state === 'OFF') notFound();
+  const post =
+    state === 'ON' || state === 'READ_ONLY'
+      ? await fetchLostFoundPost(id)
+      : null;
   return (
-    <SectionGate section="lost_found">
-      {({ readOnly }) => <Loader readOnly={readOnly} />}
-    </SectionGate>
+    <LostFoundPostClient
+      id={id}
+      initialFlags={flags ?? undefined}
+      initialPost={post}
+    />
   );
 }

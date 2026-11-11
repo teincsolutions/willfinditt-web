@@ -4,9 +4,16 @@ import { Suspense, useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { ImageUploader } from '@/components/ImageUploader';
 import { SectionGate } from '@/components/community/SectionGate';
 import { CityPicker } from '@/components/community/CityPicker';
+import {
+  CommunityImageUploader,
+  type UploadedImage,
+} from '@/components/community/CommunityImageUploader';
+import {
+  ExpiryText,
+  ListingPeriodPicker,
+} from '@/components/community/ListingPeriod';
 import {
   Field,
   fromLocalInput,
@@ -14,46 +21,67 @@ import {
   toLocalInput,
 } from '@/components/community/form';
 import { useAuth } from '@/contexts/AuthContext';
-import { useNoticeFormConfig } from '@/hooks/useCommunity';
+import { useMyKey, useNoticeFormConfig } from '@/hooks/useCommunity';
 import { apiError, noticesApi } from '@/services/community.service';
 import type {
+  EventFormConfig,
   EventPost,
   EventProfile,
   EventType,
   ImageRole,
+  ListingPeriodInput,
   Visibility,
 } from '@/types/community';
+
+/** Images the owner already has, as uploader items. */
+const asUploaded = (images: { assetId?: string; url: string | null }[]) =>
+  images
+    .filter((i): i is { assetId: string; url: string | null } =>
+      Boolean(i.assetId)
+    )
+    .map((i) => ({ assetId: i.assetId, url: i.url }));
 
 // --- Step 1: the family / organiser profile (once per account) --------------
 
 function ProfileForm({
   profile,
+  config,
   onSaved,
 }: {
   profile: EventProfile | null;
+  config?: EventFormConfig;
   onSaved: (p: EventProfile) => void;
 }) {
+  const nameRule = config?.profile.displayName ?? { required: true, min: 2, max: 80 };
+  const aboutRule = config?.profile.about ?? { required: false, max: 1000 };
   const [displayName, setDisplayName] = useState(profile?.displayName ?? '');
   const [phone1, setPhone1] = useState(profile?.phone1 ?? '');
   const [phone2, setPhone2] = useState(profile?.phone2 ?? '');
   const [about, setAbout] = useState(profile?.about ?? '');
   const [cityId, setCityId] = useState(profile?.city?.id ?? '');
-  const [photo, setPhoto] = useState<string[]>(
-    profile?.photoUrl ? [profile.photoUrl] : []
+  const [photo, setPhoto] = useState<UploadedImage[]>(
+    profile?.photoMediaId
+      ? [{ assetId: profile.photoMediaId, url: profile.photoUrl }]
+      : []
   );
   const [busy, setBusy] = useState(false);
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     setBusy(true);
+    const photoId = photo[0]?.assetId ?? null;
     try {
       const saved = await noticesApi.saveProfile({
         displayName: displayName.trim(),
-        phone1: phone1.trim() || undefined,
-        phone2: phone2.trim() || undefined,
-        about: about.trim() || undefined,
-        cityId: cityId || undefined,
-        photoUrl: photo[0],
+        // '' / null clears an optional field on the server.
+        phone1: phone1.trim() || null,
+        phone2: phone2.trim() || null,
+        about: about.trim() || null,
+        cityId: cityId || null,
+        // Only send the photo when it changed.
+        ...(photoId !== (profile?.photoMediaId ?? null)
+          ? { photoAssetId: photoId }
+          : {}),
       });
       toast.success('Profile saved');
       onSaved(saved);
@@ -81,12 +109,15 @@ function ProfileForm({
           value={displayName}
           onChange={(e) => setDisplayName(e.target.value)}
           required
-          minLength={2}
-          maxLength={80}
+          minLength={nameRule.min}
+          maxLength={nameRule.max}
         />
       </Field>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <Field label="Contact phone (optional)" hint="Shown on your notices">
+        <Field
+          label="Contact phone (optional)"
+          hint="Hidden until a signed-in visitor taps to see it"
+        >
           <input
             className={inputClass}
             value={phone1}
@@ -114,12 +145,12 @@ function ProfileForm({
           rows={3}
           value={about}
           onChange={(e) => setAbout(e.target.value)}
-          maxLength={1000}
+          maxLength={aboutRule.max}
         />
       </Field>
       <div>
         <span className="block text-sm font-semibold mb-1">Photo (optional)</span>
-        <ImageUploader images={photo} onImagesChange={setPhoto} maxImages={1} />
+        <CommunityImageUploader images={photo} onChange={setPhoto} max={1} />
       </div>
       <button
         type="submit"
@@ -134,12 +165,22 @@ function ProfileForm({
 
 // --- Step 2: the notice -----------------------------------------------------
 
-function NoticeForm({ existing }: { existing: EventPost | null }) {
+function NoticeForm({
+  existing,
+  config,
+}: {
+  existing: EventPost | null;
+  config?: EventFormConfig;
+}) {
   const router = useRouter();
   const queryClient = useQueryClient();
-  const { data: config } = useNoticeFormConfig();
   const pick = (role: ImageRole) =>
-    existing?.images.filter((i) => i.role === role).map((i) => i.url) ?? [];
+    asUploaded(existing?.images.filter((i) => i.role === role) ?? []);
+  const roleMax = (role: ImageRole, fallback: number) =>
+    config?.imageRoles.find((r) => r.value === role)?.max ?? fallback;
+  const titleRule = config?.fields.title ?? { required: true, min: 3, max: 120 };
+  const bodyRule = config?.fields.body ?? { required: true, min: 10, max: 5000 };
+  const venueRule = config?.fields.venue ?? { required: false, max: 200 };
 
   const [eventType, setEventType] = useState<EventType>(
     existing?.eventType ?? config?.eventTypes[0]?.value ?? 'FUNERAL'
@@ -152,9 +193,12 @@ function NoticeForm({ existing }: { existing: EventPost | null }) {
   const [visibility, setVisibility] = useState<Visibility>(
     existing?.visibility ?? config?.visibility.default ?? 'PUBLIC'
   );
-  const [deceased, setDeceased] = useState<string[]>(pick('DECEASED_PHOTO'));
-  const [poster, setPoster] = useState<string[]>(pick('POSTER'));
-  const [gallery, setGallery] = useState<string[]>(pick('GALLERY'));
+  const [listing, setListing] = useState<ListingPeriodInput>({
+    listingDays: config?.listing.defaultDays ?? 30,
+  });
+  const [deceased, setDeceased] = useState<UploadedImage[]>(pick('DECEASED_PHOTO'));
+  const [poster, setPoster] = useState<UploadedImage[]>(pick('POSTER'));
+  const [gallery, setGallery] = useState<UploadedImage[]>(pick('GALLERY'));
   const [busy, setBusy] = useState(false);
 
   const roles =
@@ -168,14 +212,20 @@ function NoticeForm({ existing }: { existing: EventPost | null }) {
     e.preventDefault();
     setBusy(true);
     const images = [
-      ...(allows('DECEASED_PHOTO') ? deceased : []).map((url) => ({
+      ...(allows('DECEASED_PHOTO') ? deceased : []).map((i) => ({
         role: 'DECEASED_PHOTO' as const,
-        url,
+        assetId: i.assetId,
       })),
-      ...poster.map((url) => ({ role: 'POSTER' as const, url })),
-      ...gallery.map((url) => ({ role: 'GALLERY' as const, url })),
+      ...(allows('POSTER') ? poster : []).map((i) => ({
+        role: 'POSTER' as const,
+        assetId: i.assetId,
+      })),
+      ...(allows('GALLERY') ? gallery : []).map((i) => ({
+        role: 'GALLERY' as const,
+        assetId: i.assetId,
+      })),
     ];
-    const input = {
+    const fields = {
       eventType,
       title: title.trim(),
       body: body.trim(),
@@ -187,8 +237,8 @@ function NoticeForm({ existing }: { existing: EventPost | null }) {
     };
     try {
       const saved = existing
-        ? await noticesApi.update(existing.id, input)
-        : await noticesApi.create(input);
+        ? await noticesApi.update(existing.id, fields)
+        : await noticesApi.create({ ...fields, ...listing });
       queryClient.invalidateQueries({ queryKey: ['community'] });
       toast.success(existing ? 'Notice updated' : 'Notice posted');
       router.push(`/notices/${saved.id}`);
@@ -230,8 +280,8 @@ function NoticeForm({ existing }: { existing: EventPost | null }) {
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           required
-          minLength={3}
-          maxLength={120}
+          minLength={titleRule.min}
+          maxLength={titleRule.max}
         />
       </Field>
       <Field label="Notice" hint="Programme, family details, anything people should know">
@@ -241,8 +291,8 @@ function NoticeForm({ existing }: { existing: EventPost | null }) {
           value={body}
           onChange={(e) => setBody(e.target.value)}
           required
-          minLength={10}
-          maxLength={5000}
+          minLength={bodyRule.min}
+          maxLength={bodyRule.max}
         />
       </Field>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -259,7 +309,7 @@ function NoticeForm({ existing }: { existing: EventPost | null }) {
             className={inputClass}
             value={venue}
             onChange={(e) => setVenue(e.target.value)}
-            maxLength={200}
+            maxLength={venueRule.max}
           />
         </Field>
       </div>
@@ -274,21 +324,37 @@ function NoticeForm({ existing }: { existing: EventPost | null }) {
           <span className="block text-sm font-semibold mb-1">
             Photo of the deceased (optional)
           </span>
-          <ImageUploader images={deceased} onImagesChange={setDeceased} maxImages={1} />
+          <CommunityImageUploader
+            images={deceased}
+            onChange={setDeceased}
+            max={roleMax('DECEASED_PHOTO', 1)}
+          />
         </div>
       )}
-      <div>
-        <span className="block text-sm font-semibold mb-1">
-          Funeral poster / obituary image (optional)
-        </span>
-        <ImageUploader images={poster} onImagesChange={setPoster} maxImages={1} />
-      </div>
-      <div>
-        <span className="block text-sm font-semibold mb-1">
-          More photos (optional, up to 8)
-        </span>
-        <ImageUploader images={gallery} onImagesChange={setGallery} maxImages={8} />
-      </div>
+      {allows('POSTER') && (
+        <div>
+          <span className="block text-sm font-semibold mb-1">
+            Poster / obituary image (optional)
+          </span>
+          <CommunityImageUploader
+            images={poster}
+            onChange={setPoster}
+            max={roleMax('POSTER', 1)}
+          />
+        </div>
+      )}
+      {allows('GALLERY') && (
+        <div>
+          <span className="block text-sm font-semibold mb-1">
+            More photos (optional, up to {roleMax('GALLERY', 8)})
+          </span>
+          <CommunityImageUploader
+            images={gallery}
+            onChange={setGallery}
+            max={roleMax('GALLERY', 8)}
+          />
+        </div>
+      )}
 
       <fieldset>
         <legend className="block text-sm font-semibold mb-2">Who can see it</legend>
@@ -305,6 +371,19 @@ function NoticeForm({ existing }: { existing: EventPost | null }) {
           </label>
         ))}
       </fieldset>
+
+      {existing ? (
+        <p className="text-sm text-text-gray">
+          <ExpiryText expiresAt={existing.expiresAt} />. To keep it up for
+          longer, use Renew in My community posts.
+        </p>
+      ) : (
+        <ListingPeriodPicker
+          value={listing}
+          onChange={setListing}
+          rules={config?.listing}
+        />
+      )}
 
       <button
         type="submit"
@@ -323,20 +402,22 @@ function NoticeFlow({ readOnly }: { readOnly: boolean }) {
   const editId = params.get('edit');
   const editProfile = params.get('profile') === '1';
   const { isAuthenticated, isLoading: authLoading } = useAuth();
+  const myKey = useMyKey();
 
   const profile = useQuery({
-    queryKey: ['community', 'my-notice-profile'],
+    queryKey: [...myKey, 'notice-profile'],
     queryFn: noticesApi.myProfile,
     enabled: isAuthenticated,
   });
-  const mine = useQuery({
-    queryKey: ['community', 'my-notices'],
-    queryFn: () => noticesApi.mine(),
+  const existing = useQuery({
+    queryKey: [...myKey, 'notice', editId],
+    queryFn: () => noticesApi.getMine(editId as string),
     enabled: isAuthenticated && Boolean(editId),
+    retry: false,
   });
   const [profileDone, setProfileDone] = useState(false);
-  // Types are admin-managed; wait for them so the form starts on a real one.
-  const typeConfig = useNoticeFormConfig();
+  // Types and limits come from the server; wait for them.
+  const config = useNoticeFormConfig();
 
   useEffect(() => {
     if (!authLoading && !isAuthenticated) {
@@ -351,8 +432,8 @@ function NoticeFlow({ readOnly }: { readOnly: boolean }) {
     authLoading ||
     !isAuthenticated ||
     profile.isLoading ||
-    typeConfig.isLoading ||
-    (editId && mine.isLoading)
+    config.isLoading ||
+    (editId && existing.isLoading)
   ) {
     return <p className="py-16 text-text-gray">Loading…</p>;
   }
@@ -363,6 +444,7 @@ function NoticeFlow({ readOnly }: { readOnly: boolean }) {
     return (
       <ProfileForm
         profile={profile.data ?? null}
+        config={config.data}
         onSaved={() => {
           setProfileDone(true);
           profile.refetch();
@@ -371,13 +453,16 @@ function NoticeFlow({ readOnly }: { readOnly: boolean }) {
       />
     );
   }
-  const existing = editId
-    ? (mine.data?.items.find((p) => p.id === editId) ?? null)
-    : null;
-  if (editId && !existing) {
+  if (editId && !existing.data) {
     return <p className="py-16 text-center">Notice not found.</p>;
   }
-  return <NoticeForm key={existing?.id ?? 'new'} existing={existing} />;
+  return (
+    <NoticeForm
+      key={existing.data?.id ?? 'new'}
+      existing={existing.data ?? null}
+      config={config.data}
+    />
+  );
 }
 
 export default function PostNoticePage() {

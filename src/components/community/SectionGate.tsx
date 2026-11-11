@@ -3,21 +3,46 @@
 import Link from 'next/link';
 import { ReactNode } from 'react';
 import { useSection } from '@/hooks/useCommunity';
-import type { SectionKey } from '@/types/community';
+import type { SectionFlag, SectionKey } from '@/types/community';
 
 /**
  * Renders a community section according to its state (plan v3, section 13):
  * OFF -> not found, SHUTDOWN -> maintenance screen, READ_ONLY -> banner and
- * `readOnly` for disabling post/edit controls.
+ * `readOnly` for disabling post/edit controls. Server pages pass `initial`
+ * (the flags they fetched) so the page renders on the server. If the flags
+ * cannot be loaded, it shows a retry, not "not found".
  */
 export function SectionGate({
   section,
+  initial,
   children,
 }: {
   section: SectionKey;
+  initial?: SectionFlag[];
   children: (ctx: { readOnly: boolean }) => ReactNode;
 }) {
-  const { isLoading, state, bannerMessage } = useSection(section);
+  const { isLoading, isError, retry, state, bannerMessage } = useSection(
+    section,
+    initial
+  );
+
+  if (isError) {
+    return (
+      <div className="max-w-xl mx-auto px-4 py-20 text-center">
+        <h1 className="text-2xl font-bold mb-2">Could not load this page</h1>
+        <p className="text-text-gray mb-6">
+          Please check your connection and try again.
+        </p>
+        <button
+          type="button"
+          onClick={() => retry()}
+          className="px-5 py-2.5 rounded-lg bg-primary text-white font-semibold"
+        >
+          Try again
+        </button>
+      </div>
+    );
+  }
 
   if (isLoading) {
     return (

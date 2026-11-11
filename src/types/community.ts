@@ -20,6 +20,35 @@ export interface CityRef {
   name: string;
 }
 
+/** Listing period rules from form-config (shared by all sections). */
+export interface ListingRules {
+  choices: number[];
+  defaultDays: number;
+  minDays: number;
+  maxDays: number;
+  purgeAfterDays: number;
+}
+
+/** How long to list a post: a choice of days or a custom end date. */
+export interface ListingPeriodInput {
+  listingDays?: number;
+  listUntil?: string;
+}
+
+export interface FieldRule {
+  required: boolean;
+  min?: number;
+  max?: number;
+}
+
+/** A private community image: an upload result or an image on a post. */
+export interface CommunityImage {
+  /** On uploads and on the owner's own posts (needed to edit). */
+  assetId?: string;
+  /** Short-lived signed link; null if it could not be made. */
+  url: string | null;
+}
+
 // --- Events & Notices -------------------------------------------------------
 
 /** Key of an admin-managed notice type, e.g. FUNERAL, WEDDING. */
@@ -27,9 +56,8 @@ export type EventType = string;
 export type ImageRole = 'DECEASED_PHOTO' | 'POSTER' | 'GALLERY';
 export type Visibility = 'PUBLIC' | 'UNLISTED';
 
-export interface EventImage {
+export interface EventImage extends CommunityImage {
   role: ImageRole;
-  url: string;
   sortOrder: number;
 }
 
@@ -50,7 +78,7 @@ export interface EventPost {
   images: EventImage[];
   profile: { id: string; displayName: string; photoUrl: string | null };
   /** Only on the owner's own posts. */
-  status?: 'ACTIVE' | 'SUSPENDED' | 'REJECTED';
+  status?: 'ACTIVE' | 'SUSPENDED' | 'REJECTED' | 'EXPIRED';
 }
 
 export interface EventProfile {
@@ -58,8 +86,13 @@ export interface EventProfile {
   displayName: string;
   photoUrl: string | null;
   about: string | null;
-  phone1: string | null;
-  phone2: string | null;
+  /** Public profiles: whether there is a number to reveal. */
+  hasPhone?: boolean;
+  /** Only on the owner's own profile (others use the reveal). */
+  phone1?: string | null;
+  phone2?: string | null;
+  /** Only on the owner's own profile, to keep or replace the photo. */
+  photoMediaId?: string | null;
   city: CityRef | null;
   createdAt: string;
   status?: 'ACTIVE' | 'SUSPENDED';
@@ -77,9 +110,19 @@ export interface EventFormConfig {
     default: Visibility;
     options: { value: Visibility; label: string }[];
   };
+  listing: ListingRules;
+  fields: {
+    title: FieldRule;
+    body: FieldRule;
+    venue: FieldRule;
+  };
+  profile: {
+    displayName: FieldRule;
+    about: FieldRule;
+  };
 }
 
-export interface EventPostInput {
+export interface EventPostInput extends ListingPeriodInput {
   eventType: EventType;
   title: string;
   body: string;
@@ -87,16 +130,17 @@ export interface EventPostInput {
   venue?: string;
   cityId?: string;
   visibility?: Visibility;
-  images?: { role: ImageRole; url: string }[];
+  images?: { role: ImageRole; assetId: string }[];
 }
 
+/** Partial update: fields left out are kept; null clears. */
 export interface EventProfileInput {
-  displayName: string;
-  photoUrl?: string;
-  about?: string;
-  phone1?: string;
-  phone2?: string;
-  cityId?: string;
+  displayName?: string;
+  photoAssetId?: string | null;
+  about?: string | null;
+  phone1?: string | null;
+  phone2?: string | null;
+  cityId?: string | null;
 }
 
 // --- Lost & Found -----------------------------------------------------------
@@ -113,23 +157,33 @@ export interface LostFoundPost {
   body: string;
   place: string | null;
   happenedAt: string | null;
-  posterName: string | null;
-  status: 'ACTIVE' | 'RESOLVED' | 'SUSPENDED' | 'REJECTED';
+  posterName: string;
+  /** The owner marked it resolved (item returned / owner found). */
+  resolved: boolean;
   expiresAt: string;
   createdAt: string;
   updatedAt: string;
-  images: { url: string; sortOrder: number }[];
+  images: (CommunityImage & { sortOrder: number })[];
   hasPhone: boolean;
   city: CityRef | null;
   /** Only on the owner's own posts. */
+  status?: 'ACTIVE' | 'RESOLVED' | 'SUSPENDED' | 'REJECTED' | 'EXPIRED';
   phone?: string | null;
 }
 
 export interface LostFoundFormConfig {
   categories: { value: string; label: string; description?: string | null }[];
+  listing: ListingRules;
+  fields: {
+    title: FieldRule;
+    body: FieldRule;
+    place: FieldRule;
+    posterName: FieldRule;
+    images: FieldRule;
+  };
 }
 
-export interface LostFoundInput {
+export interface LostFoundInput extends ListingPeriodInput {
   kind: LostFoundKind;
   category?: string;
   title: string;
@@ -138,6 +192,7 @@ export interface LostFoundInput {
   happenedAt?: string;
   cityId?: string;
   phone?: string;
-  posterName?: string;
+  posterName: string;
+  /** Asset ids from /community/media, in display order. */
   images?: string[];
 }

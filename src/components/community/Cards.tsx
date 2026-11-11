@@ -1,5 +1,5 @@
-/* eslint-disable @next/next/no-img-element -- community images come from
-   the upload bucket; plain img avoids next/image remote host config. */
+/* eslint-disable @next/next/no-img-element -- community images are private
+   and served as short-lived signed links; plain img with no referrer. */
 import Link from 'next/link';
 import { format } from 'date-fns';
 import { formatPostedDate } from '@/lib/formatDate';
@@ -11,7 +11,8 @@ export const noticeTypeLabel = (post: EventPost) =>
 
 /** Picks the image to show on a card: deceased photo, poster, then gallery. */
 export function noticeCover(post: EventPost): string | null {
-  const by = (role: string) => post.images.find((i) => i.role === role)?.url;
+  const by = (role: string) =>
+    post.images.find((i) => i.role === role)?.url ?? undefined;
   return by('DECEASED_PHOTO') ?? by('POSTER') ?? by('GALLERY') ?? null;
 }
 
@@ -24,7 +25,12 @@ export function NoticeCard({ post }: { post: EventPost }) {
     >
       <div className="w-24 h-28 shrink-0 rounded-lg bg-background-primary overflow-hidden">
         {cover ? (
-          <img src={cover} alt="" className="w-full h-full object-cover" />
+          <img
+            src={cover}
+            alt=""
+            referrerPolicy="no-referrer"
+            className="w-full h-full object-cover"
+          />
         ) : (
           <div className="w-full h-full flex items-center justify-center text-xs text-text-gray">
             {noticeTypeLabel(post)}
@@ -55,7 +61,7 @@ export function NoticeCard({ post }: { post: EventPost }) {
 }
 
 export function LostFoundCard({ post }: { post: LostFoundPost }) {
-  const cover = post.images[0]?.url;
+  const cover = post.images[0]?.url ?? null;
   const lost = post.kind === 'LOST';
   return (
     <Link
@@ -64,7 +70,12 @@ export function LostFoundCard({ post }: { post: LostFoundPost }) {
     >
       <div className="w-24 h-24 shrink-0 rounded-lg bg-background-primary overflow-hidden">
         {cover ? (
-          <img src={cover} alt="" className="w-full h-full object-cover" />
+          <img
+            src={cover}
+            alt=""
+            referrerPolicy="no-referrer"
+            className="w-full h-full object-cover"
+          />
         ) : (
           <div className="w-full h-full flex items-center justify-center text-xs text-text-gray">
             No photo

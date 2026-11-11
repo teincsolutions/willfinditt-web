@@ -1,30 +1,19 @@
-'use client';
-
 import Link from 'next/link';
-import { useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import { useSections } from '@/hooks/useCommunity';
+import { redirect } from 'next/navigation';
+import { fetchSections, sectionState } from '@/lib/community-server';
+
+export const dynamic = 'force-dynamic';
 
 /**
- * "Add post" asks for the post type first (plan v3 decision 3). When no
- * community section is open for posting, it goes straight to the normal ad
- * form, so nothing changes for users while the sections are off.
+ * "Add post" asks for the post type first (plan v3 decision 3). Decided on
+ * the server: when no community section is open for posting (or the flags
+ * cannot be read) it goes straight to the normal ad form, with no flash.
  */
-export default function PostChooserPage() {
-  const router = useRouter();
-  const { data, isLoading, isError } = useSections();
-  const open = (key: string) => data?.find((f) => f.key === key)?.state === 'ON';
-  const notices = open('event_notices');
-  const lostFound = open('lost_found');
-  const anyOpen = notices || lostFound;
-
-  useEffect(() => {
-    if (isError || (!isLoading && !anyOpen)) router.replace('/ads/new');
-  }, [isLoading, isError, anyOpen, router]);
-
-  if (isLoading || !anyOpen) {
-    return <p className="max-w-3xl mx-auto px-4 py-16 text-text-gray">Loading…</p>;
-  }
+export default async function PostChooserPage() {
+  const flags = await fetchSections();
+  const notices = sectionState(flags, 'event_notices') === 'ON';
+  const lostFound = sectionState(flags, 'lost_found') === 'ON';
+  if (!notices && !lostFound) redirect('/ads/new');
 
   const options = [
     {

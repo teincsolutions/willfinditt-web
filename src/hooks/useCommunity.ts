@@ -58,8 +58,9 @@ const firstPage = <T>(page?: CursorPage<T>) =>
   page ? { pages: [page], pageParams: [undefined] } : undefined;
 
 export const useNotices = (
-  filters: { eventType?: EventType; city?: string; profile?: string },
-  initial?: CursorPage<EventPost>
+  filters: { eventType?: EventType; city?: string; profile?: string; q?: string },
+  initial?: CursorPage<EventPost>,
+  enabled = true
 ) =>
   useInfiniteQuery({
     queryKey: ['community', 'notices', filters],
@@ -68,6 +69,7 @@ export const useNotices = (
     initialPageParam: undefined as string | undefined,
     getNextPageParam: (last) => last.nextCursor ?? undefined,
     initialData: firstPage(initial),
+    enabled,
   });
 
 export const useNotice = (
@@ -98,8 +100,9 @@ export const useLostFoundFormConfig = () =>
   });
 
 export const useLostFound = (
-  filters: { kind?: LostFoundKind; category?: string; city?: string },
-  initial?: CursorPage<LostFoundPost>
+  filters: { kind?: LostFoundKind; category?: string; city?: string; q?: string },
+  initial?: CursorPage<LostFoundPost>,
+  enabled = true
 ) =>
   useInfiniteQuery({
     queryKey: ['community', 'lost-found', filters],
@@ -108,6 +111,7 @@ export const useLostFound = (
     initialPageParam: undefined as string | undefined,
     getNextPageParam: (last) => last.nextCursor ?? undefined,
     initialData: firstPage(initial),
+    enabled,
   });
 
 export const useLostFoundPost = (id: string, initial?: LostFoundPost | null) =>

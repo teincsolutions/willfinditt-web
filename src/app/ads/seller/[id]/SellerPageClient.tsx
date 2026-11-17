@@ -8,6 +8,8 @@ import { format } from 'date-fns';
 import { Pagination } from '@/components/Pagination';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { SellerProfile } from '@/services/seller.service';
+import { useAuth } from '@/contexts/AuthContext';
+import { needsSignedUrl } from '@/lib/s3Utils';
 
 interface SellerPageClientProps {
   sellerProfile: SellerProfile;
@@ -16,6 +18,7 @@ interface SellerPageClientProps {
 export function SellerPageClient({ sellerProfile }: SellerPageClientProps) {
   const searchParams = useSearchParams();
   const router = useRouter();
+  const { isAuthenticated } = useAuth();
   const page = Number(searchParams.get('page')) || 1;
   const LIMIT = 20;
 
@@ -72,7 +75,8 @@ export function SellerPageClient({ sellerProfile }: SellerPageClientProps) {
         <div className="px-8 pb-8">
           <div className="relative flex flex-col md:flex-row items-start md:items-end gap-6 -mt-12">
             <div className="w-24 h-24 md:w-32 md:h-32 rounded-full border-4 border-background bg-background shadow-md overflow-hidden flex-shrink-0">
-              {displayImage ? (
+              {displayImage &&
+              (isAuthenticated || !needsSignedUrl(displayImage)) ? (
                 <OptimizedImage
                   src={displayImage}
                   alt={displayName}

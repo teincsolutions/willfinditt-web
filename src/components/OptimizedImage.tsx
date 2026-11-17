@@ -3,6 +3,8 @@
 import { useState, useEffect, useRef } from 'react';
 import Image, { ImageProps } from 'next/image';
 import { clsx, type ClassValue } from 'clsx';
+import { getAccessToken } from '@/lib/auth';
+import { needsSignedUrl } from '@/lib/s3Utils';
 import { getSignedUrl } from '@/services/upload.service';
 
 function cn(...inputs: ClassValue[]) {
@@ -65,7 +67,8 @@ export const OptimizedImage = ({
 
     const resolve = async (value?: string | null) => {
       if (!value) return '';
-      if (value.startsWith('s3://')) {
+      if (needsSignedUrl(value)) {
+        if (!getAccessToken()) return '';
         try {
           return await getSignedUrl(value);
         } catch (error) {
@@ -84,6 +87,8 @@ export const OptimizedImage = ({
       if (cancelled) return;
       setDisplaySrc(full);
       setThumbSrc(thumb);
+      // Nothing to load (private image, logged out): stop the loading pulse.
+      if (!full && !thumb) setHasPainted(true);
     };
 
     void run();

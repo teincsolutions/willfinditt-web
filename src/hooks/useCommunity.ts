@@ -168,6 +168,23 @@ export const useMyDatingProfile = (enabled = true) => {
   });
 };
 
+export const useDatingProfiles = (
+  filters: {
+    city?: string;
+    gender?: DatingGender;
+    lookingFor?: DatingLookingFor;
+  },
+  enabled = true
+) =>
+  useInfiniteQuery({
+    queryKey: ['community', 'dating', 'profiles', filters],
+    queryFn: ({ pageParam }) =>
+      datingApi.listProfiles({ ...filters, cursor: pageParam }),
+    initialPageParam: undefined as string | undefined,
+    getNextPageParam: (last) => last.nextCursor ?? undefined,
+    enabled,
+  });
+
 export const useDatingPosts = (
   filters: {
     city?: string;

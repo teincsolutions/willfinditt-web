@@ -1,15 +1,21 @@
 'use client';
 
 import Link from 'next/link';
-import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import {
+  useEffect,
+  useMemo,
+  useState,
+  type Dispatch,
+  type SetStateAction,
+} from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/contexts/AuthContext';
 import { CityPicker } from '@/components/community/CityPicker';
 import { LoadMore, SectionGate } from '@/components/community/SectionGate';
 import {
   useDatingConversations,
-  useDatingMessages,
-  useDatingPosts,
+  useDatingProfiles,
   useMyDatingKyc,
   useMyDatingProfile,
   useMyKey,
@@ -23,7 +29,7 @@ import type {
   DatingDocumentType,
   DatingGender,
   DatingLookingFor,
-  DatingPost,
+  DatingPublicProfile,
 } from '@/types/community';
 
 const GENDER_LABELS: Record<DatingGender, string> = {
@@ -32,8 +38,8 @@ const GENDER_LABELS: Record<DatingGender, string> = {
 };
 
 const LOOKING_FOR_LABELS: Record<DatingLookingFor, string> = {
-  WOMAN: 'Seeking a woman',
-  MAN: 'Seeking a man',
+  WOMAN: 'Looking for a woman',
+  MAN: 'Looking for a man',
   ANYONE: 'Open to anyone',
 };
 
@@ -43,7 +49,8 @@ const DOC_TYPES: { value: DatingDocumentType; label: string }[] = [
   { value: 'PASSPORT', label: 'Passport' },
 ];
 
-type SubView = 'browse' | 'new-post' | 'inbox' | 'profile';
+type DatingTab = 'discover' | 'matches' | 'likes' | 'profile';
+type LikedProfile = { profile: DatingPublicProfile };
 
 const pillClass = (active: boolean) =>
   `rounded-full border px-3.5 py-1.5 text-xs font-semibold transition-colors ${
@@ -52,24 +59,27 @@ const pillClass = (active: boolean) =>
       : 'border-border-custom text-text-gray hover:bg-background-primary hover:text-text'
   }`;
 
+const likesStorageKey = (profileId: string) =>
+  `community:dating:likes:v2:${profileId}`;
+
 export function DatingHubPanel() {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, isLoading: authLoading } = useAuth();
+  const router = useRouter();
   const queryClient = useQueryClient();
   const myKey = useMyKey();
 
   const kycQuery = useMyDatingKyc(isAuthenticated);
   const profileQuery = useMyDatingProfile(isAuthenticated);
 
-  const [subView, setSubView] = useState<SubView>('browse');
-
-  // Browse filters
-  const [filterGender, setFilterGender] = useState<DatingGender | ''>('');
-  const [filterLookingFor, setFilterLookingFor] = useState<
-    DatingLookingFor | ''
-  >('');
+  const [tab, setTab] = useState<DatingTab>('discover');
+  const [showMe, setShowMe] = useState<DatingLookingFor | null>(null);
   const [filterCity, setFilterCity] = useState('');
+  const [skipped, setSkipped] = useState<Set<string>>(new Set());
 
-  // KYC onboarding state (3-step wizard)
+  const [liked, setLiked] = useState<LikedProfile[]>([]);
+  const [likesReady, setLikesReady] = useState(false);
+
+  // KYC setup
   const [kycStep, setKycStep] = useState<1 | 2 | 3>(1);
   const [docType, setDocType] = useState<DatingDocumentType>('NATIONAL_ID');
   const [docNumber, setDocNumber] = useState('');
@@ -82,85 +92,145 @@ export function DatingHubPanel() {
   ]);
   const [kycBusy, setKycBusy] = useState(false);
   const [kycError, setKycError] = useState<string | null>(null);
+  const [kycNotice, setKycNotice] = useState<string | null>(null);
 
-  // Dating profile setup state
+  // Profile setup
   const [nickname, setNickname] = useState('');
-  const [birthYear, setBirthYear] = useState<number>(1996);
+  const [birthYear, setBirthYear] = useState(1996);
   const [gender, setGender] = useState<DatingGender>('MAN');
   const [lookingFor, setLookingFor] = useState<DatingLookingFor>('WOMAN');
   const [about, setAbout] = useState('');
   const [profileCity, setProfileCity] = useState('');
   const [photoAssetId, setPhotoAssetId] = useState<string | null>(null);
-  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+  const [photoBusy, setPhotoBusy] = useState(false);
   const [profileBusy, setProfileBusy] = useState(false);
   const [profileMsg, setProfileMsg] = useState<string | null>(null);
 
-  // New introduction post state
-  const [postTitle, setPostTitle] = useState('');
-  const [postBody, setPostBody] = useState('');
-  const [postBusy, setPostBusy] = useState(false);
-  const [postMsg, setPostMsg] = useState<string | null>(null);
+  const kyc = kycQuery.data ?? null;
+  const profile = profileQuery.data ?? null;
+  const kycStatus = kyc?.status ?? 'NOT_STARTED';
 
-  // Encrypted Inbox state
-  const [activeConvId, setActiveConvId] = useState<string | null>(null);
-  const [draftMsg, setDraftMsg] = useState('');
-  const [chatBusy, setChatBusy] = useState(false);
-  const [reportMsgId, setReportMsgId] = useState<string | null>(null);
-  const [reportReason, setReportReason] = useState('');
+  const kycAllowsBrowsing =
+    Boolean(kyc) &&
+    kyc?.status !== 'REJECTED' &&
+    (kyc?.status !== 'APPROVED' || kyc?.isAdult === true);
 
-  const kycRecord = kycQuery.data ?? null;
-  const kycStatus = kycRecord?.status ?? 'NOT_STARTED';
-  const myProfile = profileQuery.data ?? null;
-  const isVerifiedAndActive =
+  const canBrowse =
     isAuthenticated &&
-    kycStatus === 'APPROVED' &&
-    (myProfile?.status === 'ACTIVE' || myProfile?.status === 'HIDDEN');
+    Boolean(profile) &&
+    kycAllowsBrowsing &&
+    profile?.status !== 'REJECTED' &&
+    profile?.status !== 'SUSPENDED';
 
-  const postsQuery = useDatingPosts(
+  const canInteract =
+    canBrowse &&
+    (profile?.status === 'ACTIVE' || profile?.status === 'HIDDEN') &&
+    kyc?.status === 'APPROVED';
+
+  const effectiveShowMe: DatingLookingFor =
+    showMe ?? profile?.lookingFor ?? 'ANYONE';
+
+  const profilesQuery = useDatingProfiles(
     {
-      gender: filterGender || undefined,
-      lookingFor: filterLookingFor || undefined,
+      gender: effectiveShowMe === 'ANYONE' ? undefined : effectiveShowMe,
       city: filterCity || undefined,
     },
-    isVerifiedAndActive && subView === 'browse'
+    canBrowse && tab === 'discover'
   );
 
-  const conversationsQuery = useDatingConversations(
-    isVerifiedAndActive && subView === 'inbox'
-  );
-  const messagesQuery = useDatingMessages(
-    activeConvId,
-    isVerifiedAndActive && subView === 'inbox'
+  const conversationsQuery = useDatingConversations(canInteract);
+
+  // Keep the form in sync with the saved profile without overwriting edits.
+  useEffect(() => {
+    if (!profile) return;
+    setNickname(profile.nickname);
+    setBirthYear(profile.birthYear);
+    setGender(profile.gender);
+    setLookingFor(profile.lookingFor);
+    setAbout(profile.about ?? '');
+    setProfileCity(profile.city?.id ?? '');
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [profile?.id]);
+
+  useEffect(() => {
+    if (!profile) return;
+    const key = likesStorageKey(profile.id);
+    try {
+      const raw = window.localStorage.getItem(key);
+      setLiked(raw ? (JSON.parse(raw) as LikedProfile[]) : []);
+    } catch {
+      setLiked([]);
+    } finally {
+      setLikesReady(true);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [profile?.id]);
+
+  useEffect(() => {
+    if (!profile || !likesReady) return;
+    try {
+      window.localStorage.setItem(
+        likesStorageKey(profile.id),
+        JSON.stringify(liked)
+      );
+    } catch {
+      // Private browsing or quota: likes still work for this session.
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [liked, likesReady, profile?.id]);
+
+  const profiles = useMemo(() => {
+    const rows = profilesQuery.data?.pages.flatMap((page) => page.items) ?? [];
+    return rows.filter((item) => {
+      if (item.id === profile?.id) return false;
+      if (skipped.has(item.id)) return false;
+      if (effectiveShowMe !== 'ANYONE' && item.gender !== effectiveShowMe)
+        return false;
+      return (
+        item.lookingFor === 'ANYONE' ||
+        item.lookingFor === profile?.gender
+      );
+    });
+  }, [profilesQuery.data, profile?.id, profile?.gender, effectiveShowMe, skipped]);
+
+  const conversations = conversationsQuery.data ?? [];
+
+  const likeIds = useMemo(
+    () => new Set(liked.map((entry) => entry.profile.id)),
+    [liked]
   );
 
-  if (!isAuthenticated) {
-    return (
-      <div className="rounded-2xl border border-border-custom bg-white p-8 shadow-sm">
-        <span className="inline-flex items-center rounded-full bg-primaryLight px-3 py-1 text-xs font-bold text-primary">
-          ID-Verified &amp; Private
-        </span>
-        <h2 className="mt-3 text-2xl font-black text-text">
-          Love &amp; Dating on Willfinditt
-        </h2>
-        <p className="mt-2 max-w-xl text-sm leading-relaxed text-text-gray">
-          Every member verifies their identity with a government ID and three
-          live face checks before joining. Your real name, phone number, email,
-          and marketplace ads are never shown on your dating profile — only your
-          chosen dating nickname, approximate age, and city appear.
-        </p>
-        <div className="mt-6 flex flex-wrap gap-3">
-          <Link
-            href="/auth/login?redirect=/dating"
-            className="inline-flex items-center justify-center rounded-lg bg-primary px-5 py-2.5 text-sm font-bold text-white shadow-sm hover:opacity-90"
-          >
-            Sign in to continue
-          </Link>
-        </div>
-      </div>
+  const unlike = (profileId: string) => {
+    setLiked((previous) =>
+      previous.filter((entry) => entry.profile.id !== profileId)
     );
-  }
+  };
 
-  const handleUploadKycSlot = async (
+  const toggleLike = (target: DatingPublicProfile) => {
+    if (likeIds.has(target.id)) {
+      unlike(target.id);
+      return;
+    }
+    setLiked((previous) => [{ profile: target }, ...previous]);
+  };
+
+  const skip = (profileId: string) => {
+    setSkipped((previous) => new Set(previous).add(profileId));
+  };
+
+  const startChat = async (target: DatingPublicProfile) => {
+    try {
+      const conversation = await datingApi.startProfileConversation(target.id);
+      await queryClient.invalidateQueries({
+        queryKey: [...myKey, 'dating-conversations'],
+      });
+      router.push(`/messages/dating/${conversation.id}`);
+    } catch (err) {
+      alert(apiError(err, 'Could not start the conversation.'));
+    }
+  };
+
+  const uploadKycFile = async (
     file: File,
     onKey: (key: string) => void
   ) => {
@@ -170,14 +240,15 @@ export function DatingHubPanel() {
       const { key } = await datingApi.uploadKycImage(file);
       onKey(key);
     } catch (err) {
-      setKycError(apiError(err, 'Could not upload verification photo'));
+      setKycError(apiError(err, 'Could not upload the verification photo.'));
     } finally {
       setKycBusy(false);
     }
   };
 
-  const handleSubmitKyc = async () => {
+  const submitKyc = async () => {
     setKycError(null);
+    setKycNotice(null);
     setKycBusy(true);
     try {
       await datingApi.submitKyc({
@@ -187,30 +258,38 @@ export function DatingHubPanel() {
         documentKey,
         faceKeys,
       });
+      setDocumentKey('');
+      setFaceKeys(['', '', '']);
+      setKycStep(1);
+      setKycNotice('Your identity check was submitted for review.');
       await queryClient.invalidateQueries({
         queryKey: [...myKey, 'dating-kyc'],
       });
     } catch (err) {
-      setKycError(apiError(err, 'Could not submit KYC verification'));
+      setKycError(apiError(err, 'Could not submit the identity check.'));
     } finally {
       setKycBusy(false);
     }
   };
 
-  const handleSaveProfile = async () => {
+  const saveProfile = async () => {
     setProfileMsg(null);
+    if (!photoAssetId && !profile?.photoUrl) {
+      setProfileMsg('A public dating photo is required.');
+      return;
+    }
     setProfileBusy(true);
     try {
       const payload = {
-        nickname: nickname.trim() || myProfile?.nickname || '',
-        birthYear: Number(birthYear || myProfile?.birthYear || 1996),
+        nickname: nickname.trim(),
+        birthYear: Number(birthYear),
         gender,
         lookingFor,
         about: about.trim() || null,
         cityId: profileCity || null,
         ...(photoAssetId ? { photoAssetId } : {}),
       };
-      if (myProfile) {
+      if (profile) {
         await datingApi.updateProfile(payload);
       } else {
         await datingApi.createProfile(payload);
@@ -218,920 +297,1125 @@ export function DatingHubPanel() {
       await queryClient.invalidateQueries({
         queryKey: [...myKey, 'dating-profile'],
       });
+      setPhotoAssetId(null);
       setProfileMsg(
-        myProfile
-          ? 'Dating profile updated.'
-          : 'Dating profile created (pending approval).'
+        profile
+          ? 'Your dating profile was updated.'
+          : 'Your dating profile was submitted for review.'
       );
     } catch (err) {
-      setProfileMsg(apiError(err, 'Could not save dating profile'));
+      setProfileMsg(apiError(err, 'Could not save the dating profile.'));
     } finally {
       setProfileBusy(false);
     }
   };
 
-  const handleCreatePost = async () => {
-    setPostMsg(null);
-    setPostBusy(true);
+  const uploadPublicPhoto = async (file: File) => {
+    setProfileMsg(null);
+    setPhotoBusy(true);
     try {
-      await datingApi.createPost({
-        title: postTitle.trim(),
-        body: postBody.trim(),
-      });
-      setPostTitle('');
-      setPostBody('');
-      await queryClient.invalidateQueries({
-        queryKey: ['community', 'dating', 'posts'],
-      });
-      setSubView('browse');
+      const uploaded = await uploadCommunityImage(file);
+      setPhotoAssetId(uploaded.assetId);
+      setProfileMsg('Public photo attached.');
     } catch (err) {
-      setPostMsg(apiError(err, 'Could not publish introduction'));
+      setProfileMsg(apiError(err, 'Could not upload the public photo.'));
     } finally {
-      setPostBusy(false);
+      setPhotoBusy(false);
     }
   };
 
-  const handleStartChat = async (post: DatingPost) => {
+  const toggleHidden = async () => {
+    if (!profile) return;
     try {
-      const conv = await datingApi.startConversation(post.id);
+      await datingApi.updateProfile({ hidden: profile.status !== 'HIDDEN' });
       await queryClient.invalidateQueries({
-        queryKey: [...myKey, 'dating-conversations'],
-      });
-      setActiveConvId(conv.id);
-      setSubView('inbox');
-    } catch (err) {
-      alert(apiError(err, 'Could not open private conversation'));
-    }
-  };
-
-  const handleSelectConversation = async (convId: string) => {
-    setActiveConvId(convId);
-    try {
-      await datingApi.markRead(convId);
-      await queryClient.invalidateQueries({
-        queryKey: [...myKey, 'dating-conversations'],
-      });
-    } catch {
-      // Non-fatal
-    }
-  };
-
-  const handleSendMessage = async () => {
-    if (!activeConvId || !draftMsg.trim()) return;
-    setChatBusy(true);
-    try {
-      await datingApi.sendMessage(activeConvId, {
-        type: 'TEXT',
-        text: draftMsg.trim(),
-      });
-      setDraftMsg('');
-      await queryClient.invalidateQueries({
-        queryKey: [...myKey, 'dating-messages', activeConvId],
-      });
-      await queryClient.invalidateQueries({
-        queryKey: [...myKey, 'dating-conversations'],
+        queryKey: [...myKey, 'dating-profile'],
       });
     } catch (err) {
-      alert(apiError(err, 'Could not send message'));
-    } finally {
-      setChatBusy(false);
+      alert(apiError(err, 'Could not update your profile visibility.'));
     }
   };
 
-  const handleSharePhone = async () => {
-    if (!activeConvId) return;
-    setChatBusy(true);
-    try {
-      await datingApi.sharePhone(activeConvId);
-      await queryClient.invalidateQueries({
-        queryKey: [...myKey, 'dating-messages', activeConvId],
-      });
-    } catch (err) {
-      alert(apiError(err, 'Could not share phone number'));
-    } finally {
-      setChatBusy(false);
-    }
-  };
-
-  const handleShredConversation = async (convId: string) => {
+  const deleteProfile = async () => {
     if (
       !window.confirm(
-        'Delete this conversation? The encryption key will be destroyed immediately so neither side can read past messages.'
+        'Delete your dating profile? Your public profile and dating conversations will be removed.'
       )
     ) {
       return;
     }
     try {
-      await datingApi.deleteConversation(convId);
-      setActiveConvId(null);
+      await datingApi.deleteProfile();
+      await queryClient.invalidateQueries({
+        queryKey: [...myKey, 'dating-profile'],
+      });
       await queryClient.invalidateQueries({
         queryKey: [...myKey, 'dating-conversations'],
       });
     } catch (err) {
-      alert(apiError(err, 'Could not delete conversation'));
+      alert(apiError(err, 'Could not delete your dating profile.'));
     }
   };
 
-  const handleReportMessage = async () => {
-    if (!activeConvId || !reportMsgId || reportReason.trim().length < 3) return;
-    try {
-      await datingApi.reportMessage(
-        activeConvId,
-        reportMsgId,
-        reportReason.trim()
-      );
-      setReportMsgId(null);
-      setReportReason('');
-      await queryClient.invalidateQueries({
-        queryKey: [...myKey, 'dating-messages', activeConvId],
-      });
-      alert('Report sent to the safety team.');
-    } catch (err) {
-      alert(apiError(err, 'Could not report message'));
-    }
-  };
+  if (authLoading) {
+    return <p className="py-12 text-center text-text-gray">Loading…</p>;
+  }
 
-  // Gate 1: User has not completed KYC + Active Profile yet
-  if (!isVerifiedAndActive) {
+  if (!isAuthenticated) {
     return (
-      <div className="space-y-6">
-        <div className="rounded-2xl border border-border-custom bg-white p-6 shadow-sm">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div>
-              <span className="inline-flex rounded-full bg-primaryLight px-3 py-1 text-xs font-bold text-primary">
-                Verification status: {kycStatus.replace(/_/g, ' ')}
-              </span>
-              <h2 className="mt-2 text-xl font-black text-text">
-                Complete your private Dating verification &amp; profile
-              </h2>
-              <p className="mt-1 text-sm text-text-gray">
-                Your ID and 3 live face photos are stored in a private vault,
-                never shown to other members, and automatically purged 30 days
-                after review.
-              </p>
-            </div>
-          </div>
-
-          {kycRecord?.decisionReason || kycRecord?.infoRequestMessage ? (
-            <div className="mt-4 rounded-xl border border-error/40 bg-error/5 p-3 text-sm text-error">
-              Reviewer note:{' '}
-              {kycRecord.infoRequestMessage || kycRecord.decisionReason}
-            </div>
-          ) : null}
-
-          {kycStatus === 'PENDING' ? (
-            <div className="mt-4 rounded-xl border border-border-custom bg-background-primary p-4 text-sm text-text">
-              Your ID &amp; face verification photos have been submitted and are
-              waiting for moderator approval. Make sure your pseudonymous dating
-              profile below is filled in so it goes live right away once
-              approved.
-            </div>
-          ) : kycStatus !== 'APPROVED' ? (
-            <div className="mt-6 space-y-5 border-t border-border-custom pt-5">
-              {/* Step indicators */}
-              <div className="flex flex-wrap items-center gap-2 text-xs font-bold">
-                {[
-                  { s: 1 as const, label: '1. ID Details & Consent' },
-                  { s: 2 as const, label: '2. ID Document Photo' },
-                  { s: 3 as const, label: '3. Three Face Checks' },
-                ].map((item) => (
-                  <button
-                    key={item.s}
-                    type="button"
-                    onClick={() => setKycStep(item.s)}
-                    className={pillClass(kycStep === item.s)}
-                  >
-                    {item.label}
-                  </button>
-                ))}
-              </div>
-
-              {kycError ? (
-                <p className="text-sm font-medium text-error">{kycError}</p>
-              ) : null}
-
-              {kycStep === 1 ? (
-                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                  <div>
-                    <label className="mb-1 block text-xs font-bold text-text">
-                      Government ID Type
-                    </label>
-                    <select
-                      value={docType}
-                      onChange={(e) =>
-                        setDocType(e.target.value as DatingDocumentType)
-                      }
-                      className="w-full rounded-lg border border-border-custom bg-background px-3 py-2 text-sm text-text"
-                    >
-                      {DOC_TYPES.map((d) => (
-                        <option key={d.value} value={d.value}>
-                          {d.label}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                  <div>
-                    <label className="mb-1 block text-xs font-bold text-text">
-                      Document Number (HMAC hashed, never stored in plain text)
-                    </label>
-                    <input
-                      type="text"
-                      value={docNumber}
-                      onChange={(e) => setDocNumber(e.target.value)}
-                      placeholder="e.g. GHA-123456789-0"
-                      className="w-full rounded-lg border border-border-custom bg-background px-3 py-2 text-sm text-text"
-                    />
-                  </div>
-                  <div className="md:col-span-2">
-                    <label className="flex items-start gap-2 text-sm text-text-gray">
-                      <input
-                        type="checkbox"
-                        checked={consent}
-                        onChange={(e) => setConsent(e.target.checked)}
-                        className="mt-1"
-                      />
-                      <span>
-                        I consent to Willfinditt verifying my ID and 3 live face
-                        photos for safety and age verification. Raw verification
-                        photos are deleted 30 days after review.
-                      </span>
-                    </label>
-                  </div>
-                  <div className="md:col-span-2">
-                    <button
-                      type="button"
-                      disabled={docNumber.trim().length < 5 || !consent}
-                      onClick={() => setKycStep(2)}
-                      className="rounded-lg bg-primary px-4 py-2 text-sm font-bold text-white disabled:opacity-50"
-                    >
-                      Next: Upload ID Photo
-                    </button>
-                  </div>
-                </div>
-              ) : kycStep === 2 ? (
-                <div className="space-y-4">
-                  <div className="rounded-xl border border-border-custom p-4">
-                    <p className="text-sm font-bold text-text">
-                      Government ID Photo (Required)
-                    </p>
-                    <p className="mt-1 text-xs text-text-gray">
-                      Upload a clear photo of the front of your selected ID.
-                    </p>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={(e) => {
-                        const f = e.target.files?.[0];
-                        if (f) handleUploadKycSlot(f, setDocumentKey);
-                      }}
-                      className="mt-2 block w-full text-xs text-text-gray"
-                    />
-                    {documentKey ? (
-                      <p className="mt-1 text-xs font-semibold text-green-600">
-                        Uploaded securely
-                      </p>
-                    ) : null}
-                  </div>
-                  <div className="flex gap-2">
-                    <button
-                      type="button"
-                      onClick={() => setKycStep(1)}
-                      className="rounded-lg border border-border-custom px-4 py-2 text-sm font-semibold text-text"
-                    >
-                      Back
-                    </button>
-                    <button
-                      type="button"
-                      disabled={!documentKey || kycBusy}
-                      onClick={() => setKycStep(3)}
-                      className="rounded-lg bg-primary px-4 py-2 text-sm font-bold text-white disabled:opacity-50"
-                    >
-                      Next: Three Face Photos
-                    </button>
-                  </div>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-                    {[
-                      '1. Straight-on face photo',
-                      '2. Slight head turn (left or right)',
-                      '3. Clear selfie in good light',
-                    ].map((label, idx) => (
-                      <div
-                        key={label}
-                        className="rounded-xl border border-border-custom p-4"
-                      >
-                        <p className="text-sm font-bold text-text">{label}</p>
-                        <input
-                          type="file"
-                          accept="image/*"
-                          onChange={(e) => {
-                            const f = e.target.files?.[0];
-                            if (f) {
-                              handleUploadKycSlot(f, (key) =>
-                                setFaceKeys((prev) => {
-                                  const next: [string, string, string] = [
-                                    ...prev,
-                                  ] as [string, string, string];
-                                  next[idx] = key;
-                                  return next;
-                                })
-                              );
-                            }
-                          }}
-                          className="mt-2 block w-full text-xs text-text-gray"
-                        />
-                        {faceKeys[idx] ? (
-                          <p className="mt-1 text-xs font-semibold text-green-600">
-                            Uploaded securely
-                          </p>
-                        ) : null}
-                      </div>
-                    ))}
-                  </div>
-                  <div className="flex gap-2">
-                    <button
-                      type="button"
-                      onClick={() => setKycStep(2)}
-                      className="rounded-lg border border-border-custom px-4 py-2 text-sm font-semibold text-text"
-                    >
-                      Back
-                    </button>
-                    <button
-                      type="button"
-                      disabled={
-                        kycBusy ||
-                        !documentKey ||
-                        !faceKeys[0] ||
-                        !faceKeys[1] ||
-                        !faceKeys[2]
-                      }
-                      onClick={handleSubmitKyc}
-                      className="rounded-lg bg-primary px-5 py-2 text-sm font-bold text-white disabled:opacity-50"
-                    >
-                      {kycBusy ? 'Submitting…' : 'Submit Verification'}
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
-          ) : null}
-        </div>
-
-        {/* Dating Profile card */}
-        <div className="rounded-2xl border border-border-custom bg-white p-6 shadow-sm">
-          <h3 className="text-lg font-black text-text">
-            Your Pseudonymous Dating Profile
-          </h3>
-          <p className="mt-1 text-sm text-text-gray">
-            Choose a nickname that is different from your real name. Only your
-            nickname, approximate age, city, and dating photo are visible in
-            Dating.
-          </p>
-
-          <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
-            <div>
-              <label className="mb-1 block text-xs font-bold text-text">
-                Dating Nickname
-              </label>
-              <input
-                type="text"
-                value={nickname || myProfile?.nickname || ''}
-                onChange={(e) => setNickname(e.target.value)}
-                placeholder="e.g. SunnyAma"
-                className="w-full rounded-lg border border-border-custom bg-background px-3 py-2 text-sm text-text"
-              />
-            </div>
-            <div>
-              <label className="mb-1 block text-xs font-bold text-text">
-                Birth Year (18+ only — never shown publicly)
-              </label>
-              <input
-                type="number"
-                min={1925}
-                max={new Date().getFullYear() - 18}
-                value={birthYear || myProfile?.birthYear || 1996}
-                onChange={(e) => setBirthYear(Number(e.target.value))}
-                className="w-full rounded-lg border border-border-custom bg-background px-3 py-2 text-sm text-text"
-              />
-            </div>
-            <div>
-              <label className="mb-1 block text-xs font-bold text-text">
-                I am a
-              </label>
-              <select
-                value={gender}
-                onChange={(e) => setGender(e.target.value as DatingGender)}
-                className="w-full rounded-lg border border-border-custom bg-background px-3 py-2 text-sm text-text"
-              >
-                <option value="MAN">Man</option>
-                <option value="WOMAN">Woman</option>
-              </select>
-            </div>
-            <div>
-              <label className="mb-1 block text-xs font-bold text-text">
-                Looking for
-              </label>
-              <select
-                value={lookingFor}
-                onChange={(e) =>
-                  setLookingFor(e.target.value as DatingLookingFor)
-                }
-                className="w-full rounded-lg border border-border-custom bg-background px-3 py-2 text-sm text-text"
-              >
-                <option value="WOMAN">A woman</option>
-                <option value="MAN">A man</option>
-                <option value="ANYONE">Anyone</option>
-              </select>
-            </div>
-            <div>
-              <CityPicker
-                value={profileCity}
-                onChange={setProfileCity}
-                label="City (optional)"
-              />
-            </div>
-            <div>
-              <label className="mb-1 block text-xs font-bold text-text">
-                Public Dating Photo
-              </label>
-              <input
-                type="file"
-                accept="image/*"
-                onChange={async (e) => {
-                  const f = e.target.files?.[0];
-                  if (!f) return;
-                  try {
-                    const uploaded = await uploadCommunityImage(f);
-                    setPhotoAssetId(uploaded.assetId);
-                    setPhotoPreview(uploaded.url);
-                  } catch (err) {
-                    setProfileMsg(apiError(err, 'Could not upload photo'));
-                  }
-                }}
-                className="w-full text-xs text-text-gray"
-              />
-              {photoPreview || myProfile?.photoUrl ? (
-                <p className="mt-1 text-xs text-green-600">Photo attached</p>
-              ) : null}
-            </div>
-            <div className="md:col-span-2">
-              <label className="mb-1 block text-xs font-bold text-text">
-                About you
-              </label>
-              <textarea
-                rows={3}
-                value={about || myProfile?.about || ''}
-                onChange={(e) => setAbout(e.target.value)}
-                placeholder="Share your interests, values, and what kind of connection you are looking for…"
-                className="w-full rounded-lg border border-border-custom bg-background px-3 py-2 text-sm text-text"
-              />
-            </div>
-          </div>
-
-          {profileMsg ? (
-            <p className="mt-3 text-sm font-medium text-primary">{profileMsg}</p>
-          ) : null}
-
-          <div className="mt-4">
-            <button
-              type="button"
-              disabled={profileBusy}
-              onClick={handleSaveProfile}
-              className="rounded-lg bg-primary px-5 py-2.5 text-sm font-bold text-white disabled:opacity-50"
-            >
-              {profileBusy ? 'Saving…' : 'Save Dating Profile'}
-            </button>
-          </div>
-        </div>
+      <div className="rounded-2xl border border-border-custom bg-white p-8 shadow-sm">
+        <span className="inline-flex items-center rounded-full bg-primaryLight px-3 py-1 text-xs font-bold text-primary">
+          ID-verified and private
+        </span>
+        <h2 className="mt-3 text-2xl font-black text-text">
+          Love &amp; Dating on Willfinditt
+        </h2>
+        <p className="mt-2 max-w-xl text-sm leading-relaxed text-text-gray">
+          Every member completes an identity check before joining. Your real
+          name, phone number, email, and marketplace ads are never shown on your
+          dating profile. Other members only see your chosen nickname,
+          approximate age, city, and dating photo.
+        </p>
+        <Link
+          href="/auth/login?redirect=/dating"
+          className="mt-6 inline-flex items-center justify-center rounded-lg bg-primary px-5 py-2.5 text-sm font-bold text-white shadow-sm hover:opacity-90"
+        >
+          Sign in to continue
+        </Link>
       </div>
     );
   }
 
-  // Verified & Active Member View
-  const posts = postsQuery.data?.pages.flatMap((p) => p.items) ?? [];
-  const conversations = conversationsQuery.data ?? [];
-  const messages = [
-    ...(messagesQuery.data?.pages.flatMap((p) => p.items) ?? []),
-  ].reverse();
+  if (kycQuery.isLoading || profileQuery.isLoading) {
+    return <p className="py-12 text-center text-text-gray">Loading…</p>;
+  }
+
+  if (!profile || !kyc) {
+    return (
+      <div className="space-y-6">
+        {!profile && kyc?.status === 'PENDING' ? (
+          <div className="rounded-2xl border border-border-custom bg-background-primary p-4 text-sm text-text">
+            Your identity check is under review. Add your dating profile below
+            so it can go live as soon as your identity is approved.
+          </div>
+        ) : null}
+        <SetupPanel
+          kycStatus={kycStatus}
+          kyc={kyc}
+          kycStep={kycStep}
+          setKycStep={setKycStep}
+          docType={docType}
+          setDocType={setDocType}
+          docNumber={docNumber}
+          setDocNumber={setDocNumber}
+          consent={consent}
+          setConsent={setConsent}
+          documentKey={documentKey}
+          setDocumentKey={setDocumentKey}
+          faceKeys={faceKeys}
+          kycBusy={kycBusy}
+          kycError={kycError}
+          kycNotice={kycNotice}
+          uploadKycFile={uploadKycFile}
+          setFaceKeys={setFaceKeys}
+          submitKyc={submitKyc}
+          nickname={nickname}
+          setNickname={setNickname}
+          birthYear={birthYear}
+          setBirthYear={setBirthYear}
+          gender={gender}
+          setGender={setGender}
+          lookingFor={lookingFor}
+          setLookingFor={setLookingFor}
+          about={about}
+          setAbout={setAbout}
+          profileCity={profileCity}
+          setProfileCity={setProfileCity}
+          photoBusy={photoBusy}
+          hasPhoto={Boolean(profile?.photoUrl) || Boolean(photoAssetId)}
+          uploadPublicPhoto={uploadPublicPhoto}
+          profileBusy={profileBusy}
+          profileMsg={profileMsg}
+          saveProfile={saveProfile}
+        />
+      </div>
+    );
+  }
+
+  if (!canBrowse) {
+    return (
+      <div className="space-y-4">
+        <div className="rounded-2xl border border-error/40 bg-error/5 p-5 text-sm text-text">
+          <p className="font-bold">Dating is unavailable for this profile.</p>
+          <p className="mt-1 text-text-gray">
+            {profile.status === 'REJECTED'
+              ? 'Your dating profile was not approved. You can review the reason and contact support.'
+              : profile.status === 'SUSPENDED'
+                ? 'Your dating profile is suspended. Contact support if you need help.'
+                : kycStatus === 'REJECTED'
+                  ? 'Your identity check was not approved. You can review the note and try again.'
+                  : 'Please complete the required checks to continue.'}
+          </p>
+          {kyc?.decisionReason || kyc?.infoRequestMessage ? (
+            <p className="mt-2 rounded-lg bg-white p-3 text-error">
+              {kyc.infoRequestMessage || kyc.decisionReason}
+            </p>
+          ) : null}
+        </div>
+        <SetupPanel
+          kycStatus={kycStatus}
+          kyc={kyc}
+          kycStep={kycStep}
+          setKycStep={setKycStep}
+          docType={docType}
+          setDocType={setDocType}
+          docNumber={docNumber}
+          setDocNumber={setDocNumber}
+          consent={consent}
+          setConsent={setConsent}
+          documentKey={documentKey}
+          setDocumentKey={setDocumentKey}
+          faceKeys={faceKeys}
+          kycBusy={kycBusy}
+          kycError={kycError}
+          kycNotice={kycNotice}
+          uploadKycFile={uploadKycFile}
+          setFaceKeys={setFaceKeys}
+          submitKyc={submitKyc}
+          nickname={nickname}
+          setNickname={setNickname}
+          birthYear={birthYear}
+          setBirthYear={setBirthYear}
+          gender={gender}
+          setGender={setGender}
+          lookingFor={lookingFor}
+          setLookingFor={setLookingFor}
+          about={about}
+          setAbout={setAbout}
+          profileCity={profileCity}
+          setProfileCity={setProfileCity}
+          photoBusy={photoBusy}
+          hasPhoto={Boolean(profile.photoUrl) || Boolean(photoAssetId)}
+          uploadPublicPhoto={uploadPublicPhoto}
+          profileBusy={profileBusy}
+          profileMsg={profileMsg}
+          saveProfile={saveProfile}
+        />
+      </div>
+    );
+  }
 
   return (
-    <div className="space-y-6">
-      {/* Top sub-navigation bar */}
-      <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-border-custom bg-white p-4 shadow-sm">
-        <div className="flex flex-wrap items-center gap-2">
-          {[
-            { id: 'browse' as const, label: 'Browse Introductions' },
-            { id: 'new-post' as const, label: 'Post Introduction' },
-            { id: 'inbox' as const, label: 'Encrypted Dating Inbox' },
-            { id: 'profile' as const, label: `My Profile (${myProfile.nickname})` },
-          ].map((item) => (
-            <button
-              key={item.id}
-              type="button"
-              onClick={() => setSubView(item.id)}
-              className={pillClass(subView === item.id)}
-            >
-              {item.label}
-            </button>
-          ))}
+    <div className="space-y-5">
+      <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-border-custom bg-white p-3 shadow-sm">
+        <div className="flex flex-wrap gap-2">
+          <button
+            type="button"
+            onClick={() => setTab('discover')}
+            className={pillClass(tab === 'discover')}
+          >
+            Discover
+          </button>
+          <button
+            type="button"
+            onClick={() => setTab('matches')}
+            className={pillClass(tab === 'matches')}
+          >
+            Matches
+            {canInteract && conversations.length > 0
+              ? ` (${conversations.length})`
+              : ''}
+          </button>
+          <button
+            type="button"
+            onClick={() => setTab('likes')}
+            className={pillClass(tab === 'likes')}
+          >
+            Likes{liked.length > 0 ? ` (${liked.length})` : ''}
+          </button>
+          <button
+            type="button"
+            onClick={() => setTab('profile')}
+            className={pillClass(tab === 'profile')}
+          >
+            Your profile
+          </button>
         </div>
         <span className="text-xs font-semibold text-text-gray">
-          Signed in as{' '}
-          <strong className="text-text">{myProfile.nickname}</strong> · KYC
-          Verified
+          {profile.nickname} · {profile.age}
+          {profile.verified ? ' · Verified' : ''}
         </span>
       </div>
 
-      {subView === 'browse' ? (
-        <div className="space-y-4">
-          <div className="flex flex-wrap items-center gap-2">
-            {[
-              { value: '' as const, label: 'All posters' },
-              { value: 'WOMAN' as const, label: 'Women' },
-              { value: 'MAN' as const, label: 'Men' },
-            ].map((g) => (
-              <button
-                key={g.label}
-                type="button"
-                onClick={() => setFilterGender(g.value)}
-                className={pillClass(filterGender === g.value)}
-              >
-                {g.label}
-              </button>
-            ))}
+      {!canInteract ? (
+        <div className="rounded-xl border border-border-custom bg-background-primary p-3 text-sm text-text-gray">
+          Your profile is still under review. You can browse, but messaging
+          unlocks after approval.
+        </div>
+      ) : null}
 
-            {[
-              { value: '' as const, label: 'Looking for: Any' },
-              { value: 'WOMAN' as const, label: 'Seeking a woman' },
-              { value: 'MAN' as const, label: 'Seeking a man' },
-              { value: 'ANYONE' as const, label: 'Open to anyone' },
-            ].map((lf) => (
-              <button
-                key={lf.label}
-                type="button"
-                onClick={() => setFilterLookingFor(lf.value)}
-                className={pillClass(filterLookingFor === lf.value)}
-              >
-                {lf.label}
-              </button>
-            ))}
+      {tab === 'discover' ? (
+        <DiscoverTab
+          profiles={profiles}
+          loading={profilesQuery.isLoading}
+          error={profilesQuery.isError}
+          refetch={profilesQuery.refetch}
+          hasNextPage={Boolean(profilesQuery.hasNextPage)}
+          fetchingNext={profilesQuery.isFetchingNextPage}
+          fetchNext={() => profilesQuery.fetchNextPage()}
+          showMe={effectiveShowMe}
+          setShowMe={setShowMe}
+          filterCity={filterCity}
+          setFilterCity={setFilterCity}
+          liked={likeIds}
+          toggleLike={toggleLike}
+          skip={skip}
+          canInteract={canInteract}
+          startChat={startChat}
+        />
+      ) : tab === 'matches' ? (
+        <MatchesTab
+          conversations={conversations}
+          loading={conversationsQuery.isLoading}
+          canInteract={canInteract}
+        />
+      ) : tab === 'likes' ? (
+        <LikesTab
+          liked={liked}
+          unlike={unlike}
+          canInteract={canInteract}
+          startChat={startChat}
+        />
+      ) : (
+        <ProfileTab
+          profile={profile}
+          onToggleHidden={toggleHidden}
+          onDelete={deleteProfile}
+        />
+      )}
+    </div>
+  );
+}
+
+function SetupPanel({
+  kycStatus,
+  kyc,
+  kycStep,
+  setKycStep,
+  docType,
+  setDocType,
+  docNumber,
+  setDocNumber,
+  consent,
+  setConsent,
+  documentKey,
+  setDocumentKey,
+  faceKeys,
+  kycBusy,
+  kycError,
+  kycNotice,
+  uploadKycFile,
+  setFaceKeys,
+  submitKyc,
+  nickname,
+  setNickname,
+  birthYear,
+  setBirthYear,
+  gender,
+  setGender,
+  lookingFor,
+  setLookingFor,
+  about,
+  setAbout,
+  profileCity,
+  setProfileCity,
+  photoBusy,
+  hasPhoto,
+  uploadPublicPhoto,
+  profileBusy,
+  profileMsg,
+  saveProfile,
+}: {
+  kycStatus: string;
+  kyc: ReturnType<typeof useMyDatingKyc>['data'];
+  kycStep: 1 | 2 | 3;
+  setKycStep: (step: 1 | 2 | 3) => void;
+  docType: DatingDocumentType;
+  setDocType: (value: DatingDocumentType) => void;
+  docNumber: string;
+  setDocNumber: (value: string) => void;
+  consent: boolean;
+  setConsent: (value: boolean) => void;
+  documentKey: string;
+  setDocumentKey: (value: string) => void;
+  faceKeys: [string, string, string];
+  kycBusy: boolean;
+  kycError: string | null;
+  kycNotice: string | null;
+  uploadKycFile: (file: File, onKey: (key: string) => void) => void;
+  setFaceKeys: Dispatch<SetStateAction<[string, string, string]>>;
+  submitKyc: () => void;
+  nickname: string;
+  setNickname: (value: string) => void;
+  birthYear: number;
+  setBirthYear: (value: number) => void;
+  gender: DatingGender;
+  setGender: (value: DatingGender) => void;
+  lookingFor: DatingLookingFor;
+  setLookingFor: (value: DatingLookingFor) => void;
+  about: string;
+  setAbout: (value: string) => void;
+  profileCity: string;
+  setProfileCity: (value: string) => void;
+  photoBusy: boolean;
+  hasPhoto: boolean;
+  uploadPublicPhoto: (file: File) => void;
+  profileBusy: boolean;
+  profileMsg: string | null;
+  saveProfile: () => void;
+}) {
+  const kycDone = kycStatus === 'PENDING' || kycStatus === 'APPROVED';
+
+  return (
+    <div className="space-y-6">
+      <div className="rounded-2xl border border-border-custom bg-white p-6 shadow-sm">
+        <span className="inline-flex rounded-full bg-primaryLight px-3 py-1 text-xs font-bold text-primary">
+          Identity status: {kycStatus.replace(/_/g, ' ')}
+        </span>
+        <h2 className="mt-2 text-xl font-black text-text">
+          {kycDone
+            ? 'Your identity check is complete'
+            : 'Verify your identity to start dating'}
+        </h2>
+        <p className="mt-1 text-sm text-text-gray">
+          Your ID and face photos are stored privately, are never shown to other
+          members, and are deleted 30 days after review.
+        </p>
+
+        {kyc?.decisionReason || kyc?.infoRequestMessage ? (
+          <div className="mt-4 rounded-xl border border-error/40 bg-error/5 p-3 text-sm text-error">
+            {kyc.infoRequestMessage || kyc.decisionReason}
           </div>
+        ) : null}
 
-          <div className="max-w-md">
-            <CityPicker
-              value={filterCity}
-              onChange={setFilterCity}
-              label="Filter by city"
-            />
-          </div>
+        {kycNotice ? (
+          <p className="mt-4 rounded-lg bg-background-primary p-3 text-sm text-text">
+            {kycNotice}
+          </p>
+        ) : null}
 
-          {postsQuery.isLoading ? (
-            <p className="py-12 text-center text-text-gray">
-              Loading introductions…
-            </p>
-          ) : !posts.length ? (
-            <div className="rounded-2xl border border-dashed border-border-custom bg-white py-14 text-center">
-              <p className="font-semibold text-text">
-                No dating introductions match your filters yet.
-              </p>
-              <button
-                type="button"
-                onClick={() => setSubView('new-post')}
-                className="mt-4 inline-flex rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white"
-              >
-                Write an introduction
-              </button>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-              {posts.map((post) => (
-                <article
-                  key={post.id}
-                  className="flex flex-col justify-between rounded-2xl border border-border-custom bg-white p-5 shadow-sm"
+        {!kycDone ? (
+          <div className="mt-5 space-y-5 border-t border-border-custom pt-5">
+            <div className="flex flex-wrap items-center gap-2 text-xs font-bold">
+              {[
+                { s: 1 as const, label: '1. ID details and consent' },
+                { s: 2 as const, label: '2. ID document photo' },
+                { s: 3 as const, label: '3. Three face checks' },
+              ].map((item) => (
+                <button
+                  key={item.s}
+                  type="button"
+                  onClick={() => setKycStep(item.s)}
+                  className={pillClass(kycStep === item.s)}
                 >
-                  <div>
-                    <div className="flex items-center gap-3">
-                      {post.profile.photoUrl ? (
-                        <img
-                          src={post.profile.photoUrl}
-                          alt={post.profile.nickname}
-                          referrerPolicy="no-referrer"
-                          className="h-14 w-14 rounded-full object-cover"
-                        />
-                      ) : (
-                        <div className="flex h-14 w-14 items-center justify-center rounded-full bg-primaryLight text-lg font-bold text-primary">
-                          {post.profile.nickname.slice(0, 1).toUpperCase()}
-                        </div>
-                      )}
-                      <div>
-                        <p className="font-bold text-text">
-                          {post.profile.nickname}, {post.profile.age}
-                        </p>
-                        <p className="text-xs text-text-gray">
-                          {GENDER_LABELS[post.profile.gender]} ·{' '}
-                          {LOOKING_FOR_LABELS[post.profile.lookingFor]}
-                          {post.city ? ` · ${post.city.name}` : ''}
-                        </p>
-                      </div>
-                    </div>
-                    <h3 className="mt-4 text-base font-bold text-text">
-                      {post.title}
-                    </h3>
-                    <p className="mt-1.5 whitespace-pre-wrap text-sm leading-relaxed text-text-gray">
-                      {post.body}
-                    </p>
-                  </div>
-                  <div className="mt-4 flex items-center justify-between border-t border-border-custom pt-3">
-                    <span className="text-xs text-text-light-gray">
-                      Encrypted 1-to-1 chat
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() => handleStartChat(post)}
-                      className="rounded-lg bg-primary px-4 py-1.5 text-xs font-bold text-white hover:opacity-90"
-                    >
-                      Message privately
-                    </button>
-                  </div>
-                </article>
+                  {item.label}
+                </button>
               ))}
             </div>
-          )}
 
-          <LoadMore
-            show={Boolean(postsQuery.hasNextPage)}
-            loading={postsQuery.isFetchingNextPage}
-            onClick={() => postsQuery.fetchNextPage()}
-          />
-        </div>
-      ) : subView === 'new-post' ? (
-        <div className="max-w-2xl rounded-2xl border border-border-custom bg-white p-6 shadow-sm">
-          <h3 className="text-lg font-black text-text">
-            Post a Dating Introduction
-          </h3>
-          <p className="mt-1 text-sm text-text-gray">
-            Posting as <strong>{myProfile.nickname}</strong>. Do not include
-            your phone number or social handles in the public post — you can
-            share your number inside encrypted chat when you feel comfortable.
-          </p>
-          <div className="mt-4 space-y-4">
-            <div>
-              <label className="mb-1 block text-xs font-bold text-text">
-                Headline (3–120 characters)
-              </label>
-              <input
-                type="text"
-                value={postTitle}
-                onChange={(e) => setPostTitle(e.target.value)}
-                placeholder="e.g. Looking for a serious partner in Accra who loves music and travel"
-                className="w-full rounded-lg border border-border-custom bg-background px-3 py-2 text-sm text-text"
-              />
-            </div>
-            <div>
-              <label className="mb-1 block text-xs font-bold text-text">
-                About you &amp; who you&apos;d like to meet (min 10 characters)
-              </label>
-              <textarea
-                rows={5}
-                value={postBody}
-                onChange={(e) => setPostBody(e.target.value)}
-                placeholder="Write a warm, honest introduction…"
-                className="w-full rounded-lg border border-border-custom bg-background px-3 py-2 text-sm text-text"
-              />
-            </div>
-            {postMsg ? (
-              <p className="text-sm font-medium text-error">{postMsg}</p>
+            {kycError ? (
+              <p className="text-sm font-medium text-error">{kycError}</p>
             ) : null}
-            <button
-              type="button"
-              disabled={
-                postBusy ||
-                postTitle.trim().length < 3 ||
-                postBody.trim().length < 10
-              }
-              onClick={handleCreatePost}
-              className="rounded-lg bg-primary px-5 py-2.5 text-sm font-bold text-white disabled:opacity-50"
-            >
-              {postBusy ? 'Publishing…' : 'Publish Introduction'}
-            </button>
-          </div>
-        </div>
-      ) : subView === 'inbox' ? (
-        <div className="grid grid-cols-1 gap-4 rounded-2xl border border-border-custom bg-white p-4 shadow-sm lg:grid-cols-[280px_1fr]">
-          {/* Conversation list */}
-          <div className="border-b border-border-custom pb-4 lg:border-b-0 lg:border-r lg:pb-0 lg:pr-4">
-            <h3 className="text-sm font-bold text-text">
-              Encrypted Dating Conversations
-            </h3>
-            <p className="mt-0.5 text-xs text-text-gray">
-              Separate from marketplace messages.
-            </p>
-            <div className="mt-3 space-y-2">
-              {!conversations.length ? (
-                <p className="py-6 text-xs text-text-gray">
-                  No conversations yet. Message someone from Browse
-                  Introductions to start.
-                </p>
-              ) : (
-                conversations.map((conv) => (
-                  <button
-                    key={conv.id}
-                    type="button"
-                    onClick={() => handleSelectConversation(conv.id)}
-                    className={`flex w-full items-center justify-between rounded-xl p-2.5 text-left transition-colors ${
-                      activeConvId === conv.id
-                        ? 'bg-primaryLight text-primary'
-                        : 'hover:bg-background-primary'
-                    }`}
-                  >
-                    <div>
-                      <p className="text-sm font-bold">
-                        {conv.peerProfile?.nickname ?? 'Dating member'}
-                      </p>
-                      <p className="truncate text-xs text-text-gray">
-                        {conv.post.title}
-                      </p>
-                    </div>
-                    {conv.unreadCount > 0 ? (
-                      <span className="rounded-full bg-primary px-2 py-0.5 text-[11px] font-bold text-white">
-                        {conv.unreadCount}
-                      </span>
-                    ) : null}
-                  </button>
-                ))
-              )}
-            </div>
-          </div>
 
-          {/* Active Conversation Thread */}
-          <div className="flex min-h-[380px] flex-col justify-between">
-            {!activeConvId ? (
-              <div className="flex flex-1 items-center justify-center text-sm text-text-gray">
-                Select a conversation to view encrypted messages.
+            {kycStep === 1 ? (
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                <div>
+                  <label className="mb-1 block text-xs font-bold text-text">
+                    Government ID type
+                  </label>
+                  <select
+                    value={docType}
+                    onChange={(e) =>
+                      setDocType(e.target.value as DatingDocumentType)
+                    }
+                    className="w-full rounded-lg border border-border-custom bg-background px-3 py-2 text-sm text-text"
+                  >
+                    {DOC_TYPES.map((doc) => (
+                      <option key={doc.value} value={doc.value}>
+                        {doc.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="mb-1 block text-xs font-bold text-text">
+                    Document number
+                  </label>
+                  <input
+                    type="text"
+                    value={docNumber}
+                    onChange={(e) => setDocNumber(e.target.value)}
+                    placeholder="e.g. GHA-123456789-0"
+                    className="w-full rounded-lg border border-border-custom bg-background px-3 py-2 text-sm text-text"
+                  />
+                  <p className="mt-1 text-xs text-text-gray">
+                    Your ID number is never shown to other members.
+                  </p>
+                </div>
+                <label className="flex items-start gap-2 text-sm text-text-gray md:col-span-2">
+                  <input
+                    type="checkbox"
+                    checked={consent}
+                    onChange={(e) => setConsent(e.target.checked)}
+                    className="mt-1"
+                  />
+                  <span>
+                    I consent to Willfinditt checking my ID and three face
+                    photos for safety and age verification.
+                  </span>
+                </label>
+                <div className="md:col-span-2">
+                  <button
+                    type="button"
+                    disabled={docNumber.trim().length < 5 || !consent}
+                    onClick={() => setKycStep(2)}
+                    className="rounded-lg bg-primary px-4 py-2 text-sm font-bold text-white disabled:opacity-50"
+                  >
+                    Next: upload ID photo
+                  </button>
+                </div>
+              </div>
+            ) : kycStep === 2 ? (
+              <div className="space-y-4">
+                <div className="rounded-xl border border-border-custom p-4">
+                  <p className="text-sm font-bold text-text">
+                    Government ID photo
+                  </p>
+                  <p className="mt-1 text-xs text-text-gray">
+                    Upload a clear photo of the front of your selected ID.
+                  </p>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) uploadKycFile(file, setDocumentKey);
+                    }}
+                    className="mt-2 block w-full text-xs text-text-gray"
+                  />
+                  {documentKey ? (
+                    <p className="mt-1 text-xs font-semibold text-green-600">
+                      ID photo attached
+                    </p>
+                  ) : null}
+                </div>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setKycStep(1)}
+                    className="rounded-lg border border-border-custom px-4 py-2 text-sm font-semibold text-text"
+                  >
+                    Back
+                  </button>
+                  <button
+                    type="button"
+                    disabled={!documentKey || kycBusy}
+                    onClick={() => setKycStep(3)}
+                    className="rounded-lg bg-primary px-4 py-2 text-sm font-bold text-white disabled:opacity-50"
+                  >
+                    Next: three face photos
+                  </button>
+                </div>
               </div>
             ) : (
-              <>
-                <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border-custom pb-3">
-                  <span className="text-xs font-semibold text-text-gray">
-                    AES-256-GCM Encrypted Conversation
-                  </span>
-                  <div className="flex flex-wrap gap-2">
-                    <button
-                      type="button"
-                      disabled={chatBusy}
-                      onClick={handleSharePhone}
-                      className="rounded-lg border border-border-custom px-3 py-1 text-xs font-semibold text-text hover:border-primary hover:text-primary"
-                    >
-                      Share my number in this chat
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleShredConversation(activeConvId)}
-                      className="rounded-lg border border-error/40 px-3 py-1 text-xs font-semibold text-error hover:bg-error/5"
-                    >
-                      Delete &amp; shred key
-                    </button>
-                  </div>
-                </div>
-
-                <div className="my-4 max-h-[340px] flex-1 space-y-3 overflow-y-auto pr-1">
-                  {messages.map((m) => (
+              <div className="space-y-4">
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+                  {[
+                    '1. Straight-on face photo',
+                    '2. Slight head turn',
+                    '3. Clear selfie in good light',
+                  ].map((label, index) => (
                     <div
-                      key={m.id}
-                      className={`flex flex-col ${
-                        m.isMine ? 'items-end' : 'items-start'
-                      }`}
+                      key={label}
+                      className="rounded-xl border border-border-custom p-4"
                     >
-                      <div
-                        className={`max-w-md rounded-2xl px-4 py-2.5 text-sm ${
-                          m.isMine
-                            ? 'bg-primary text-white'
-                            : 'bg-background-primary text-text'
-                        }`}
-                      >
-                        {m.type === 'PHONE_SHARE' ? (
-                          <p className="font-semibold">Shared phone: {m.text}</p>
-                        ) : (
-                          <p className="whitespace-pre-wrap">{m.text}</p>
-                        )}
-                      </div>
-                      {!m.isMine ? (
-                        <button
-                          type="button"
-                          onClick={() => setReportMsgId(m.id)}
-                          className="mt-1 text-[11px] text-text-light-gray hover:text-error"
-                        >
-                          Report message
-                        </button>
+                      <p className="text-sm font-bold text-text">{label}</p>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) {
+                            uploadKycFile(file, (key) =>
+                              setFaceKeys((previous) => {
+                                const next = [...previous] as [
+                                  string,
+                                  string,
+                                  string,
+                                ];
+                                next[index] = key;
+                                return next;
+                              })
+                            );
+                          }
+                        }}
+                        className="mt-2 block w-full text-xs text-text-gray"
+                      />
+                      {faceKeys[index] ? (
+                        <p className="mt-1 text-xs font-semibold text-green-600">
+                          Face photo attached
+                        </p>
                       ) : null}
                     </div>
                   ))}
                 </div>
-
-                {reportMsgId ? (
-                  <div className="mb-3 rounded-xl border border-error/40 bg-error/5 p-3">
-                    <p className="text-xs font-bold text-text">
-                      Report message to safety moderators
-                    </p>
-                    <input
-                      type="text"
-                      value={reportReason}
-                      onChange={(e) => setReportReason(e.target.value)}
-                      placeholder="Describe the issue (at least 3 characters)…"
-                      className="mt-2 w-full rounded-lg border border-border-custom bg-white px-3 py-1.5 text-xs"
-                    />
-                    <div className="mt-2 flex gap-2">
-                      <button
-                        type="button"
-                        onClick={handleReportMessage}
-                        className="rounded-lg bg-error px-3 py-1 text-xs font-bold text-white"
-                      >
-                        Submit report
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setReportMsgId(null)}
-                        className="text-xs text-text-gray"
-                      >
-                        Cancel
-                      </button>
-                    </div>
-                  </div>
-                ) : null}
-
                 <div className="flex gap-2">
-                  <input
-                    type="text"
-                    value={draftMsg}
-                    onChange={(e) => setDraftMsg(e.target.value)}
-                    placeholder="Write an encrypted message…"
-                    className="flex-1 rounded-xl border border-border-custom bg-background px-3.5 py-2 text-sm text-text"
-                  />
                   <button
                     type="button"
-                    disabled={chatBusy || !draftMsg.trim()}
-                    onClick={handleSendMessage}
-                    className="rounded-xl bg-primary px-5 py-2 text-sm font-bold text-white disabled:opacity-50"
+                    onClick={() => setKycStep(2)}
+                    className="rounded-lg border border-border-custom px-4 py-2 text-sm font-semibold text-text"
                   >
-                    Send
+                    Back
+                  </button>
+                  <button
+                    type="button"
+                    disabled={
+                      kycBusy ||
+                      !documentKey ||
+                      !faceKeys[0] ||
+                      !faceKeys[1] ||
+                      !faceKeys[2]
+                    }
+                    onClick={submitKyc}
+                    className="rounded-lg bg-primary px-5 py-2 text-sm font-bold text-white disabled:opacity-50"
+                  >
+                    {kycBusy ? 'Submitting…' : 'Submit identity check'}
                   </button>
                 </div>
-              </>
+              </div>
             )}
           </div>
-        </div>
-      ) : (
-        <div className="max-w-2xl rounded-2xl border border-border-custom bg-white p-6 shadow-sm">
-          <h3 className="text-lg font-black text-text">
-            My Dating Profile &amp; Privacy
-          </h3>
-          <p className="mt-1 text-sm text-text-gray">
-            Nickname: <strong>{myProfile.nickname}</strong> · Age:{' '}
-            {myProfile.age} · Status: {myProfile.status}
-          </p>
-          <p className="mt-2 text-sm text-text-gray">
-            {myProfile.about || 'No about text set.'}
-          </p>
-          <div className="mt-6 flex flex-wrap gap-3 border-t border-border-custom pt-4">
-            <button
-              type="button"
-              onClick={async () => {
-                const nextHidden = myProfile.status !== 'HIDDEN';
-                await datingApi.updateProfile({ hidden: nextHidden });
-                await queryClient.invalidateQueries({
-                  queryKey: [...myKey, 'dating-profile'],
-                });
-              }}
-              className="rounded-lg border border-border-custom px-4 py-2 text-xs font-bold text-text hover:bg-background-primary"
+        ) : null}
+      </div>
+
+      <div className="rounded-2xl border border-border-custom bg-white p-6 shadow-sm">
+        <h3 className="text-lg font-black text-text">Your dating profile</h3>
+        <p className="mt-1 text-sm text-text-gray">
+          Use a nickname that does not reveal your real name. Only your
+          nickname, approximate age, city, about text, and public photo are
+          visible to other members.
+        </p>
+
+        <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
+          <div>
+            <label className="mb-1 block text-xs font-bold text-text">
+              Dating nickname
+            </label>
+            <input
+              type="text"
+              value={nickname}
+              onChange={(e) => setNickname(e.target.value)}
+              placeholder="e.g. SunnyAma"
+              className="w-full rounded-lg border border-border-custom bg-background px-3 py-2 text-sm text-text"
+            />
+          </div>
+          <div>
+            <label className="mb-1 block text-xs font-bold text-text">
+              Birth year (18+ only, never shown publicly)
+            </label>
+            <input
+              type="number"
+              min={1925}
+              max={new Date().getFullYear() - 18}
+              value={birthYear}
+              onChange={(e) => setBirthYear(Number(e.target.value))}
+              className="w-full rounded-lg border border-border-custom bg-background px-3 py-2 text-sm text-text"
+            />
+          </div>
+          <div>
+            <label className="mb-1 block text-xs font-bold text-text">
+              I am a
+            </label>
+            <select
+              value={gender}
+              onChange={(e) => setGender(e.target.value as DatingGender)}
+              className="w-full rounded-lg border border-border-custom bg-background px-3 py-2 text-sm text-text"
             >
-              {myProfile.status === 'HIDDEN'
-                ? 'Show My Dating Profile'
-                : 'Hide My Dating Profile'}
-            </button>
-            <button
-              type="button"
-              onClick={async () => {
-                if (
-                  !window.confirm(
-                    'Delete your Dating profile? All your dating posts will be removed and your dating chat keys will be crypto-shredded.'
-                  )
-                ) {
-                  return;
-                }
-                await datingApi.deleteProfile();
-                await queryClient.invalidateQueries({
-                  queryKey: [...myKey, 'dating-profile'],
-                });
-              }}
-              className="rounded-lg border border-error px-4 py-2 text-xs font-bold text-error hover:bg-error/5"
+              <option value="MAN">Man</option>
+              <option value="WOMAN">Woman</option>
+            </select>
+          </div>
+          <div>
+            <label className="mb-1 block text-xs font-bold text-text">
+              Looking for
+            </label>
+            <select
+              value={lookingFor}
+              onChange={(e) =>
+                setLookingFor(e.target.value as DatingLookingFor)
+              }
+              className="w-full rounded-lg border border-border-custom bg-background px-3 py-2 text-sm text-text"
             >
-              Delete Dating Profile &amp; Shred Chat Keys
-            </button>
+              <option value="WOMAN">A woman</option>
+              <option value="MAN">A man</option>
+              <option value="ANYONE">Anyone</option>
+            </select>
+          </div>
+          <CityPicker
+            value={profileCity}
+            onChange={setProfileCity}
+            label="City (optional)"
+          />
+          <div>
+            <label className="mb-1 block text-xs font-bold text-text">
+              Public dating photo (required)
+            </label>
+            <input
+              type="file"
+              accept="image/*"
+              disabled={photoBusy}
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) uploadPublicPhoto(file);
+              }}
+              className="w-full text-xs text-text-gray disabled:opacity-50"
+            />
+            {photoBusy ? (
+              <p className="mt-1 text-xs text-text-gray">Uploading…</p>
+            ) : hasPhoto || profileMsg === 'Public photo attached.' ? (
+              <p className="mt-1 text-xs text-green-600">Photo attached</p>
+            ) : (
+              <p className="mt-1 text-xs text-text-gray">
+                A public photo is required to publish your profile.
+              </p>
+            )}
+          </div>
+          <div className="md:col-span-2">
+            <label className="mb-1 block text-xs font-bold text-text">
+              About you
+            </label>
+            <textarea
+              rows={3}
+              value={about}
+              onChange={(e) => setAbout(e.target.value)}
+              placeholder="Share your interests, values, and what kind of connection you are looking for…"
+              className="w-full rounded-lg border border-border-custom bg-background px-3 py-2 text-sm text-text"
+            />
           </div>
         </div>
+
+        {profileMsg ? (
+          <p className="mt-3 text-sm font-medium text-primary">{profileMsg}</p>
+        ) : null}
+
+        <div className="mt-4">
+          <button
+            type="button"
+            disabled={profileBusy || photoBusy || !hasPhoto}
+            onClick={saveProfile}
+            className="rounded-lg bg-primary px-5 py-2.5 text-sm font-bold text-white disabled:opacity-50"
+          >
+            {profileBusy ? 'Saving…' : 'Save dating profile'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ProfileCard({
+  profile,
+  liked,
+  onLike,
+  onSkip,
+  onMessage,
+  canInteract,
+}: {
+  profile: DatingPublicProfile;
+  liked: boolean;
+  onLike: () => void;
+  onSkip?: () => void;
+  onMessage: () => void;
+  canInteract: boolean;
+}) {
+  return (
+    <article className="flex flex-col overflow-hidden rounded-2xl border border-border-custom bg-white shadow-sm">
+      <div className="relative h-56 w-full bg-primaryLight">
+        {profile.photoUrl ? (
+          <img
+            src={profile.photoUrl}
+            alt={profile.nickname}
+            referrerPolicy="no-referrer"
+            className="h-full w-full object-cover"
+          />
+        ) : (
+          <div className="flex h-full items-center justify-center text-4xl font-black text-primary">
+            {profile.nickname.slice(0, 1).toUpperCase()}
+          </div>
+        )}
+        {profile.verified ? (
+          <span className="absolute left-3 top-3 rounded-full bg-white/95 px-2.5 py-1 text-[11px] font-bold text-green-700 shadow-sm">
+            Verified
+          </span>
+        ) : null}
+      </div>
+      <div className="flex flex-1 flex-col p-5">
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <h3 className="text-lg font-black text-text">
+              {profile.nickname}, {profile.age}
+            </h3>
+            <p className="mt-0.5 text-xs text-text-gray">
+              {GENDER_LABELS[profile.gender]} ·{' '}
+              {LOOKING_FOR_LABELS[profile.lookingFor]}
+              {profile.city ? ` · ${profile.city.name}` : ''}
+            </p>
+          </div>
+        </div>
+        <p className="mt-2 line-clamp-3 flex-1 text-sm leading-relaxed text-text-gray">
+          {profile.about || 'No introduction yet.'}
+        </p>
+        <div className="mt-4 flex flex-wrap items-center gap-2 border-t border-border-custom pt-3">
+          <button
+            type="button"
+            onClick={onLike}
+            className={`rounded-lg border px-3 py-1.5 text-xs font-bold ${
+              liked
+                ? 'border-primary bg-primaryLight text-primary'
+                : 'border-border-custom text-text hover:border-primary hover:text-primary'
+            }`}
+          >
+            {liked ? 'Liked · Unlike' : 'Like'}
+          </button>
+          {onSkip ? (
+            <button
+              type="button"
+              onClick={onSkip}
+              className="rounded-lg border border-border-custom px-3 py-1.5 text-xs font-bold text-text-gray hover:border-text hover:text-text"
+            >
+              Skip
+            </button>
+          ) : null}
+          <button
+            type="button"
+            onClick={onMessage}
+            disabled={!canInteract}
+            title={
+              canInteract
+                ? undefined
+                : 'Messaging unlocks after your profile is approved.'
+            }
+            className="ml-auto rounded-lg bg-primary px-3 py-1.5 text-xs font-bold text-white hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            Message
+          </button>
+        </div>
+      </div>
+    </article>
+  );
+}
+
+function DiscoverTab({
+  profiles,
+  loading,
+  error,
+  refetch,
+  hasNextPage,
+  fetchingNext,
+  fetchNext,
+  showMe,
+  setShowMe,
+  filterCity,
+  setFilterCity,
+  liked,
+  toggleLike,
+  skip,
+  canInteract,
+  startChat,
+}: {
+  profiles: DatingPublicProfile[];
+  loading: boolean;
+  error: boolean;
+  refetch: () => void;
+  hasNextPage: boolean;
+  fetchingNext: boolean;
+  fetchNext: () => void;
+  showMe: DatingLookingFor;
+  setShowMe: (value: DatingLookingFor) => void;
+  filterCity: string;
+  setFilterCity: (value: string) => void;
+  liked: Set<string>;
+  toggleLike: (profile: DatingPublicProfile) => void;
+  skip: (profileId: string) => void;
+  canInteract: boolean;
+  startChat: (profile: DatingPublicProfile) => void;
+}) {
+  return (
+    <div className="space-y-4">
+      <div className="flex flex-wrap items-end gap-3">
+        <div>
+          <p className="mb-1 text-xs font-bold text-text">Show me</p>
+          <div className="flex flex-wrap gap-2">
+            {[
+              { value: 'ANYONE' as const, label: 'Anyone' },
+              { value: 'WOMAN' as const, label: 'Women' },
+              { value: 'MAN' as const, label: 'Men' },
+            ].map((item) => (
+              <button
+                key={item.value}
+                type="button"
+                onClick={() => setShowMe(item.value)}
+                className={pillClass(showMe === item.value)}
+              >
+                {item.label}
+              </button>
+            ))}
+          </div>
+        </div>
+        <div className="min-w-[220px] flex-1">
+          <CityPicker
+            value={filterCity}
+            onChange={setFilterCity}
+            label="Filter by city"
+          />
+        </div>
+      </div>
+
+      {loading ? (
+        <p className="py-12 text-center text-text-gray">Loading profiles…</p>
+      ) : error ? (
+        <div className="py-12 text-center">
+          <p className="text-error">Could not load profiles.</p>
+          <button
+            type="button"
+            onClick={refetch}
+            className="mt-3 rounded-lg bg-primary px-4 py-2 text-sm font-bold text-white"
+          >
+            Try again
+          </button>
+        </div>
+      ) : !profiles.length ? (
+        <div className="rounded-2xl border border-dashed border-border-custom bg-white py-14 text-center">
+          <p className="font-semibold text-text">No profiles yet</p>
+          <p className="mt-1 text-sm text-text-gray">
+            {filterCity
+              ? 'No profiles in this city match your preferences yet.'
+              : 'No profiles match your preferences yet. Check back soon.'}
+          </p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+          {profiles.map((profile) => (
+            <ProfileCard
+              key={profile.id}
+              profile={profile}
+              liked={liked.has(profile.id)}
+              onLike={() => toggleLike(profile)}
+              onSkip={() => skip(profile.id)}
+              onMessage={() => startChat(profile)}
+              canInteract={canInteract}
+            />
+          ))}
+        </div>
       )}
+
+      <LoadMore
+        show={hasNextPage}
+        loading={fetchingNext}
+        onClick={fetchNext}
+      />
+    </div>
+  );
+}
+
+function MatchesTab({
+  conversations,
+  loading,
+  canInteract,
+}: {
+  conversations: {
+    id: string;
+    peerProfile: DatingPublicProfile | null;
+    unreadCount: number;
+    updatedAt: string;
+  }[];
+  loading: boolean;
+  canInteract: boolean;
+}) {
+  if (!canInteract) {
+    return (
+      <div className="rounded-2xl border border-border-custom bg-white p-8 text-center text-text-gray">
+        <p className="font-semibold text-text">Matches unlock after approval</p>
+        <p className="mt-1 text-sm">
+          Keep browsing while your profile is being reviewed.
+        </p>
+      </div>
+    );
+  }
+
+  if (loading) {
+    return <p className="py-12 text-center text-text-gray">Loading matches…</p>;
+  }
+
+  if (!conversations.length) {
+    return (
+      <div className="rounded-2xl border border-dashed border-border-custom bg-white p-8 text-center">
+        <p className="font-semibold text-text">No matches yet</p>
+        <p className="mt-1 text-sm text-text-gray">
+          Start a conversation from Discover and your matches will appear here.
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="divide-y divide-border-custom overflow-hidden rounded-2xl border border-border-custom bg-white">
+      {conversations.map((conversation) => {
+        const peer = conversation.peerProfile;
+        return (
+          <Link
+            key={conversation.id}
+            href={`/messages/dating/${conversation.id}`}
+            className="flex items-center gap-3 p-4 hover:bg-background-primary"
+          >
+            <div className="h-12 w-12 shrink-0 overflow-hidden rounded-full bg-primaryLight">
+              {peer?.photoUrl ? (
+                <img
+                  src={peer.photoUrl}
+                  alt={peer.nickname}
+                  referrerPolicy="no-referrer"
+                  className="h-full w-full object-cover"
+                />
+              ) : (
+                <div className="flex h-full items-center justify-center text-lg font-bold text-primary">
+                  {(peer?.nickname ?? 'D').slice(0, 1).toUpperCase()}
+                </div>
+              )}
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="truncate font-bold text-text">
+                {peer?.nickname ?? 'Dating member'}
+              </p>
+              <p className="truncate text-xs text-text-gray">
+                {conversation.unreadCount > 0
+                  ? `${conversation.unreadCount} new message${
+                      conversation.unreadCount > 1 ? 's' : ''
+                    }`
+                  : 'Dating conversation'}
+              </p>
+            </div>
+            <span className="text-xs text-text-gray">
+              {new Date(conversation.updatedAt).toLocaleDateString()}
+            </span>
+          </Link>
+        );
+      })}
+    </div>
+  );
+}
+
+function LikesTab({
+  liked,
+  unlike,
+  canInteract,
+  startChat,
+}: {
+  liked: LikedProfile[];
+  unlike: (profileId: string) => void;
+  canInteract: boolean;
+  startChat: (profile: DatingPublicProfile) => void;
+}) {
+  if (!liked.length) {
+    return (
+      <div className="rounded-2xl border border-dashed border-border-custom bg-white p-8 text-center">
+        <p className="font-semibold text-text">No likes yet</p>
+        <p className="mt-1 text-sm text-text-gray">
+          Profiles you like from Discover will appear here.
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+      {liked.map(({ profile }) => (
+        <ProfileCard
+          key={profile.id}
+          profile={profile}
+          liked
+          onLike={() => unlike(profile.id)}
+          onMessage={() => startChat(profile)}
+          canInteract={canInteract}
+        />
+      ))}
+    </div>
+  );
+}
+
+function ProfileTab({
+  profile,
+  onToggleHidden,
+  onDelete,
+}: {
+  profile: {
+    nickname: string;
+    age: number;
+    about: string | null;
+    status: string;
+    photoUrl: string | null;
+    city?: { name: string } | null;
+  };
+  onToggleHidden: () => void;
+  onDelete: () => void;
+}) {
+  return (
+    <div className="max-w-2xl rounded-2xl border border-border-custom bg-white p-6 shadow-sm">
+      <div className="flex items-center gap-4">
+        <div className="h-16 w-16 overflow-hidden rounded-full bg-primaryLight">
+          {profile.photoUrl ? (
+            <img
+              src={profile.photoUrl}
+              alt={profile.nickname}
+              referrerPolicy="no-referrer"
+              className="h-full w-full object-cover"
+            />
+          ) : (
+            <div className="flex h-full items-center justify-center text-xl font-bold text-primary">
+              {profile.nickname.slice(0, 1).toUpperCase()}
+            </div>
+          )}
+        </div>
+        <div>
+          <h3 className="text-lg font-black text-text">
+            {profile.nickname}, {profile.age}
+          </h3>
+          <p className="text-sm text-text-gray">
+            Status: {profile.status.replace(/_/g, ' ')}
+            {profile.city ? ` · ${profile.city.name}` : ''}
+          </p>
+        </div>
+      </div>
+      <p className="mt-4 text-sm text-text-gray">
+        {profile.about || 'No about text set.'}
+      </p>
+      <div className="mt-6 flex flex-wrap gap-3 border-t border-border-custom pt-4">
+        <button
+          type="button"
+          onClick={onToggleHidden}
+          className="rounded-lg border border-border-custom px-4 py-2 text-xs font-bold text-text hover:bg-background-primary"
+        >
+          {profile.status === 'HIDDEN'
+            ? 'Show my dating profile'
+            : 'Hide my dating profile'}
+        </button>
+        <button
+          type="button"
+          onClick={onDelete}
+          className="rounded-lg border border-error px-4 py-2 text-xs font-bold text-error hover:bg-error/5"
+        >
+          Delete dating profile
+        </button>
+      </div>
     </div>
   );
 }
@@ -1142,24 +1426,20 @@ export function DatingPageClient() {
       {() => (
         <div className="min-h-screen bg-background">
           <section className="border-b border-border-custom bg-gradient-to-br from-primary/10 via-background to-background-primary/40">
-            <div className="container mx-auto flex flex-col justify-between gap-4 px-4 py-8 md:flex-row md:items-end">
-              <div>
-                <Link
-                  href="/community"
-                  className="text-xs font-bold uppercase tracking-wider text-primary hover:underline"
-                >
-                  ← Back to Community Hub
-                </Link>
-                <h1 className="mt-1 text-3xl font-black text-text">
-                  Love &amp; Dating
-                </h1>
-                <p className="mt-1 text-sm text-text-gray">
-                  ID-verified introductions and private encrypted conversations.
-                </p>
-              </div>
+            <div className="container mx-auto px-4 py-8">
+              <Link
+                href="/community"
+                className="text-xs font-bold uppercase tracking-wider text-primary hover:underline"
+              >
+                ← Back to Community
+              </Link>
+              <h1 className="mt-1 text-3xl font-black text-text">Dating</h1>
+              <p className="mt-1 text-sm text-text-gray">
+                Discover verified members and keep your conversations in
+                Messages.
+              </p>
             </div>
           </section>
-
           <div className="container mx-auto px-4 py-8">
             <DatingHubPanel />
           </div>

@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useState, type ReactNode } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { useSections, useSellHref } from '@/hooks/useCommunity';
+import { useSections } from '@/hooks/useCommunity';
 
 const canBrowse = (state?: string) => state === 'ON' || state === 'READ_ONLY';
 const canPost = (state?: string) => state === 'ON';
@@ -73,7 +73,6 @@ function SectionCard({
 export function CommunityMenu() {
   const { data: sections } = useSections();
   const { isAuthenticated } = useAuth();
-  const sellHref = useSellHref();
   const [open, setOpen] = useState(false);
 
   const stateOf = (key: string) =>
@@ -204,16 +203,6 @@ export function CommunityMenu() {
                   Sign in to post
                 </Link>
               )}
-
-              <div className="mt-2 border-t border-border-custom pt-2">
-                <Link
-                  href={sellHref}
-                  onClick={close}
-                  className="flex items-center justify-center rounded-lg bg-primary px-3 py-2 text-sm font-semibold text-white hover:opacity-90"
-                >
-                  Sell / Post
-                </Link>
-              </div>
             </div>
           </div>
         </div>

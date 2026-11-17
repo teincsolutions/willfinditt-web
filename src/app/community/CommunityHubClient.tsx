@@ -120,12 +120,6 @@ export function CommunityHubClient({ initialFlags }: { initialFlags?: SectionFla
                 people behind the posts.
               </p>
             </div>
-            <Link
-              href="/post"
-              className="inline-flex shrink-0 items-center justify-center rounded-lg bg-primary px-5 py-3 text-sm font-bold text-white shadow-sm hover:opacity-90"
-            >
-              Sell / Post
-            </Link>
           </div>
 
           <div className="mt-6 max-w-3xl">
@@ -284,9 +278,6 @@ export function CommunityHubClient({ initialFlags }: { initialFlags?: SectionFla
               </Link>
               <Link href="/post/lost-found" className="block rounded-lg border border-border-custom px-3 py-2 text-sm font-semibold text-text hover:border-primary hover:text-primary">
                 Post lost or found
-              </Link>
-              <Link href="/post" className="block rounded-lg border border-border-custom px-3 py-2 text-sm font-semibold text-text hover:border-primary hover:text-primary">
-                Sell an item or ad
               </Link>
             </div>
           </div>

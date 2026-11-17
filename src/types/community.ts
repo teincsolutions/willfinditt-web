@@ -314,7 +314,8 @@ export interface DatingPostInput extends ListingPeriodInput {
 
 export interface DatingConversation {
   id: string;
-  post: { id: string; title: string };
+  /** Null for conversations started directly from a dating profile. */
+  post: { id: string; title: string } | null;
   peerProfile: DatingPublicProfile | null;
   unreadCount: number;
   createdAt: string;

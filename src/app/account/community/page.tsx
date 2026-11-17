@@ -301,6 +301,12 @@ export default function CommunityProfilePage() {
 
   return (
     <div>
+      <Link
+        href="/community"
+        className="mb-4 inline-flex items-center gap-1 text-xs font-bold uppercase tracking-wider text-primary hover:underline"
+      >
+        ← Back to Community
+      </Link>
       {/* Profile card */}
       <div className="overflow-hidden rounded-2xl border border-border-custom bg-white">
         <div className="h-24 bg-gradient-to-r from-primary via-primary/80 to-primary/50" />

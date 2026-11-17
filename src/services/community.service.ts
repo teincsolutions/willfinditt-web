@@ -13,6 +13,7 @@ import type {
   DatingPost,
   DatingPostInput,
   DatingProfileInput,
+  DatingPublicProfile,
   EventFormConfig,
   EventPost,
   EventPostInput,
@@ -201,6 +202,14 @@ export const datingApi = {
     await api.delete('/dating/profile/me');
   },
 
+  listProfiles: async (params: {
+    city?: string;
+    gender?: DatingGender;
+    lookingFor?: DatingLookingFor;
+    cursor?: string;
+  }): Promise<CursorPage<DatingPublicProfile>> =>
+    (await api.get('/dating/profiles', { params })).data,
+
   listPosts: async (params: {
     city?: string;
     gender?: DatingGender;
@@ -224,6 +233,11 @@ export const datingApi = {
 
   startConversation: async (postId: string): Promise<DatingConversation> =>
     (await api.post(`/dating/posts/${postId}/conversations`)).data.data,
+
+  startProfileConversation: async (
+    profileId: string
+  ): Promise<DatingConversation> =>
+    (await api.post(`/dating/profiles/${profileId}/conversations`)).data.data,
 
   listConversations: async (): Promise<DatingConversation[]> =>
     (await api.get('/dating/conversations')).data.items,

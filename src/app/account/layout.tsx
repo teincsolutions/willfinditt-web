@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { useEffect } from 'react';
+import { useSections } from '@/hooks/useCommunity';
 import {
   HeartIcon,
   LockIcon,
@@ -20,6 +21,8 @@ const menuItems = [
   { label: 'Business Profile', href: '/account/business', Icon: StoreIcon },
   { label: 'Verification', href: '/account/verification', Icon: ShieldCheckIcon },
   { label: 'My Ads', href: '/account/my-ads', Icon: PackageIcon },
+  // Shown only while a community section is open (see visibleItems).
+  { label: 'Community Posts', href: '/account/community', Icon: PackageIcon },
   { label: 'Security', href: '/account/security', Icon: LockIcon },
   { label: 'Help & Support', href: '/account/threads', Icon: SupportIcon },
   { label: 'Saved Items', href: '/favorites', Icon: HeartIcon }, // External to /account, but managed here in menu
@@ -33,6 +36,15 @@ export default function AccountLayout({
   const pathname = usePathname();
   const router = useRouter();
   const { isAuthenticated, isLoading, logout } = useAuth();
+  const { data: sections } = useSections();
+  const communityOpen = Boolean(
+    sections?.some(
+      (s) => s.key !== 'dating' && (s.state === 'ON' || s.state === 'READ_ONLY')
+    )
+  );
+  const visibleItems = menuItems.filter(
+    (item) => item.href !== '/account/community' || communityOpen
+  );
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
@@ -58,7 +70,7 @@ export default function AccountLayout({
           <aside className="w-full md:w-64 flex-shrink-0">
             <div className="bg-background rounded-xl shadow-sm border border-border-custom overflow-hidden">
               <nav className="flex flex-col p-2">
-                {menuItems.map((item) => {
+                {visibleItems.map((item) => {
                   const isActive = pathname.startsWith(item.href);
                   const ItemIcon = item.Icon;
                   return (

@@ -12,9 +12,12 @@ import { useLocation } from '@/contexts/LocationContext';
 import { useParentCategories } from '@/hooks/useCategories';
 import { useUnreadCount } from '@/hooks/useNotifications';
 import { useChatUnreadCount } from '@/hooks/useChat';
+import { useSellHref } from '@/hooks/useCommunity';
 import { OptimizedImage } from '@/components/OptimizedImage';
 
 export const Header = () => {
+  // /ads/new unless a community section is open (then the post chooser).
+  const sellHref = useSellHref();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isMegaMenuOpen, setIsMegaMenuOpen] = useState(false);
   const [isLocationMenuOpen, setIsLocationMenuOpen] = useState(false);
@@ -149,7 +152,7 @@ export const Header = () => {
             {/* Desktop Actions */}
             <div className="hidden lg:flex items-center space-x-3">
               {/* Sell Button */}
-              <Link href="/ads/new">
+              <Link href={sellHref}>
                 <Button
                   size="sm"
                   className="bg-primary hover:opacity-90 shadow-md flex flex-row items-center"
@@ -457,7 +460,7 @@ export const Header = () => {
                 )}
               </Link>
               <Link
-                href="/ads/new"
+                href={sellHref}
                 className="p-2 bg-success hover:opacity-90 rounded-lg transition-colors"
               >
                 <svg

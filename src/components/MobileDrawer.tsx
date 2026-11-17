@@ -5,6 +5,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Category } from '@/types/category';
 import { useLocation } from '@/contexts/LocationContext';
 import { OptimizedImage } from './OptimizedImage';
+import { CommunityNavLinks } from './community/CommunityNavLinks';
+import { useSellHref } from '@/hooks/useCommunity';
 
 interface MobileDrawerProps {
   isOpen: boolean;
@@ -19,6 +21,7 @@ export const MobileDrawer = ({
 }: MobileDrawerProps) => {
   const { user, isAuthenticated, logout } = useAuth();
   const { selectedCountry, setSelectedCountry, countries } = useLocation();
+  const sellHref = useSellHref();
 
   return (
     <>
@@ -108,7 +111,7 @@ export const MobileDrawer = ({
 
             <div className="space-y-1">
               <Link
-                href="/ads/new"
+                href={sellHref}
                 onClick={onClose}
                 className="flex items-center gap-4 p-3 rounded-2xl hover:bg-background-primary transition-all group"
               >
@@ -134,6 +137,8 @@ export const MobileDrawer = ({
                   </span>
                 </div>
               </Link>
+
+              <CommunityNavLinks onNavigate={onClose} />
 
               <Link
                 href="/favorites"

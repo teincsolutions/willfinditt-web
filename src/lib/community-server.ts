@@ -15,10 +15,21 @@ import type {
  */
 const API = process.env.NEXT_PUBLIC_API_URL;
 
+/**
+ * Shared secret with the API (WEB_SSR_READ_TOKEN). All visitors reach the
+ * API from this server, so its reads are exempt from the per-IP public read
+ * limit when the token is sent. Server-only: not a NEXT_PUBLIC variable, so
+ * it is never included in browser code.
+ */
+const SSR_TOKEN = process.env.WEB_SSR_READ_TOKEN;
+
 async function getJson<T>(path: string): Promise<T | null> {
   if (!API) return null;
   try {
-    const res = await fetch(`${API}${path}`, { cache: 'no-store' });
+    const res = await fetch(`${API}${path}`, {
+      cache: 'no-store',
+      headers: SSR_TOKEN ? { 'x-willfind8-ssr': SSR_TOKEN } : undefined,
+    });
     if (!res.ok) return null;
     return (await res.json()) as T;
   } catch {

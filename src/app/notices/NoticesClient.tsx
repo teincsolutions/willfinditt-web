@@ -5,7 +5,9 @@ import { useState } from 'react';
 import { SectionGate, LoadMore } from '@/components/community/SectionGate';
 import { NoticeCard } from '@/components/community/Cards';
 import { CityPicker } from '@/components/community/CityPicker';
+import { CommunitySearch } from '@/components/community/CommunitySearch';
 import { useNoticeFormConfig, useNotices } from '@/hooks/useCommunity';
+import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 import type {
   CursorPage,
   EventPost,
@@ -21,6 +23,9 @@ function NoticesList({
   initialPage?: CursorPage<EventPost>;
 }) {
   const [eventType, setEventType] = useState<EventType | ''>('');
+  const [q, setQ] = useState('');
+  const debouncedQ = useDebouncedValue(q);
+  const search = debouncedQ.trim().length >= 2 ? debouncedQ.trim() : undefined;
   // Types are admin-managed; chips show the active ones.
   const { data: config } = useNoticeFormConfig();
   const TYPES: { value: EventType | ''; label: string }[] = [
@@ -29,9 +34,9 @@ function NoticesList({
   ];
   const [city, setCity] = useState('');
   const query = useNotices(
-    { eventType: eventType || undefined, city: city || undefined },
+    { eventType: eventType || undefined, city: city || undefined, q: search },
     // The server-rendered first page is for the unfiltered list only.
-    !eventType && !city ? initialPage : undefined
+    !eventType && !city && !search ? initialPage : undefined
   );
   const posts = query.data?.pages.flatMap((p) => p.items) ?? [];
 
@@ -53,6 +58,13 @@ function NoticesList({
           </Link>
         )}
       </div>
+
+      <CommunitySearch
+        value={q}
+        onChange={setQ}
+        placeholder="Search notices by title or description…"
+        className="mb-4 max-w-xl"
+      />
 
       <div className="flex flex-wrap gap-2 mb-4">
         {TYPES.map((t) => (
@@ -79,7 +91,7 @@ function NoticesList({
       ) : query.isError ? (
         <p className="text-error">Could not load notices. Please try again.</p>
       ) : posts.length === 0 ? (
-        <p className="text-text-gray py-12 text-center">No notices yet.</p>
+        <p className="text-text-gray py-12 text-center">{search ? 'No notices match your search.' : 'No notices yet.'}</p>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {posts.map((post) => (

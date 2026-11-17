@@ -1,12 +1,15 @@
 import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/contexts/AuthContext';
 import {
+  datingApi,
   getSections,
   lostFoundApi,
   noticesApi,
 } from '@/services/community.service';
 import type {
   CursorPage,
+  DatingGender,
+  DatingLookingFor,
   EventPost,
   EventType,
   LostFoundKind,
@@ -58,8 +61,9 @@ const firstPage = <T>(page?: CursorPage<T>) =>
   page ? { pages: [page], pageParams: [undefined] } : undefined;
 
 export const useNotices = (
-  filters: { eventType?: EventType; city?: string; profile?: string },
-  initial?: CursorPage<EventPost>
+  filters: { eventType?: EventType; city?: string; profile?: string; q?: string },
+  initial?: CursorPage<EventPost>,
+  enabled = true
 ) =>
   useInfiniteQuery({
     queryKey: ['community', 'notices', filters],
@@ -68,6 +72,7 @@ export const useNotices = (
     initialPageParam: undefined as string | undefined,
     getNextPageParam: (last) => last.nextCursor ?? undefined,
     initialData: firstPage(initial),
+    enabled,
   });
 
 export const useNotice = (
@@ -98,8 +103,9 @@ export const useLostFoundFormConfig = () =>
   });
 
 export const useLostFound = (
-  filters: { kind?: LostFoundKind; category?: string; city?: string },
-  initial?: CursorPage<LostFoundPost>
+  filters: { kind?: LostFoundKind; category?: string; city?: string; q?: string },
+  initial?: CursorPage<LostFoundPost>,
+  enabled = true
 ) =>
   useInfiniteQuery({
     queryKey: ['community', 'lost-found', filters],
@@ -108,6 +114,7 @@ export const useLostFound = (
     initialPageParam: undefined as string | undefined,
     getNextPageParam: (last) => last.nextCursor ?? undefined,
     initialData: firstPage(initial),
+    enabled,
   });
 
 export const useLostFoundPost = (id: string, initial?: LostFoundPost | null) =>
@@ -129,4 +136,94 @@ export const useSellHref = () => {
     (f) => (f.key === 'event_notices' || f.key === 'lost_found') && f.state === 'ON'
   );
   return anyOpen ? '/post' : '/ads/new';
+};
+
+// --- Love & Dating (Phase 2 — plan v3 PR 13) --------------------------------
+
+export const useDatingFormConfig = (enabled = true) =>
+  useQuery({
+    queryKey: ['community', 'dating', 'form-config'],
+    queryFn: datingApi.formConfig,
+    staleTime: 5 * 60_000,
+    enabled,
+  });
+
+export const useMyDatingKyc = (enabled = true) => {
+  const myKey = useMyKey();
+  return useQuery({
+    queryKey: [...myKey, 'dating-kyc'],
+    queryFn: datingApi.myKyc,
+    enabled,
+    retry: false,
+  });
+};
+
+export const useMyDatingProfile = (enabled = true) => {
+  const myKey = useMyKey();
+  return useQuery({
+    queryKey: [...myKey, 'dating-profile'],
+    queryFn: datingApi.myProfile,
+    enabled,
+    retry: false,
+  });
+};
+
+export const useDatingProfiles = (
+  filters: {
+    city?: string;
+    gender?: DatingGender;
+    lookingFor?: DatingLookingFor;
+  },
+  enabled = true
+) =>
+  useInfiniteQuery({
+    queryKey: ['community', 'dating', 'profiles', filters],
+    queryFn: ({ pageParam }) =>
+      datingApi.listProfiles({ ...filters, cursor: pageParam }),
+    initialPageParam: undefined as string | undefined,
+    getNextPageParam: (last) => last.nextCursor ?? undefined,
+    enabled,
+  });
+
+export const useDatingPosts = (
+  filters: {
+    city?: string;
+    gender?: DatingGender;
+    lookingFor?: DatingLookingFor;
+  },
+  enabled = true
+) =>
+  useInfiniteQuery({
+    queryKey: ['community', 'dating', 'posts', filters],
+    queryFn: ({ pageParam }) =>
+      datingApi.listPosts({ ...filters, cursor: pageParam }),
+    initialPageParam: undefined as string | undefined,
+    getNextPageParam: (last) => last.nextCursor ?? undefined,
+    enabled,
+  });
+
+export const useDatingConversations = (enabled = true) => {
+  const myKey = useMyKey();
+  return useQuery({
+    queryKey: [...myKey, 'dating-conversations'],
+    queryFn: datingApi.listConversations,
+    enabled,
+    refetchInterval: 15_000,
+  });
+};
+
+export const useDatingMessages = (
+  conversationId: string | null,
+  enabled = true
+) => {
+  const myKey = useMyKey();
+  return useInfiniteQuery({
+    queryKey: [...myKey, 'dating-messages', conversationId],
+    queryFn: ({ pageParam }) =>
+      datingApi.listMessages(conversationId as string, pageParam),
+    initialPageParam: undefined as string | undefined,
+    getNextPageParam: (last) => last.nextCursor ?? undefined,
+    enabled: enabled && Boolean(conversationId),
+    refetchInterval: 10_000,
+  });
 };

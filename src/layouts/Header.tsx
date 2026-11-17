@@ -13,6 +13,7 @@ import { useParentCategories } from '@/hooks/useCategories';
 import { useUnreadCount } from '@/hooks/useNotifications';
 import { useChatUnreadCount } from '@/hooks/useChat';
 import { useSellHref } from '@/hooks/useCommunity';
+import { CommunityMenu } from '@/components/community/CommunityMenu';
 import { OptimizedImage } from '@/components/OptimizedImage';
 
 export const Header = () => {
@@ -172,7 +173,7 @@ export const Header = () => {
                       />
                     </svg>
                   </div>
-                  <span>Sell</span>
+                  <span>Sell / Post</span>
                 </Button>
               </Link>
 
@@ -320,6 +321,26 @@ export const Header = () => {
                             />
                           </svg>
                           <span>My Account</span>
+                        </Link>
+                        <Link
+                          href="/account/community"
+                          className="flex items-center gap-3 px-4 py-2.5 text-text hover:bg-background transition-colors"
+                          onClick={() => setIsDropdownOpen(false)}
+                        >
+                          <svg
+                            className="w-5 h-5"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M17 20h5v-2a4 4 0 0 0-4-4h-1M9 20H4v-2a4 4 0 0 1 4-4h1m4-4a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm6 0a3 3 0 1 0 0-6"
+                            />
+                          </svg>
+                          <span>My community</span>
                         </Link>
                         <Link
                           href="/account/my-ads"
@@ -576,8 +597,11 @@ export const Header = () => {
                 </Suspense>
               </div>
 
+              {/* Community */}
+              <CommunityMenu />
+
               {/* Quick Category Links */}
-              <div className="flex items-center gap-1">
+              <div className="hidden items-center gap-1 xl:flex">
                 {categories.slice(0, 6).map((category) => (
                   <Link
                     key={category.id}

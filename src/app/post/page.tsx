@@ -18,7 +18,7 @@ export default async function PostChooserPage() {
   const options = [
     {
       href: '/ads/new',
-      title: 'Sell or advertise',
+      title: 'Sell an item or ad',
       text: 'Products, services, property, jobs and everything else.',
       show: true,
     },
@@ -38,7 +38,16 @@ export default async function PostChooserPage() {
 
   return (
     <div className="max-w-3xl mx-auto px-4 py-10">
-      <h1 className="text-2xl md:text-3xl font-bold mb-2">What are you posting?</h1>
+      <Link
+        href="/"
+        className="mb-6 inline-flex items-center gap-1.5 text-sm font-semibold text-text-gray hover:text-primary"
+      >
+        <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="m15 19-7-7 7-7" />
+        </svg>
+        Back
+      </Link>
+      <h1 className="text-2xl md:text-3xl font-bold mb-2">Sell or post</h1>
       <p className="text-text-gray mb-8">Choose the type of post.</p>
       <div className="grid gap-4">
         {options.map((o) => (

@@ -22,7 +22,7 @@ const menuItems = [
   { label: 'Verification', href: '/account/verification', Icon: ShieldCheckIcon },
   { label: 'My Ads', href: '/account/my-ads', Icon: PackageIcon },
   // Shown only while a community section is open (see visibleItems).
-  { label: 'Community Posts', href: '/account/community', Icon: PackageIcon },
+  { label: 'Community Profile', href: '/account/community', Icon: PackageIcon },
   { label: 'Security', href: '/account/security', Icon: LockIcon },
   { label: 'Help & Support', href: '/account/threads', Icon: SupportIcon },
   { label: 'Saved Items', href: '/favorites', Icon: HeartIcon }, // External to /account, but managed here in menu

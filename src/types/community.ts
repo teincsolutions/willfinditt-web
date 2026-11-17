@@ -196,3 +196,144 @@ export interface LostFoundInput extends ListingPeriodInput {
   /** Asset ids from /community/media, in display order. */
   images?: string[];
 }
+
+// --- Love & Dating (Phase 2 — matches willfind8-api dating module) ---------
+
+export type DatingGender = 'MAN' | 'WOMAN';
+export type DatingLookingFor = 'MAN' | 'WOMAN' | 'ANYONE';
+export type DatingProfileStatus =
+  | 'PENDING_REVIEW'
+  | 'ACTIVE'
+  | 'HIDDEN'
+  | 'REJECTED'
+  | 'SUSPENDED';
+
+export type DatingKycStatus =
+  | 'PENDING'
+  | 'INFO_REQUESTED'
+  | 'APPROVED'
+  | 'REJECTED';
+
+export type DatingDocumentType =
+  | 'NATIONAL_ID'
+  | 'DRIVERS_LICENSE'
+  | 'PASSPORT';
+
+export interface DatingFormConfig {
+  genders: { value: DatingGender; label: string }[];
+  lookingFor: { value: DatingLookingFor; label: string }[];
+  profile: {
+    nickname: FieldRule;
+    birthYear: { required: boolean; minAge: number; note: string };
+    about: FieldRule;
+    photo: { required: boolean; upload: string };
+  };
+  kyc: {
+    upload: string;
+    facePhotosCount: number;
+    retentionDays: number;
+    documentTypes: { value: DatingDocumentType; label: string }[];
+  };
+  post: {
+    title: FieldRule;
+    body: FieldRule;
+  };
+  listing: ListingRules;
+}
+
+export interface DatingPublicProfile {
+  id: string;
+  nickname: string;
+  age: number;
+  gender: DatingGender;
+  lookingFor: DatingLookingFor;
+  about: string | null;
+  city: CityRef | null;
+  photoUrl: string | null;
+  verified: boolean;
+  createdAt: string;
+}
+
+export interface DatingMyProfile extends DatingPublicProfile {
+  birthYear: number;
+  photoMediaId: string | null;
+  status: DatingProfileStatus;
+  kycStatus: DatingKycStatus | null;
+}
+
+export interface DatingPost {
+  id: string;
+  title: string;
+  body: string;
+  city: CityRef | null;
+  expiresAt: string;
+  createdAt: string;
+  updatedAt: string;
+  profile: DatingPublicProfile;
+  status?: 'ACTIVE' | 'SUSPENDED' | 'REJECTED' | 'EXPIRED';
+}
+
+export interface DatingKycState {
+  id: string;
+  documentType: DatingDocumentType;
+  status: DatingKycStatus;
+  consentAt: string;
+  submittedAt: string;
+  reviewedAt: string | null;
+  decisionReason: string | null;
+  infoRequestMessage: string | null;
+  isAdult: boolean | null;
+  ageBand: string | null;
+  imagesPurgedAt: string | null;
+}
+
+export interface DatingKycSubmitInput {
+  consent: boolean;
+  documentType: DatingDocumentType;
+  documentNumber: string;
+  documentKey: string;
+  faceKeys: [string, string, string];
+}
+
+export interface DatingProfileInput {
+  nickname?: string;
+  birthYear?: number;
+  gender?: DatingGender;
+  lookingFor?: DatingLookingFor;
+  about?: string | null;
+  photoAssetId?: string | null;
+  cityId?: string | null;
+  hidden?: boolean;
+}
+
+export interface DatingPostInput extends ListingPeriodInput {
+  title: string;
+  body: string;
+  cityId?: string;
+}
+
+export interface DatingConversation {
+  id: string;
+  /** Null for conversations started directly from a dating profile. */
+  post: { id: string; title: string } | null;
+  peerProfile: DatingPublicProfile | null;
+  unreadCount: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface DatingMessage {
+  id: string;
+  conversationId: string;
+  isMine: boolean;
+  senderProfile: {
+    id: string;
+    nickname: string;
+    photoUrl: string | null;
+  } | null;
+  type: 'TEXT' | 'IMAGE' | 'PHONE_SHARE';
+  text: string;
+  imageUrl: string | null;
+  readAt: string | null;
+  createdAt: string;
+}

@@ -21,7 +21,7 @@ export function NoticeCard({ post }: { post: EventPost }) {
   return (
     <Link
       href={`/notices/${post.id}`}
-      className="flex gap-4 rounded-xl border border-border-custom bg-white p-3 hover:shadow-md transition-shadow"
+      className="flex gap-4 rounded-xl border border-border-custom bg-surface p-3 hover:shadow-md transition-shadow"
     >
       <div className="w-24 h-28 shrink-0 rounded-lg bg-background-primary overflow-hidden">
         {cover ? (
@@ -66,7 +66,7 @@ export function LostFoundCard({ post }: { post: LostFoundPost }) {
   return (
     <Link
       href={`/lost-and-found/${post.id}`}
-      className="flex gap-4 rounded-xl border border-border-custom bg-white p-3 hover:shadow-md transition-shadow"
+      className="flex gap-4 rounded-xl border border-border-custom bg-surface p-3 hover:shadow-md transition-shadow"
     >
       <div className="w-24 h-24 shrink-0 rounded-lg bg-background-primary overflow-hidden">
         {cover ? (

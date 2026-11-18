@@ -29,7 +29,7 @@ export function CommunityProfileCard({ compact = false }: { compact?: boolean })
 
   if (!isAuthenticated) {
     return (
-      <div className="rounded-2xl border border-border-custom bg-white p-5">
+      <div className="rounded-2xl border border-border-custom bg-surface p-5">
         <h2 className="text-lg font-bold">Your community</h2>
         <p className="mt-1 text-sm text-text-gray">
           Sign in to post notices, report lost items and manage your community
@@ -56,7 +56,7 @@ export function CommunityProfileCard({ compact = false }: { compact?: boolean })
     : '/account/community';
 
   return (
-    <div className="overflow-hidden rounded-2xl border border-border-custom bg-white">
+    <div className="overflow-hidden rounded-2xl border border-border-custom bg-surface">
       <div className="h-16 bg-gradient-to-r from-primary to-primary/60" />
       <div className={`px-5 ${compact ? 'pb-4' : 'pb-5'}`}>
         <div className="-mt-8 mb-3 flex items-end justify-between gap-3">

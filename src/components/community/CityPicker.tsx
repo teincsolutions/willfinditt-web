@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useCities, useCountries, useStates } from '@/hooks/useLocations';
 
 const selectClass =
-  'w-full rounded-lg border border-border-custom bg-white px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40';
+  'w-full rounded-lg border border-border-custom bg-background px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40';
 
 /**
  * Region -> city picker (Ghana first). Reports the chosen city id, or ''

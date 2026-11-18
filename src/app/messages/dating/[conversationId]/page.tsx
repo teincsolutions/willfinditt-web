@@ -221,7 +221,7 @@ export default function DatingChatPage() {
                       value={reportReason}
                       onChange={(event) => setReportReason(event.target.value)}
                       placeholder="What is wrong with this message?"
-                      className="w-full rounded-lg border border-border-custom bg-white px-3 py-1.5 text-xs"
+                      className="w-full rounded-lg border border-border-custom bg-background px-3 py-1.5 text-xs"
                     />
                     <div className="mt-2 flex gap-2">
                       <button
@@ -278,7 +278,7 @@ function MessageBubble({ message }: { message: DatingMessage }) {
       className={`max-w-[75%] rounded-2xl px-4 py-2.5 text-sm shadow-sm ${
         message.isMine
           ? 'rounded-tr-none bg-primary text-white'
-          : 'rounded-tl-none border border-border-custom bg-white text-text'
+          : 'rounded-tl-none border border-border-custom bg-surface text-text'
       }`}
     >
       <p className="whitespace-pre-wrap break-words">

@@ -67,7 +67,7 @@ const initials = (name: string) =>
 
 function Stat({ value, label }: { value: string | number; label: string }) {
   return (
-    <div className="rounded-xl border border-border-custom bg-white px-4 py-3 text-center">
+    <div className="rounded-xl border border-border-custom bg-surface px-4 py-3 text-center">
       <p className="text-2xl font-black text-text">{value}</p>
       <p className="text-xs font-medium text-text-gray">{label}</p>
     </div>
@@ -90,7 +90,7 @@ function OwnerNoticeCard({
   const cover = noticeCover(post);
   const takenDown = post.status === 'SUSPENDED' || post.status === 'REJECTED';
   return (
-    <li className="rounded-xl border border-border-custom bg-white p-3">
+    <li className="rounded-xl border border-border-custom bg-surface p-3">
       <div className="flex gap-3">
         <div className="h-24 w-20 shrink-0 overflow-hidden rounded-lg bg-background-primary">
           {cover ? (
@@ -156,7 +156,7 @@ function OwnerLostFoundCard({
 }) {
   const cover = post.images[0]?.url ?? null;
   return (
-    <li className="rounded-xl border border-border-custom bg-white p-3">
+    <li className="rounded-xl border border-border-custom bg-surface p-3">
       <div className="flex gap-3">
         <div className="h-24 w-20 shrink-0 overflow-hidden rounded-lg bg-background-primary">
           {cover ? (
@@ -308,7 +308,7 @@ export default function CommunityProfilePage() {
         ← Back to Community
       </Link>
       {/* Profile card */}
-      <div className="overflow-hidden rounded-2xl border border-border-custom bg-white">
+      <div className="overflow-hidden rounded-2xl border border-border-custom bg-surface">
         <div className="h-24 bg-gradient-to-r from-primary via-primary/80 to-primary/50" />
         <div className="px-5 pb-5">
           <div className="-mt-10 flex items-end justify-between gap-3">

@@ -19,9 +19,11 @@ function NoticeDetail({
   post: EventPost;
   readOnly: boolean;
 }) {
-  const deceased = post.images.find((i) => i.role === 'DECEASED_PHOTO');
-  const poster = post.images.find((i) => i.role === 'POSTER');
-  const gallery = post.images.filter((i) => i.role === 'GALLERY');
+  const deceased = post.images.find(
+    (i) => i.role === 'DECEASED_PHOTO' && i.url,
+  );
+  const poster = post.images.find((i) => i.role === 'POSTER' && i.url);
+  const gallery = post.images.filter((i) => i.role === 'GALLERY' && i.url);
 
   return (
     <div className="max-w-5xl mx-auto px-4 py-8 grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -34,7 +36,9 @@ function NoticeDetail({
         </div>
 
         {(deceased || poster) && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div
+            className={`grid gap-4 ${deceased && poster ? 'grid-cols-1 sm:grid-cols-2' : 'grid-cols-1 max-w-md'}`}
+          >
             {deceased && (
               <figure>
                 <img
@@ -54,7 +58,7 @@ function NoticeDetail({
                   src={poster.url ?? undefined}
                   referrerPolicy="no-referrer"
                   alt="Funeral poster or obituary"
-                  className="w-full rounded-xl object-contain aspect-[4/5] bg-background-primary"
+                  className="w-full h-auto max-h-[36rem] rounded-xl object-contain"
                 />
                 <figcaption className="text-xs text-text-gray mt-1">
                   Poster / obituary
@@ -86,13 +90,20 @@ function NoticeDetail({
         {gallery.length > 0 && (
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
             {gallery.map((img) => (
-              <img
+              <a
                 key={img.sortOrder}
-                src={img.url ?? undefined}
-                referrerPolicy="no-referrer"
-                alt=""
-                className="w-full aspect-square object-cover rounded-lg bg-background-primary"
-              />
+                href={img.url ?? undefined}
+                target="_blank"
+                rel="noopener noreferrer"
+                title="Open full size"
+              >
+                <img
+                  src={img.url ?? undefined}
+                  referrerPolicy="no-referrer"
+                  alt=""
+                  className="w-full aspect-square object-cover rounded-lg bg-background-primary hover:opacity-90 transition-opacity"
+                />
+              </a>
             ))}
           </div>
         )}

@@ -29,6 +29,7 @@ export const Header = () => {
 
   const closeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const locationCloseTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const categoryRowRef = useRef<HTMLDivElement>(null);
 
   const handleMouseEnter = () => {
     if (closeTimeoutRef.current) clearTimeout(closeTimeoutRef.current);
@@ -508,7 +509,7 @@ export const Header = () => {
 
           {/* Desktop Category Navigation Bar */}
           <div className="hidden lg:block border-t border-border-custom px-4">
-            <nav className="flex items-center justify-between py-2 relative">
+            <nav className="flex items-center justify-between gap-2 py-2 relative">
               {/* All Categories Button with Mega Menu */}
               <div
                 className="py-2"
@@ -601,16 +602,46 @@ export const Header = () => {
               <CommunityMenu />
 
               {/* Quick Category Links */}
-              <div className="hidden items-center gap-1 xl:flex">
-                {categories.slice(0, 6).map((category) => (
-                  <Link
-                    key={category.id}
-                    href={`/category/${category.slug || category.id}?categoryId=${category.id}`}
-                    className="px-3 py-2 text-sm font-medium text-text-gray hover:text-primary hover:bg-background-primary rounded-lg transition-colors whitespace-nowrap"
+              <div className="relative hidden min-w-0 flex-1 items-center xl:flex">
+                <div
+                  ref={categoryRowRef}
+                  className="flex min-w-0 flex-1 items-center gap-1 overflow-x-auto scroll-smooth pr-8 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden [mask-image:linear-gradient(to_right,black_85%,transparent)]"
+                >
+                  {categories.map((category) => (
+                    <Link
+                      key={category.id}
+                      href={`/category/${category.slug || category.id}?categoryId=${category.id}`}
+                      className="px-3 py-2 text-sm font-medium text-text-gray hover:text-primary hover:bg-background-primary rounded-lg transition-colors whitespace-nowrap"
+                    >
+                      {category.name}
+                    </Link>
+                  ))}
+                </div>
+                <button
+                  type="button"
+                  aria-label="More categories"
+                  onClick={() =>
+                    categoryRowRef.current?.scrollBy({
+                      left: 240,
+                      behavior: 'smooth',
+                    })
+                  }
+                  className="absolute right-0 flex h-8 w-8 items-center justify-center rounded-full border border-border-custom bg-background text-text-gray shadow-sm hover:text-primary hover:border-primary transition-colors"
+                >
+                  <svg
+                    className="h-4 w-4"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
                   >
-                    {category.name}
-                  </Link>
-                ))}
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2.5}
+                      d="M9 5l7 7-7 7"
+                    />
+                  </svg>
+                </button>
               </div>
             </nav>
           </div>

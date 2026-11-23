@@ -270,7 +270,7 @@ export function CommunityHubClient({ initialFlags }: { initialFlags?: SectionFla
         <aside className="hidden space-y-4 lg:block">
           <CommunityProfileCard compact />
 
-          <div className="rounded-2xl border border-border-custom bg-white p-5">
+          <div className="rounded-2xl border border-border-custom bg-surface p-5">
             <h2 className="text-sm font-bold text-text">Quick post</h2>
             <div className="mt-3 space-y-2">
               <Link href="/post/notice" className="block rounded-lg border border-border-custom px-3 py-2 text-sm font-semibold text-text hover:border-primary hover:text-primary">
@@ -282,7 +282,7 @@ export function CommunityHubClient({ initialFlags }: { initialFlags?: SectionFla
             </div>
           </div>
 
-          <div className="rounded-2xl border border-border-custom bg-white p-5">
+          <div className="rounded-2xl border border-border-custom bg-surface p-5">
             <h2 className="text-sm font-bold text-text">Community guidelines</h2>
             <ul className="mt-2 space-y-1.5 text-sm text-text-gray">
               <li>Be kind and accurate.</li>

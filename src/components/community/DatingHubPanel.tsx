@@ -363,7 +363,7 @@ export function DatingHubPanel() {
 
   if (!isAuthenticated) {
     return (
-      <div className="rounded-2xl border border-border-custom bg-white p-8 shadow-sm">
+      <div className="rounded-2xl border border-border-custom bg-surface p-8 shadow-sm">
         <span className="inline-flex items-center rounded-full bg-primaryLight px-3 py-1 text-xs font-bold text-primary">
           ID-verified and private
         </span>
@@ -457,7 +457,7 @@ export function DatingHubPanel() {
                   : 'Please complete the required checks to continue.'}
           </p>
           {kyc?.decisionReason || kyc?.infoRequestMessage ? (
-            <p className="mt-2 rounded-lg bg-white p-3 text-error">
+            <p className="mt-2 rounded-lg bg-surface p-3 text-error">
               {kyc.infoRequestMessage || kyc.decisionReason}
             </p>
           ) : null}
@@ -507,7 +507,7 @@ export function DatingHubPanel() {
 
   return (
     <div className="space-y-5">
-      <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-border-custom bg-white p-3 shadow-sm">
+      <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-border-custom bg-surface p-3 shadow-sm">
         <div className="flex flex-wrap gap-2">
           <button
             type="button"
@@ -678,7 +678,7 @@ function SetupPanel({
 
   return (
     <div className="space-y-6">
-      <div className="rounded-2xl border border-border-custom bg-white p-6 shadow-sm">
+      <div className="rounded-2xl border border-border-custom bg-surface p-6 shadow-sm">
         <span className="inline-flex rounded-full bg-primaryLight px-3 py-1 text-xs font-bold text-primary">
           Identity status: {kycStatus.replace(/_/g, ' ')}
         </span>
@@ -898,7 +898,7 @@ function SetupPanel({
         ) : null}
       </div>
 
-      <div className="rounded-2xl border border-border-custom bg-white p-6 shadow-sm">
+      <div className="rounded-2xl border border-border-custom bg-surface p-6 shadow-sm">
         <h3 className="text-lg font-black text-text">Your dating profile</h3>
         <p className="mt-1 text-sm text-text-gray">
           Use a nickname that does not reveal your real name. Only your
@@ -1039,7 +1039,7 @@ function ProfileCard({
   canInteract: boolean;
 }) {
   return (
-    <article className="flex flex-col overflow-hidden rounded-2xl border border-border-custom bg-white shadow-sm">
+    <article className="flex flex-col overflow-hidden rounded-2xl border border-border-custom bg-surface shadow-sm">
       <div className="relative h-56 w-full bg-primaryLight">
         {profile.photoUrl ? (
           <img
@@ -1195,7 +1195,7 @@ function DiscoverTab({
           </button>
         </div>
       ) : !profiles.length ? (
-        <div className="rounded-2xl border border-dashed border-border-custom bg-white py-14 text-center">
+        <div className="rounded-2xl border border-dashed border-border-custom bg-surface py-14 text-center">
           <p className="font-semibold text-text">No profiles yet</p>
           <p className="mt-1 text-sm text-text-gray">
             {filterCity
@@ -1244,7 +1244,7 @@ function MatchesTab({
 }) {
   if (!canInteract) {
     return (
-      <div className="rounded-2xl border border-border-custom bg-white p-8 text-center text-text-gray">
+      <div className="rounded-2xl border border-border-custom bg-surface p-8 text-center text-text-gray">
         <p className="font-semibold text-text">Matches unlock after approval</p>
         <p className="mt-1 text-sm">
           Keep browsing while your profile is being reviewed.
@@ -1259,7 +1259,7 @@ function MatchesTab({
 
   if (!conversations.length) {
     return (
-      <div className="rounded-2xl border border-dashed border-border-custom bg-white p-8 text-center">
+      <div className="rounded-2xl border border-dashed border-border-custom bg-surface p-8 text-center">
         <p className="font-semibold text-text">No matches yet</p>
         <p className="mt-1 text-sm text-text-gray">
           Start a conversation from Discover and your matches will appear here.
@@ -1269,7 +1269,7 @@ function MatchesTab({
   }
 
   return (
-    <div className="divide-y divide-border-custom overflow-hidden rounded-2xl border border-border-custom bg-white">
+    <div className="divide-y divide-border-custom overflow-hidden rounded-2xl border border-border-custom bg-surface">
       {conversations.map((conversation) => {
         const peer = conversation.peerProfile;
         return (
@@ -1327,7 +1327,7 @@ function LikesTab({
 }) {
   if (!liked.length) {
     return (
-      <div className="rounded-2xl border border-dashed border-border-custom bg-white p-8 text-center">
+      <div className="rounded-2xl border border-dashed border-border-custom bg-surface p-8 text-center">
         <p className="font-semibold text-text">No likes yet</p>
         <p className="mt-1 text-sm text-text-gray">
           Profiles you like from Discover will appear here.
@@ -1369,7 +1369,7 @@ function ProfileTab({
   onDelete: () => void;
 }) {
   return (
-    <div className="max-w-2xl rounded-2xl border border-border-custom bg-white p-6 shadow-sm">
+    <div className="max-w-2xl rounded-2xl border border-border-custom bg-surface p-6 shadow-sm">
       <div className="flex items-center gap-4">
         <div className="h-16 w-16 overflow-hidden rounded-full bg-primaryLight">
           {profile.photoUrl ? (

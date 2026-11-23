@@ -54,7 +54,7 @@ export default async function PostChooserPage() {
           <Link
             key={o.href}
             href={o.href}
-            className="block rounded-xl border border-border-custom bg-white p-5 hover:border-primary hover:shadow-md transition"
+            className="block rounded-xl border border-border-custom bg-surface p-5 hover:border-primary hover:shadow-md transition"
           >
             <h2 className="text-lg font-bold">{o.title}</h2>
             <p className="text-text-gray">{o.text}</p>

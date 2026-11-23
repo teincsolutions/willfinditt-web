@@ -37,7 +37,7 @@ export function ShareButton({ title, path }: { title: string; path: string }) {
         Share
       </button>
       {open && (
-        <div className="mt-2 rounded-xl border border-border-custom bg-white p-2 space-y-1">
+        <div className="mt-2 rounded-xl border border-border-custom bg-surface p-2 space-y-1">
           <a
             href={`https://wa.me/?text=${encodeURIComponent(text)}`}
             target="_blank"
